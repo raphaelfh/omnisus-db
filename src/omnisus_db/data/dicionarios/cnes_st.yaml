@@ -1,0 +1,30 @@
+name: cnes_st
+title: CNES — Estabelecimentos
+profile: tabular-data-resource
+encoding: cp1252
+schema:
+  fields:
+    - name: cnes
+      type: string
+      description: "Código CNES"
+    - name: nome_fantasia
+      type: string
+    - name: tp_unid
+      type: integer
+      description: "Tipo de unidade"
+    - name: codufmun
+      type: string
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: codufmun, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: ano
+      type: integer
+      constraints: { required: true }
+    - name: mes
+      type: integer
+      constraints: { required: true, minimum: 1, maximum: 12 }
+x-source-format: dbc
+x-source-family: datasus_ftp
+x-source-prefix: ST
+x-partitions: [ano, mes]
+x-version: "1.0.0"

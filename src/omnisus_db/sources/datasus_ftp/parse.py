@@ -25,8 +25,29 @@ logger = structlog.get_logger(__name__)
 BATCH_ROWS = 100_000
 
 
+def _ensure_dbf_terminator(dbf_bytes: bytes) -> bytes:
+    """Ensure the DBF field-descriptor area ends with 0x0D.
+
+    Some DATASUS DBC payloads (notably CNES) decompress to a DBF whose
+    declared header length leaves a 0x00 in place of the required 0x0D
+    field-descriptor terminator. Patch the byte at ``hdr_size - 1`` when
+    needed so dbfread2 can parse the file.
+    """
+    if len(dbf_bytes) < 12:
+        return dbf_bytes
+    hdr_size = int.from_bytes(dbf_bytes[8:10], "little")
+    if hdr_size <= 32 or hdr_size > len(dbf_bytes):
+        return dbf_bytes
+    if dbf_bytes[hdr_size - 1] == 0x0D:
+        return dbf_bytes
+    patched = bytearray(dbf_bytes)
+    patched[hdr_size - 1] = 0x0D
+    return bytes(patched)
+
+
 def _stream_records(dbf_bytes: bytes, encoding: str) -> Iterator[dict[str, Any]]:
     """Stream records from DBF bytes via a temp file (dbfread2 needs a path)."""
+    dbf_bytes = _ensure_dbf_terminator(dbf_bytes)
     with tempfile.NamedTemporaryFile(suffix=".dbf", delete=False) as tmp:
         tmp.write(dbf_bytes)
         tmp_path = tmp.name

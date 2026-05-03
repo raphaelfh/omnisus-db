@@ -153,12 +153,30 @@ def import_ibge_pop(
     return asyncio.run(run())
 
 
+def import_cnes_st(
+    *,
+    years: Iterable[int],
+    months: Iterable[int] = range(1, 13),
+    ufs: Sequence[str] | None = None,
+    target: str = "ducklake:./omnisus.ducklake",
+) -> list[ImportResult]:
+    """Import CNES-ST (estabelecimentos) — monthly. (years x ufs x months)."""
+    return _import_dataset_ftp_monthly(
+        "cnes_st",
+        years=years,
+        ufs=ufs,
+        months=months,
+        target=target,
+    )
+
+
 __all__ = [
     "ALL_UFS",
     "ImportResult",
     "Lake",
     "ScopeKey",
     "__version__",
+    "import_cnes_st",
     "import_ibge_pop",
     "import_sih",
     "import_sim",
