@@ -37,11 +37,49 @@ def init(
 
 @app.command(name="import")
 def import_cmd(
-    dataset: str = typer.Argument(..., help="Dataset name (sim, sinasc, ...)"),
+    dataset: str = typer.Argument(..., help="sim | sinasc | sih | ibge-pop | cnes-st"),
+    year: list[int] | None = typer.Option(
+        None, "--year", "-y", help="Repeatable; e.g. -y 2023 -y 2024"
+    ),
+    years_range: str | None = typer.Option(None, "--years", help="e.g. 2020-2024"),
+    ufs: str | None = typer.Option(None, "--ufs", help="Comma list: SP,RJ,MG"),
+    months: str | None = typer.Option(None, "--months", help="Comma list, monthly only"),
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
 ) -> None:
-    """Import a dataset (stub — implemented in Phase 2+)."""
-    console.print(f"[yellow]TODO[/yellow] import {dataset}")
-    raise typer.Exit(code=2)
+    """Import a dataset into the lake."""
+    import omnisus_db as odb
+
+    # Resolve years
+    if years_range:
+        a, b = years_range.split("-")
+        yrs: list[int] = list(range(int(a), int(b) + 1))
+    elif year:
+        yrs = list(year)
+    else:
+        raise typer.BadParameter("provide --year/-y or --years RANGE")
+
+    uf_list = [u.strip().upper() for u in ufs.split(",")] if ufs else None
+
+    if dataset == "sim":
+        results = odb.import_sim(years=yrs, ufs=uf_list, target=target)
+    elif dataset == "sinasc":
+        results = odb.import_sinasc(years=yrs, ufs=uf_list, target=target)
+    elif dataset == "ibge-pop":
+        results = odb.import_ibge_pop(years=yrs, target=target)
+    elif dataset == "sih":
+        m = [int(x) for x in months.split(",")] if months else range(1, 13)
+        results = odb.import_sih(years=yrs, ufs=uf_list, months=m, target=target)
+    elif dataset == "cnes-st":
+        m = [int(x) for x in months.split(",")] if months else range(1, 13)
+        results = odb.import_cnes_st(years=yrs, ufs=uf_list, months=m, target=target)
+    else:
+        raise typer.BadParameter(f"unknown dataset: {dataset}")
+
+    total_rows = sum(r.rows for r in results)
+    console.print(
+        f"[green]:heavy_check_mark:[/green] imported [bold]{total_rows:,}[/bold] rows "
+        f"({len(results)} scope(s))"
+    )
 
 
 @app.command()
