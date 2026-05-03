@@ -1,0 +1,23 @@
+name: ibge_pop
+title: IBGE — População residente por município/ano
+profile: tabular-data-resource
+encoding: utf-8
+schema:
+  fields:
+    - name: codigo_ibge
+      type: string
+      constraints: { required: true }
+      foreignKeys:
+        - { fields: codigo_ibge, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: ano
+      type: integer
+      constraints: { required: true }
+    - name: populacao
+      type: integer
+      constraints: { minimum: 0 }
+  primaryKey: [codigo_ibge, ano]
+x-source-format: json
+x-source-family: ibge
+x-source-url: "https://servicodados.ibge.gov.br/api/v3/agregados/793"
+x-partitions: [ano]
+x-version: "1.0.0"

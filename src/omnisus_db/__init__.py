@@ -132,12 +132,34 @@ def import_sinasc(
     return _import_dataset_ftp("sinasc_nv", years=years, ufs=ufs, target=target)
 
 
+def import_ibge_pop(
+    *,
+    years: Iterable[int] | None = None,
+    target: str = "ducklake:./omnisus.ducklake",
+) -> list[ImportResult]:
+    """Import IBGE population estimates for the given years."""
+    from omnisus_db.sources.ibge.importers.pop import import_pop_year
+
+    if years is None:
+        years = range(2010, 2026)
+
+    async def run() -> list[ImportResult]:
+        results: list[ImportResult] = []
+        with Lake.local(target) as lake:
+            for y in years:
+                results.append(await import_pop_year(year=y, lake=lake))
+        return results
+
+    return asyncio.run(run())
+
+
 __all__ = [
     "ALL_UFS",
     "ImportResult",
     "Lake",
     "ScopeKey",
     "__version__",
+    "import_ibge_pop",
     "import_sih",
     "import_sim",
     "import_sinasc",
