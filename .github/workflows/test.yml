@@ -1,0 +1,32 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Setup Python
+        run: uv python install 3.13
+      - name: Sync deps
+        run: uv sync --extra dev
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format check
+        run: uv run ruff format --check .
+      - name: Unit + integration tests
+        run: uv run pytest -m "not e2e and not perf" --cov=omnisus_db --cov-report=xml
+      - name: Frictionless validate dicionarios
+        if: hashFiles('src/omnisus_db/data/dicionarios/*.yaml') != ''
+        run: uv run frictionless validate src/omnisus_db/data/dicionarios/*.yaml
