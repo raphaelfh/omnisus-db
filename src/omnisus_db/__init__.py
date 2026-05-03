@@ -79,6 +79,16 @@ def import_sim(
     return _import_dataset_ftp("sim_do", years=years, ufs=ufs, target=target)
 
 
+def import_sinasc(
+    *,
+    years: Iterable[int],
+    ufs: Sequence[str] | None = None,
+    target: str = "ducklake:./omnisus.ducklake",
+) -> list[ImportResult]:
+    """Import SINASC-NV (nascidos vivos) for the given years/UFs."""
+    return _import_dataset_ftp("sinasc_nv", years=years, ufs=ufs, target=target)
+
+
 __all__ = [
     "ALL_UFS",
     "ImportResult",
@@ -86,4 +96,5 @@ __all__ = [
     "ScopeKey",
     "__version__",
     "import_sim",
+    "import_sinasc",
 ]

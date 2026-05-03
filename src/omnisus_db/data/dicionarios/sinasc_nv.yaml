@@ -1,0 +1,44 @@
+name: sinasc_nv
+title: SINASC — Declarações de Nascidos Vivos
+profile: tabular-data-resource
+encoding: cp1252
+schema:
+  fields:
+    - name: numerodn
+      type: string
+      description: "Número da DN (synthesized downstream — may be absent)"
+    - name: dtnasc
+      type: date
+      x-format: ddMMyyyy
+      constraints: { required: true }
+    - name: sexo
+      type: integer
+      x-decode: { 0: "Ignorado", 1: "Masculino", 2: "Feminino" }
+    - name: peso
+      type: integer
+      description: "Peso ao nascer (gramas)"
+    - name: apgar1
+      type: integer
+      constraints: { minimum: 0, maximum: 10 }
+    - name: apgar5
+      type: integer
+      constraints: { minimum: 0, maximum: 10 }
+    - name: codmunres
+      type: string
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: codmunres, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: codmunnasc
+      type: string
+      x-transform: lpad_6
+    - name: ano
+      type: integer
+      constraints: { required: true }
+    - name: uf
+      type: string
+      constraints: { required: true, pattern: "^[A-Z]{2}$" }
+x-source-format: dbc
+x-source-family: datasus_ftp
+x-source-prefix: DN
+x-partitions: [ano, uf]
+x-version: "1.0.0"
