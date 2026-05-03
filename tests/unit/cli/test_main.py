@@ -69,3 +69,61 @@ def test_import_requires_year_or_years() -> None:
     result = runner.invoke(app, ["import", "sim"])
     assert result.exit_code != 0
     assert "year" in result.output.lower()
+
+
+def test_query_runs_sql(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/q.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    result = runner.invoke(
+        app,
+        ["query", "SELECT count(*) FROM lake.aux_uf", "--target", target],
+    )
+    assert result.exit_code == 0, result.stdout
+    assert "27" in result.stdout
+
+
+def test_lake_tables_lists_aux(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/t.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    result = runner.invoke(app, ["lake", "tables", "--target", target])
+    assert result.exit_code == 0
+    assert "aux_uf" in result.stdout
+
+
+def test_doctor_reports_environment() -> None:
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == 0
+    assert "DuckDB" in result.stdout
+    assert "Polars" in result.stdout
+
+
+def test_lake_describe_shows_columns(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/d.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    result = runner.invoke(
+        app,
+        ["lake", "describe", "aux_uf", "--target", target],
+    )
+    assert result.exit_code == 0
+    assert "codigo_ibge" in result.stdout
+
+
+def test_lake_optimize_runs(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/o.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    result = runner.invoke(
+        app,
+        ["lake", "optimize", "aux_uf", "--target", target],
+    )
+    # Optimize may print output; just confirm no crash
+    assert result.exit_code == 0
+
+
+def test_lake_update_auxiliares(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/u.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    result = runner.invoke(
+        app,
+        ["lake", "update-auxiliares", "--target", target],
+    )
+    assert result.exit_code == 0

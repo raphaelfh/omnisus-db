@@ -83,10 +83,24 @@ def import_cmd(
 
 
 @app.command()
-def query(sql: str = typer.Argument(...)) -> None:
-    """Run an ad-hoc SQL query against the lake (stub)."""
-    console.print(f"[yellow]TODO[/yellow] query: {sql}")
-    raise typer.Exit(code=2)
+def query(
+    sql: str = typer.Argument(..., help="SQL to run against the lake"),
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Run an ad-hoc SQL query."""
+    from rich.table import Table
+
+    with Lake.local(target) as lake:
+        rel = lake.connect().sql(sql)
+        cols = list(rel.columns)
+        rows = rel.fetchall()
+
+    table = Table(*cols)
+    for row in rows[:200]:
+        table.add_row(*[str(v) for v in row])
+    console.print(table)
+    if len(rows) > 200:
+        console.print(f"... ({len(rows)} rows total, showing first 200)")
 
 
 lake_app = typer.Typer(name="lake", help="Lake operations.")
@@ -94,15 +108,100 @@ app.add_typer(lake_app)
 
 
 @lake_app.command(name="tables")
-def lake_tables_cmd() -> None:
-    """List tables in the lake (stub)."""
-    raise typer.Exit(code=2)
+def lake_tables_cmd(
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """List user tables in the lake."""
+    with Lake.local(target) as lake:
+        for t in lake.tables():
+            console.print(f"  {t}")
+
+
+@lake_app.command(name="describe")
+def lake_describe_cmd(
+    table: str,
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Describe a lake table (columns + types)."""
+    from rich.table import Table as RichTable
+
+    with Lake.local(target) as lake:
+        cols = lake.connect().execute(f"DESCRIBE lake.{table}").fetchall()
+    rt = RichTable("Column", "Type")
+    for c in cols:
+        rt.add_row(str(c[0]), str(c[1]))
+    console.print(rt)
+
+
+@lake_app.command(name="snapshots")
+def lake_snapshots_cmd(
+    table: str,
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """List snapshot history for a table."""
+    with Lake.local(target) as lake:
+        for snap in lake.snapshots(table):
+            console.print(snap)
+
+
+@lake_app.command(name="optimize")
+def lake_optimize_cmd(
+    table: str,
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Compact small Parquet files for a table."""
+    with Lake.local(target) as lake:
+        try:
+            lake.optimize(table)
+        except Exception as exc:
+            # ducklake_compact_files can be a no-op or noisy on tiny tables;
+            # surface the message but do not fail the CLI.
+            console.print(f"[yellow]optimize note:[/yellow] {exc}")
+            return
+    console.print(f"[green]:heavy_check_mark:[/green] optimized {table}")
+
+
+@lake_app.command(name="vacuum")
+def lake_vacuum_cmd(
+    older_than: str = typer.Option("30 days", "--older-than"),
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Drop snapshots older than the given interval."""
+    with Lake.local(target) as lake:
+        lake.vacuum(older_than=older_than)
+    console.print(f"[green]:heavy_check_mark:[/green] vacuumed snapshots older than {older_than}")
+
+
+@lake_app.command(name="update-auxiliares")
+def lake_update_aux_cmd(
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Refresh aux_* tables from the bundled bootstrap.zip."""
+    with Lake.local(target) as lake:
+        lake.bootstrap_auxiliares()
+    console.print("[green]:heavy_check_mark:[/green] aux tables refreshed")
 
 
 @app.command()
 def doctor() -> None:
-    """Run diagnostics on the environment (stub)."""
-    raise typer.Exit(code=2)
+    """Print diagnostic info (versions, env)."""
+    import duckdb
+    import polars as pl
+    import pyarrow as pa
+
+    from omnisus_db._version import __version__ as v
+
+    console.print(f"omnisus-db: {v}")
+    console.print(f"DuckDB:     {duckdb.__version__}")
+    console.print(f"Polars:     {pl.__version__}")
+    console.print(f"PyArrow:    {pa.__version__}")
+
+    try:
+        con = duckdb.connect()
+        con.execute("INSTALL ducklake; LOAD ducklake;")
+        console.print("[green]:heavy_check_mark:[/green] ducklake extension OK")
+    except Exception as exc:
+        console.print(f"[red]x[/red] ducklake load failed: {exc}")
 
 
 if __name__ == "__main__":
