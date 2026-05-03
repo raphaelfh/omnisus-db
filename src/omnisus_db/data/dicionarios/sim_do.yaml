@@ -1,0 +1,62 @@
+name: sim_do
+title: SIM — Declarações de Óbito
+profile: tabular-data-resource
+encoding: cp1252
+schema:
+  fields:
+    - name: numerodo
+      type: string
+      constraints: { required: true }
+    - name: tipobito
+      type: integer
+      x-decode: { 1: "Fetal", 2: "Não fetal" }
+    - name: dtobito
+      type: date
+      x-format: ddMMyyyy
+      constraints: { required: true }
+    - name: dtnasc
+      type: date
+      x-format: ddMMyyyy
+    - name: idade
+      type: string
+      description: "Código IDADE de 3 dígitos do SIM"
+    - name: sexo
+      type: integer
+      x-decode: { 0: "Ignorado", 1: "Masculino", 2: "Feminino" }
+    - name: racacor
+      type: integer
+      x-decode: { 1: "Branca", 2: "Preta", 3: "Amarela", 4: "Parda", 5: "Indígena" }
+    - name: estciv
+      type: integer
+      x-decode:
+        1: "Solteiro"
+        2: "Casado"
+        3: "Viúvo"
+        4: "Separado"
+        5: "União estável"
+        9: "Ignorado"
+    - name: causabas
+      type: string
+      constraints: { required: true, pattern: "^[A-Z]\\d{2}\\.?\\d?$" }
+      foreignKeys:
+        - { fields: causabas, reference: { resource: aux_cid10, fields: codigo } }
+    - name: codmunres
+      type: string
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: codmunres, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: codmunocor
+      type: string
+      x-transform: lpad_6
+    - name: ano
+      type: integer
+      constraints: { required: true, minimum: 1996 }
+    - name: uf
+      type: string
+      constraints: { required: true, pattern: "^[A-Z]{2}$" }
+  primaryKey: [numerodo]
+x-source-format: dbc
+x-source-family: datasus_ftp
+x-source-prefix: DO
+x-partitions: [ano, uf]
+x-version: "1.0.0"

@@ -33,3 +33,24 @@ def test_loader_caches_parsed_yaml() -> None:
     a = load_dicionario("aux_uf")
     b = load_dicionario("aux_uf")
     assert a is b  # lru_cache
+
+
+def test_load_sim_do_has_expected_extensions() -> None:
+    dic = load_dicionario("sim_do")
+    assert dic.encoding == "cp1252"
+    assert dic.partitions == ["ano", "uf"]
+    assert dic.source_format == "dbc"
+    assert dic.decode("sexo", 1) == "Masculino"
+    assert dic.decode("sexo", 99) == 99
+
+
+def test_load_sim_do_arrow_schema_round_trip() -> None:
+    dic = load_dicionario("sim_do")
+    schema = dic.arrow_schema
+    # Required fields present
+    assert "numerodo" in schema.names
+    assert "ano" in schema.names
+    # Date types mapped
+    assert schema.field("dtobito").type == pa.date32()
+    # Integer mapped
+    assert schema.field("sexo").type == pa.int64()
