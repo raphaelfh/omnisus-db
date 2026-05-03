@@ -89,6 +89,7 @@ quote-style = "double"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+python_files = ["test_*.py", "bench_*.py"]
 asyncio_mode = "auto"
 markers = [
     "integration: tests that hit external resources or real lake",

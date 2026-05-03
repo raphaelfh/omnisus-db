@@ -1,0 +1,131 @@
+{
+    "machine_info": {
+        "node": "Raphaels-MacBook-Pro.local",
+        "processor": "arm",
+        "machine": "arm64",
+        "python_compiler": "Clang 21.1.4 ",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.13.12",
+        "python_version": "3.13.12",
+        "python_build": [
+            "main",
+            "Mar  3 2026 15:32:44"
+        ],
+        "release": "25.4.0",
+        "system": "Darwin",
+        "cpu": {
+            "python_version": "3.13.12.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "ARM_8",
+            "bits": 64,
+            "count": 18,
+            "arch_string_raw": "arm64",
+            "brand_raw": "Apple M5 Pro"
+        }
+    },
+    "commit_info": {
+        "id": "a3de2d824a30a16e07dfc85416209793e376daca",
+        "time": "2026-05-03T01:02:19-03:00",
+        "author_time": "2026-05-03T01:02:19-03:00",
+        "dirty": true,
+        "project": "omnisus-db",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test_bench_dbf_parse_sim",
+            "fullname": "tests/perf/bench_dbf_parse.py::test_bench_dbf_parse_sim",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.08957124996231869,
+                "max": 0.09194720804225653,
+                "mean": 0.09060399226886644,
+                "stddev": 0.0008164350076163177,
+                "rounds": 11,
+                "median": 0.0903812909964472,
+                "iqr": 0.0014527182502206415,
+                "q1": 0.08993969800940249,
+                "q3": 0.09139241625962313,
+                "iqr_outliers": 0,
+                "stddev_outliers": 4,
+                "outliers": "4;0",
+                "ld15iqr": 0.08957124996231869,
+                "hd15iqr": 0.09194720804225653,
+                "ops": 11.037041249049048,
+                "total": 0.9966439149575308,
+                "data": [
+                    0.09157383302226663,
+                    0.091425666003488,
+                    0.09194720804225653,
+                    0.0898089159745723,
+                    0.09129266702802852,
+                    0.09004416695097461,
+                    0.09013620798941702,
+                    0.08990487502887845,
+                    0.09055783395888284,
+                    0.08957124996231869,
+                    0.0903812909964472
+                ],
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test_bench_full_pipeline_sim",
+            "fullname": "tests/perf/bench_full_pipeline.py::test_bench_full_pipeline_sim",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.13112320803338662,
+                "max": 0.15252262499416247,
+                "mean": 0.13955118068649122,
+                "stddev": 0.011400268092118408,
+                "rounds": 3,
+                "median": 0.1350077090319246,
+                "iqr": 0.01604956272058189,
+                "q1": 0.13209433328302111,
+                "q3": 0.148143896003603,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 0.13112320803338662,
+                "hd15iqr": 0.15252262499416247,
+                "ops": 7.16582973415718,
+                "total": 0.4186535420594737,
+                "data": [
+                    0.15252262499416247,
+                    0.1350077090319246,
+                    0.13112320803338662
+                ],
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2026-05-03T04:03:20.749524+00:00",
+    "version": "5.2.3"
+}
