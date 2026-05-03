@@ -1,0 +1,26 @@
+name: aux_municipios
+title: Municípios brasileiros (IBGE)
+profile: tabular-data-resource
+encoding: utf-8
+schema:
+  fields:
+    - name: codigo_ibge
+      type: string
+      constraints: { required: true, pattern: "^\\d{6,7}$" }
+      description: "Código IBGE 6 ou 7 dígitos"
+    - name: nome
+      type: string
+      constraints: { required: true }
+    - name: uf_codigo
+      type: string
+      constraints: { required: true }
+      foreignKeys:
+        - { fields: uf_codigo, reference: { resource: aux_uf, fields: codigo_ibge } }
+    - name: latitude
+      type: number
+    - name: longitude
+      type: number
+  primaryKey: [codigo_ibge]
+x-version: "1.0.0"
+x-source: IBGE
+x-source-url: "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"

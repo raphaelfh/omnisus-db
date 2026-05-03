@@ -1,0 +1,23 @@
+name: aux_cid10
+title: CID-10 (Classificação Internacional de Doenças)
+profile: tabular-data-resource
+encoding: utf-8
+schema:
+  fields:
+    - name: codigo
+      type: string
+      constraints: { required: true, pattern: "^[A-Z]\\d{2}\\.?\\d?$" }
+      description: "Código CID-10 (ex.: I10, E10.9)"
+    - name: descricao
+      type: string
+      constraints: { required: true }
+    - name: capitulo
+      type: integer
+      constraints: { minimum: 1, maximum: 22 }
+    - name: bloco
+      type: string
+      description: "Faixa do bloco (ex.: I00-I99)"
+  primaryKey: [codigo]
+x-version: "1.0.0"
+x-source: DATASUS
+x-source-url: "http://www2.datasus.gov.br/cid10/V2008/cid10.htm"
