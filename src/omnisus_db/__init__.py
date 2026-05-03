@@ -69,6 +69,36 @@ def _import_dataset_ftp(
     return asyncio.run(run())
 
 
+def _import_dataset_ftp_monthly(
+    dataset: str,
+    *,
+    years: Iterable[int],
+    ufs: Sequence[str] | None,
+    months: Iterable[int],
+    target: str,
+) -> list[ImportResult]:
+    """Bulk import: every (uf, year, month) combo for a monthly DATASUS-FTP dataset."""
+    if ufs is None:
+        ufs = ALL_UFS
+
+    async def run() -> list[ImportResult]:
+        results: list[ImportResult] = []
+        with Lake.local(target) as lake:
+            for year in years:
+                for uf in ufs:
+                    for mes in months:
+                        results.append(
+                            await _import_scope_ftp(
+                                dataset=dataset,
+                                scope=ScopeKey(uf=uf, ano=year, mes=mes),
+                                lake=lake,
+                            )
+                        )
+        return results
+
+    return asyncio.run(run())
+
+
 def import_sim(
     *,
     years: Iterable[int],
@@ -77,6 +107,19 @@ def import_sim(
 ) -> list[ImportResult]:
     """Import SIM-DO (declarações de óbito) for the given years/UFs."""
     return _import_dataset_ftp("sim_do", years=years, ufs=ufs, target=target)
+
+
+def import_sih(
+    *,
+    years: Iterable[int],
+    ufs: Sequence[str] | None = None,
+    months: Iterable[int] = range(1, 13),
+    target: str = "ducklake:./omnisus.ducklake",
+) -> list[ImportResult]:
+    """Import SIH-RD (AIH reduzida) — monthly. (years x ufs x months)."""
+    return _import_dataset_ftp_monthly(
+        "sih_rd", years=years, ufs=ufs, months=months, target=target
+    )
 
 
 def import_sinasc(
@@ -95,6 +138,7 @@ __all__ = [
     "Lake",
     "ScopeKey",
     "__version__",
+    "import_sih",
     "import_sim",
     "import_sinasc",
 ]

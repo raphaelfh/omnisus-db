@@ -1,0 +1,51 @@
+name: sih_rd
+title: SIHSUS — AIH Reduzida
+profile: tabular-data-resource
+encoding: cp1252
+schema:
+  fields:
+    - name: n_aih
+      type: string
+      description: "Número da AIH"
+    - name: cnes
+      type: string
+      description: "CNES do estabelecimento"
+    - name: dt_inter
+      type: date
+      x-format: yyyyMMdd
+    - name: dt_saida
+      type: date
+      x-format: yyyyMMdd
+    - name: diag_princ
+      type: string
+      foreignKeys:
+        - { fields: diag_princ, reference: { resource: aux_cid10, fields: codigo } }
+    - name: proc_rea
+      type: string
+      description: "Procedimento principal SIGTAP"
+    - name: val_tot
+      type: number
+    - name: dias_perm
+      type: integer
+    - name: morte
+      type: integer
+      x-decode: { 0: "Não", 1: "Sim" }
+    - name: munic_res
+      type: string
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: munic_res, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: ano
+      type: integer
+      constraints: { required: true }
+    - name: mes
+      type: integer
+      constraints: { required: true, minimum: 1, maximum: 12 }
+    - name: uf
+      type: string
+      constraints: { required: true, pattern: "^[A-Z]{2}$" }
+x-source-format: dbc
+x-source-family: datasus_ftp
+x-source-prefix: RD
+x-partitions: [ano, uf, mes]
+x-version: "1.0.0"
