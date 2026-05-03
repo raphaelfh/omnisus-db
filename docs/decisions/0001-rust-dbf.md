@@ -2,7 +2,9 @@
 
 **Date:** 2026-05-02
 **Status:** Decided — Option B (Rust crate justified), deferred to v0.2.0
-**Spec ref:** [§7.5](../../../omnisus/docs/superpowers/specs/2026-05-02-omnisus-db-design.md)
+**Spec ref:** §7.5 of the omnisus-db design spec
+(`omnisus/docs/superpowers/specs/2026-05-02-omnisus-db-design.md`
+in the parent `omnisus` repository)
 
 ## Context
 

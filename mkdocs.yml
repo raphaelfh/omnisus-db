@@ -1,0 +1,48 @@
+site_name: omnisus-db
+site_description: Brazilian public health database ingestion library
+site_url: https://raphaelfh.github.io/omnisus-db
+repo_url: https://github.com/raphaelfh/omnisus-db
+repo_name: raphaelfh/omnisus-db
+copyright: "(c) 2026 Raphael Federicci"
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: teal
+      accent: amber
+
+nav:
+  - Home: index.md
+  - Guides:
+      - Getting Started: guides/getting-started.md
+      - Migration from PySUS: guides/migration-from-pysus.md
+  - Architecture: architecture.md
+  - Sources:
+      - SIM-DO: sources/sim_do.md
+      - SINASC-NV: sources/sinasc_nv.md
+      - SIH-RD: sources/sih_rd.md
+      - IBGE-pop: sources/ibge_pop.md
+      - CNES-ST: sources/cnes_st.md
+  - Decisions:
+      - 0001 Rust DBF: decisions/0001-rust-dbf.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
+  - tables
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
