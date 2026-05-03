@@ -78,6 +78,34 @@ class Lake:
             f"older_than => INTERVAL '{older_than}')"
         )
 
+    def bootstrap_auxiliares(self) -> None:
+        """Load aux_* tables from the packaged bootstrap.zip.
+
+        Idempotent: re-running replaces the table contents.
+        """
+        import io
+        import os
+        import tempfile
+        import zipfile
+        from importlib.resources import files
+
+        zip_bytes = (files("omnisus_db.data") / "auxiliares-bootstrap.zip").read_bytes()
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+            for name in zf.namelist():
+                if not name.endswith(".parquet"):
+                    continue
+                table = name.removesuffix(".parquet")
+                with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
+                    tmp.write(zf.read(name))
+                    tmp_path = tmp.name
+                try:
+                    self._con.execute(
+                        f"CREATE OR REPLACE TABLE {self._alias}.{table} AS "
+                        f"SELECT * FROM read_parquet('{tmp_path}')"
+                    )
+                finally:
+                    os.unlink(tmp_path)
+
     def close(self) -> None:
         """Detach and close the connection."""
         close_connection(self._con)
