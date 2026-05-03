@@ -38,7 +38,7 @@ async def fetch_dbc_bytes(
     """Fetch DBC bytes for one scope, with exponential retry on 5xx/network."""
     url = url_for(dataset, scope)
     last_exc: Exception | None = None
-    async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+    async with httpx.AsyncClient(timeout=timeout_seconds, follow_redirects=True) as client:
         for attempt in range(max_retries):
             try:
                 resp = await client.get(url)
