@@ -4,41 +4,430 @@ profile: tabular-data-resource
 encoding: cp1252
 schema:
   fields:
+    # ========================================================================
+    # Identificação e Local de Nascimento
+    # ========================================================================
     - name: numerodn
       type: string
-      description: "Número da DN (synthesized downstream — may be absent)"
-    - name: dtnasc
+      label: Número da DN
+      description: "Número da DN (sintetizado downstream — pode estar ausente)"
+    - name: origem
+      type: string
+      label: Origem do registro
+      x-decode:
+        "1": "Oracle"
+        "2": "SINASC Web"
+        "3": "SINASC Local"
+        "9": "Ignorado"
+    - name: codestab
+      type: string
+      label: Estabelecimento (CNES)
+      description: |
+        Código CNES do estabelecimento (7 dígitos). O nome resolve via
+        ``aux_cnes`` quando ``import_cnes_master()`` foi rodado.
+      foreignKeys:
+        - { fields: codestab, reference: { resource: aux_cnes, fields: cnes } }
+    - name: codmunnasc
+      type: string
+      label: Município de nascimento
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: codmunnasc, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: locnasc
+      type: string
+      label: Local de nascimento
+      x-decode:
+        "1": "Hospital"
+        "2": "Outro estabelecimento de saúde"
+        "3": "Domicílio"
+        "4": "Outros"
+        "5": "Aldeia indígena"
+        "9": "Ignorado"
+    - name: contador
+      type: integer
+      label: Contador
+
+    # ========================================================================
+    # Dados da Mãe
+    # ========================================================================
+    - name: idademae
+      type: integer
+      label: Idade da mãe
+    - name: dtnascmae
       type: date
+      label: Data de nascimento da mãe
       x-format: ddMMyyyy
-      constraints: { required: true }
-    - name: sexo
-      type: integer
-      x-decode: { 0: "Ignorado", 1: "Masculino", 2: "Feminino" }
-    - name: peso
-      type: integer
-      description: "Peso ao nascer (gramas)"
-    - name: apgar1
-      type: integer
-      constraints: { minimum: 0, maximum: 10 }
-    - name: apgar5
-      type: integer
-      constraints: { minimum: 0, maximum: 10 }
+    - name: estcivmae
+      type: string
+      label: Estado civil da mãe
+      x-decode:
+        "1": "Solteira"
+        "2": "Casada"
+        "3": "Viúva"
+        "4": "Separada/Divorciada"
+        "5": "União estável"
+        "9": "Ignorado"
+    - name: escmae
+      type: string
+      label: Escolaridade da mãe (faixas)
+      x-decode:
+        "1": "Nenhuma"
+        "2": "1 a 3 anos"
+        "3": "4 a 7 anos"
+        "4": "8 a 11 anos"
+        "5": "12 anos ou mais"
+        "9": "Ignorado"
+    - name: escmae2010
+      type: string
+      label: Escolaridade da mãe (2010)
+      x-decode:
+        "0": "Sem escolaridade"
+        "1": "Fundamental I (1-5 ano)"
+        "2": "Fundamental II (6-9 ano)"
+        "3": "Médio"
+        "4": "Superior incompleto"
+        "5": "Superior completo"
+        "9": "Ignorado"
+    - name: escmaeagr1
+      type: string
+      label: Escolaridade da mãe agregada
+      x-decode:
+        "00": "Sem escolaridade"
+        "01": "Fundamental I incompleto"
+        "02": "Fundamental I completo"
+        "03": "Fundamental II incompleto"
+        "04": "Fundamental II completo"
+        "05": "Médio incompleto"
+        "06": "Médio completo"
+        "07": "Superior incompleto"
+        "08": "Superior completo"
+        "09": "Ignorado"
+        "10": "Fundamental completo (inespecífico)"
+        "11": "Médio (inespecífico)"
+        "12": "Superior (inespecífico)"
+    - name: seriescmae
+      type: string
+      label: Série escolar da mãe
+    - name: codocupmae
+      type: string
+      label: Ocupação da mãe (CBO)
+    - name: racacormae
+      type: string
+      label: Raça/cor da mãe
+      x-decode:
+        "1": "Branca"
+        "2": "Preta"
+        "3": "Amarela"
+        "4": "Parda"
+        "5": "Indígena"
+        "9": "Ignorado"
     - name: codmunres
       type: string
+      label: Município de residência
       x-transform: lpad_6
       foreignKeys:
         - { fields: codmunres, reference: { resource: aux_municipios, fields: codigo_ibge } }
-    - name: codmunnasc
+    - name: naturalmae
       type: string
+      label: Naturalidade da mãe
+    - name: codmunnatu
+      type: string
+      label: Município de naturalidade da mãe
       x-transform: lpad_6
+      foreignKeys:
+        - { fields: codmunnatu, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: codufnatu
+      type: string
+      label: UF de naturalidade da mãe
+    - name: codpaisres
+      type: string
+      label: País de residência
+
+    # ========================================================================
+    # Histórico Obstétrico
+    # ========================================================================
+    - name: qtdgestant
+      type: integer
+      label: Gestações anteriores
+    - name: qtdpartnor
+      type: integer
+      label: Partos vaginais anteriores
+    - name: qtdpartces
+      type: integer
+      label: Partos cesáreos anteriores
+    - name: qtdfilvivo
+      type: integer
+      label: Filhos nascidos vivos
+    - name: qtdfilmort
+      type: integer
+      label: Filhos mortos
+
+    # ========================================================================
+    # Gestação e Pré-natal
+    # ========================================================================
+    - name: gestacao
+      type: string
+      label: Gestação (faixas semanas)
+      x-decode:
+        "1": "< 22 semanas"
+        "2": "22 a 27 semanas"
+        "3": "28 a 31 semanas"
+        "4": "32 a 36 semanas"
+        "5": "37 a 41 semanas"
+        "6": "42+ semanas"
+        "9": "Ignorado"
+    - name: semagestac
+      type: integer
+      label: Semanas de gestação
+    - name: tpmetestim
+      type: string
+      label: Método estimativa IG
+      x-decode:
+        "1": "Exame físico"
+        "2": "Outro método"
+        "9": "Ignorado"
+    - name: dtultmenst
+      type: date
+      label: Data última menstruação
+      x-format: ddMMyyyy
+    - name: mesprenat
+      type: integer
+      label: Mês início pré-natal
+    - name: consultas
+      type: string
+      label: Consultas pré-natal (faixas)
+      x-decode:
+        "1": "Nenhuma"
+        "2": "1 a 3 consultas"
+        "3": "4 a 6 consultas"
+        "4": "7 ou mais consultas"
+        "9": "Ignorado"
+    - name: consprenat
+      type: integer
+      label: Consultas pré-natal (exato)
+    - name: kotelchuck
+      type: string
+      label: Índice de Kotelchuck
+      x-decode:
+        "1": "Inadequado"
+        "2": "Intermediário"
+        "3": "Adequado"
+        "4": "Mais que adequado"
+        "9": "Ignorado"
+
+    # ========================================================================
+    # Parto
+    # ========================================================================
+    - name: gravidez
+      type: string
+      label: Tipo de gravidez
+      x-decode:
+        "1": "Única"
+        "2": "Dupla"
+        "3": "Tripla ou mais"
+        "9": "Ignorada"
+    - name: parto
+      type: string
+      label: Tipo de parto
+      x-decode: { "1": "Vaginal", "2": "Cesáreo", "9": "Ignorado" }
+    - name: stcesparto
+      type: string
+      label: Cesárea antes do trabalho de parto
+      x-decode:
+        "1": "Sim"
+        "2": "Não"
+        "3": "Não se aplica"
+        "9": "Ignorado"
+    - name: sttrabpart
+      type: string
+      label: Trabalho de parto induzido
+      x-decode:
+        "1": "Sim"
+        "2": "Não"
+        "3": "Não se aplica"
+        "9": "Ignorado"
+    - name: tpapresent
+      type: string
+      label: Apresentação fetal
+      x-decode:
+        "1": "Cefálico"
+        "2": "Pélvica ou podálica"
+        "3": "Transversa"
+        "9": "Ignorado"
+    - name: tpnascassi
+      type: string
+      label: Assistência ao nascimento
+      x-decode:
+        "1": "Médico"
+        "2": "Enfermeira/obstetriz"
+        "3": "Parteira"
+        "4": "Outros"
+        "9": "Ignorado"
+    - name: tprobson
+      type: string
+      label: Classificação de Robson
+      x-decode:
+        "01": "Grupo 1 — Nulípara, única cefálica, ≥ 37 sem, TP espontâneo"
+        "02": "Grupo 2 — Nulípara, única cefálica, ≥ 37 sem, TP induzido ou cesárea eletiva"
+        "03": "Grupo 3 — Multípara s/ cesárea anterior, única cefálica, ≥ 37 sem, TP espontâneo"
+        "04": "Grupo 4 — Multípara s/ cesárea anterior, única cefálica, ≥ 37 sem, TP induzido/eletiva"
+        "05": "Grupo 5 — Multípara c/ cesárea anterior, única cefálica, ≥ 37 sem"
+        "06": "Grupo 6 — Nulípara, única pélvica"
+        "07": "Grupo 7 — Multípara, única pélvica (incl. c/ cesárea anterior)"
+        "08": "Grupo 8 — Gestação múltipla (incl. c/ cesárea anterior)"
+        "09": "Grupo 9 — Única transversa/oblíqua (incl. c/ cesárea anterior)"
+        "10": "Grupo 10 — Única cefálica, < 37 sem (incl. c/ cesárea anterior)"
+    - name: paridade
+      type: string
+      label: Paridade
+      x-decode: { "0": "Nulípara", "1": "Multípara" }
+
+    # ========================================================================
+    # Recém-Nascido
+    # ========================================================================
+    - name: dtnasc
+      type: date
+      label: Data de nascimento
+      x-format: ddMMyyyy
+      constraints: { required: true }
+    - name: horanasc
+      type: string
+      label: Hora de nascimento
+      x-display: time_hhmm
+    - name: sexo
+      type: integer
+      label: Sexo
+      x-decode:
+        "0": "Ignorado"
+        "1": "Masculino"
+        "2": "Feminino"
+        "9": "Ignorado"
+        "M": "Masculino"
+        "F": "Feminino"
+        "I": "Ignorado"
+    - name: racacor
+      type: string
+      label: Raça/cor do recém-nascido
+      x-decode:
+        "1": "Branca"
+        "2": "Preta"
+        "3": "Amarela"
+        "4": "Parda"
+        "5": "Indígena"
+        "9": "Ignorado"
+    - name: peso
+      type: integer
+      label: Peso ao nascer (g)
+    - name: apgar1
+      type: integer
+      label: Apgar 1º minuto
+      constraints: { minimum: 0, maximum: 10 }
+    - name: apgar5
+      type: integer
+      label: Apgar 5º minuto
+      constraints: { minimum: 0, maximum: 10 }
+    - name: idanomal
+      type: string
+      label: Anomalia congênita
+      x-decode: { "1": "Sim", "2": "Não", "9": "Ignorado" }
+    - name: codanomal
+      type: string
+      label: Código da anomalia (CID-10)
+      foreignKeys:
+        - { fields: codanomal, reference: { resource: aux_cid10, fields: codigo } }
+    - name: idadepai
+      type: integer
+      label: Idade do pai
+
+    # ========================================================================
+    # Responsável pelo Preenchimento
+    # ========================================================================
+    - name: tpfuncresp
+      type: string
+      label: Função do responsável
+      x-decode:
+        "1": "Médico"
+        "2": "Enfermeiro"
+        "3": "Parteira"
+        "4": "Funcionário do cartório"
+        "5": "Outros"
+    - name: tpdocresp
+      type: string
+      label: Tipo de documento do responsável
+      x-decode:
+        "1": "CNES"
+        "2": "CRM"
+        "3": "COREN"
+        "4": "RG"
+        "5": "CPF"
+    - name: dtdeclarac
+      type: date
+      label: Data da declaração
+      x-format: ddMMyyyy
+
+    # ========================================================================
+    # Administrativo / Sistema
+    # ========================================================================
+    - name: numerolote
+      type: string
+      label: Número do lote
+    - name: dtcadastro
+      type: date
+      label: Data de cadastro
+      x-format: ddMMyyyy
+    - name: dtrecebim
+      type: date
+      label: Data de recebimento
+      x-format: ddMMyyyy
+    - name: dtrecoriga
+      type: date
+      label: Data recebimento original
+      x-format: ddMMyyyy
+    - name: versaosist
+      type: string
+      label: Versão do sistema
+    - name: stdnepidem
+      type: string
+      label: Status DN epidemiológica
+      x-decode: { "0": "Não", "1": "Sim" }
+    - name: stdnnova
+      type: string
+      label: Status DN nova
+      x-decode:
+        "0": "Formulário antigo"
+        "1": "Formulário novo (pós-2011)"
+    - name: difdata
+      type: integer
+      label: Diferença de datas (dias)
+
+    # ========================================================================
+    # Partições + proveniência (adicionados pelo ETL)
+    # ========================================================================
     - name: ano
       type: integer
+      label: Ano
       constraints: { required: true }
     - name: uf
       type: string
+      label: UF
       constraints: { required: true, pattern: "^[A-Z]{2}$" }
+    - name: _fonte_arquivo
+      type: string
+      label: Arquivo fonte
+    - name: _data_extracao
+      type: string
+      label: Data de extração
+    - name: _hash_arquivo
+      type: string
+      label: Hash do arquivo
+    - name: _sistema
+      type: string
+      label: Sistema
+    - name: _grupo
+      type: string
+      label: Grupo
 x-source-format: dbc
 x-source-family: datasus_ftp
 x-source-prefix: DN
 x-partitions: [ano, uf]
-x-version: "1.0.0"
+x-version: "2.0.0"

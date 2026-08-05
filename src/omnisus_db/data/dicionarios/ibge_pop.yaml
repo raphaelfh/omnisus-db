@@ -6,18 +6,21 @@ schema:
   fields:
     - name: codigo_ibge
       type: string
+      label: Município (IBGE)
       constraints: { required: true }
       foreignKeys:
         - { fields: codigo_ibge, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: ano
       type: integer
+      label: Ano
       constraints: { required: true }
     - name: populacao
       type: integer
+      label: População
       constraints: { minimum: 0 }
   primaryKey: [codigo_ibge, ano]
 x-source-format: json
 x-source-family: ibge
 x-source-url: "https://servicodados.ibge.gov.br/api/v3/agregados/793"
 x-partitions: [ano]
-x-version: "1.0.0"
+x-version: "2.0.0"

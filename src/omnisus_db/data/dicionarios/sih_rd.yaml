@@ -1,51 +1,545 @@
 name: sih_rd
-title: SIHSUS — AIH Reduzida
+title: SIHSUS — AIH Reduzida (RD)
 profile: tabular-data-resource
 encoding: cp1252
 schema:
   fields:
+    # ========================================================================
+    # Identificação Administrativa
+    # ========================================================================
+    - name: uf_zi
+      type: string
+      label: UF do gestor
+    - name: ano_cmpt
+      type: integer
+      label: Ano de competência
+    - name: mes_cmpt
+      type: integer
+      label: Mês de competência
     - name: n_aih
       type: string
-      description: "Número da AIH"
+      label: Número da AIH
+    - name: ident
+      type: string
+      label: Tipo da AIH
+      x-decode:
+        "1": "AIH Principal (tipo 1)"
+        "3": "AIH de Continuação (tipo 3)"
+        "5": "AIH Longa permanência (tipo 5)"
+    - name: sequencia
+      type: integer
+      label: Sequencial na remessa
+    - name: remessa
+      type: string
+      label: Número da remessa
+
+    # ========================================================================
+    # Estabelecimento
+    # ========================================================================
+    - name: cgc_hosp
+      type: string
+      label: CNPJ do hospital
     - name: cnes
       type: string
-      description: "CNES do estabelecimento"
-    - name: dt_inter
-      type: date
-      x-format: yyyyMMdd
-    - name: dt_saida
-      type: date
-      x-format: yyyyMMdd
-    - name: diag_princ
-      type: string
+      label: CNES do hospital
+      description: |
+        Código CNES do hospital (7 dígitos). O nome resolve via
+        ``aux_cnes`` quando ``import_cnes_master()`` foi rodado.
       foreignKeys:
-        - { fields: diag_princ, reference: { resource: aux_cid10, fields: codigo } }
-    - name: proc_rea
+        - { fields: cnes, reference: { resource: aux_cnes, fields: cnes } }
+    - name: cnpj_mant
       type: string
-      description: "Procedimento principal SIGTAP"
-    - name: val_tot
-      type: number
-    - name: dias_perm
-      type: integer
-    - name: morte
-      type: integer
-      x-decode: { 0: "Não", 1: "Sim" }
+      label: CNPJ da mantenedora
+    - name: munic_mov
+      type: string
+      label: Município do hospital (IBGE)
+      x-transform: lpad_6
+      foreignKeys:
+        - { fields: munic_mov, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: natureza
+      type: string
+      label: Natureza jurídica (antigo)
+      x-decode:
+        "10": "Administração direta da saúde (MS/SES/SMS)"
+        "20": "Administração direta de outros órgãos"
+        "30": "Administração indireta — Autarquias"
+        "40": "Administração indireta — Fundações públicas"
+        "50": "Administração indireta — Empresa pública"
+        "60": "Administração indireta — Org. social pública"
+        "61": "Entidade beneficente sem fins lucrativos"
+        "70": "Entidade empresarial"
+        "80": "Entidade sem fins lucrativos"
+    - name: nat_jur
+      type: string
+      label: Natureza jurídica (CONCLA)
+    - name: gestao
+      type: string
+      label: Tipo de gestão
+      x-decode:
+        "0": "Estadual"
+        "1": "Municipal"
+        "2": "Estadual plena"
+        "3": "Municipal plena (NOAS)"
+        "4": "Municipal plena (NOB)"
+    - name: espec
+      type: string
+      label: Especialidade do leito
+      x-decode:
+        "01": "Cirúrgico"
+        "02": "Obstétrico"
+        "03": "Clínico"
+        "04": "Crônico (longa permanência)"
+        "05": "Psiquiatria"
+        "06": "Pneumologia sanitária"
+        "07": "Reabilitação"
+        "08": "Clínico/Cirúrgico"
+        "09": "Pediatria clínica"
+        "10": "Pediatria cirúrgica"
+        "11": "Hospital-dia"
+        "12": "Psiquiatria hospital-dia"
+    - name: complex
+      type: string
+      label: Complexidade
+      x-decode:
+        "01": "Atenção básica"
+        "02": "Média complexidade"
+        "03": "Alta complexidade"
+        "05": "Não se aplica"
+
+    # ========================================================================
+    # Paciente
+    # ========================================================================
+    - name: nasc
+      type: date
+      label: Data de nascimento
+      x-format: yyyyMMdd
+    - name: sexo
+      type: string
+      label: Sexo
+      x-decode:
+        "0": "Ignorado"
+        "1": "Masculino"
+        "2": "Feminino"
+        "3": "Feminino"
+        "9": "Ignorado"
+        "M": "Masculino"
+        "F": "Feminino"
+        "I": "Ignorado"
     - name: munic_res
       type: string
+      label: Município de residência (IBGE)
       x-transform: lpad_6
       foreignKeys:
         - { fields: munic_res, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: cep
+      type: string
+      label: CEP do paciente
+    - name: cod_idade
+      type: string
+      label: Unidade da idade
+      x-decode:
+        "0": "Ignorada"
+        "2": "Dias"
+        "3": "Meses"
+        "4": "Anos"
+        "5": "Mais de 100 anos"
+    - name: idade
+      type: integer
+      label: Idade
+      x-display: idade_sih
+    - name: nacional
+      type: string
+      label: Nacionalidade
+    - name: raca_cor
+      type: string
+      label: Raça/cor
+      x-decode:
+        "01": "Branca"
+        "02": "Preta"
+        "03": "Parda"
+        "04": "Amarela"
+        "05": "Indígena"
+        "1": "Branca"
+        "2": "Preta"
+        "3": "Parda"
+        "4": "Amarela"
+        "5": "Indígena"
+        "99": "Sem informação"
+    - name: etnia
+      type: string
+      label: Etnia (se indígena)
+    - name: cbor
+      type: string
+      label: Ocupação (CBO)
+    - name: homonimo
+      type: string
+      label: Homônimo
+      x-decode: { "0": "Não", "1": "Sim" }
+
+    # ========================================================================
+    # Internação
+    # ========================================================================
+    - name: dt_inter
+      type: date
+      label: Data de internação
+      x-format: yyyyMMdd
+    - name: dt_saida
+      type: date
+      label: Data de saída
+      x-format: yyyyMMdd
+    - name: dias_perm
+      type: integer
+      label: Dias de permanência
+    - name: qt_diarias
+      type: integer
+      label: Diárias cobradas
+    - name: car_int
+      type: string
+      label: Caráter da internação
+      x-decode:
+        "01": "Eletiva"
+        "02": "Urgência"
+        "03": "Acidente no local de trabalho"
+        "04": "Acidente no trajeto p/ trabalho"
+        "05": "Outros acidentes de trânsito"
+        "06": "Outras causas externas"
+        "1": "Eletiva"
+        "2": "Urgência"
+    - name: cobranca
+      type: string
+      label: Motivo de saída/cobrança
+      x-decode:
+        "11": "Alta curado"
+        "12": "Alta melhorado"
+        "14": "Alta a pedido"
+        "15": "Alta com previsão de retorno"
+        "16": "Alta por evasão"
+        "18": "Alta por outros motivos"
+        "19": "Alta de paciente agudo em psiquiatria"
+        "21": "Permanência por característica da doença"
+        "22": "Permanência por intercorrência"
+        "23": "Permanência por impossibilidade socio-familiar"
+        "24": "Permanência por processo de doação de órgãos"
+        "25": "Permanência por mudança de procedimento"
+        "26": "Permanência por reoperação"
+        "27": "Permanência por outros motivos"
+        "28": "Transferência para outro estab."
+        "31": "Transferência para internação domiciliar"
+        "41": "Óbito com DO pelo médico assistente"
+        "42": "Óbito com DO pelo IML"
+        "43": "Óbito com DO pelo SVO"
+        "51": "Encerramento administrativo"
+        "61": "Alta mãe/puérpera e RN"
+        "62": "Alta mãe/puérpera e permanência RN"
+        "63": "Alta mãe/puérpera e óbito RN"
+        "64": "Alta mãe/puérpera com óbito neonatal"
+        "65": "Óbito mãe/puérpera e alta RN"
+        "66": "Óbito mãe/puérpera e permanência RN"
+        "67": "Óbito mãe/puérpera e óbito RN"
+    - name: morte
+      type: integer
+      label: Óbito
+      x-decode: { "0": "Não", "1": "Sim" }
+
+    # ========================================================================
+    # Procedimentos
+    # ========================================================================
+    - name: proc_solic
+      type: string
+      label: Procedimento solicitado (SIGTAP)
+    - name: proc_rea
+      type: string
+      label: Procedimento realizado (SIGTAP)
+
+    # ========================================================================
+    # Diagnósticos CID-10
+    # ========================================================================
+    - name: diag_princ
+      type: string
+      label: Diagnóstico principal (CID-10)
+      foreignKeys:
+        - { fields: diag_princ, reference: { resource: aux_cid10, fields: codigo } }
+    - name: diag_secun
+      type: string
+      label: Diagnóstico secundário
+      foreignKeys:
+        - { fields: diag_secun, reference: { resource: aux_cid10, fields: codigo } }
+    - name: cid_notif
+      type: string
+      label: CID notificação compulsória
+    - name: cid_asso
+      type: string
+      label: CID causa associada
+      foreignKeys:
+        - { fields: cid_asso, reference: { resource: aux_cid10, fields: codigo } }
+    - name: cid_morte
+      type: string
+      label: CID causa da morte
+      foreignKeys:
+        - { fields: cid_morte, reference: { resource: aux_cid10, fields: codigo } }
+    - name: infehosp
+      type: string
+      label: Infecção hospitalar
+      x-decode: { "0": "Não", "1": "Sim" }
+
+    # ========================================================================
+    # UTI / UCI
+    # ========================================================================
+    - name: uti_mes_in
+      type: integer
+      label: Dias UTI mês internação
+    - name: uti_mes_an
+      type: integer
+      label: Dias UTI mês anterior
+    - name: uti_mes_al
+      type: integer
+      label: Dias UTI mês alta
+    - name: uti_mes_to
+      type: integer
+      label: Total dias UTI
+    - name: marca_uti
+      type: string
+      label: Tipo de UTI
+      x-decode:
+        "00": "Não utilizou UTI"
+        "01": "UTI Adulto tipo I"
+        "02": "UTI Adulto tipo II"
+        "03": "UTI Adulto tipo III"
+        "04": "UTI Infantil tipo I"
+        "05": "UTI Infantil tipo II"
+        "06": "UTI Infantil tipo III"
+        "07": "UTI Neonatal tipo I"
+        "08": "UTI Neonatal tipo II"
+        "09": "UTI Neonatal tipo III"
+        "10": "UTI de Queimados"
+        "11": "UTI Coronariana tipo II (UCO II)"
+        "12": "UTI Coronariana tipo III (UCO III)"
+        "74": "UTI Adulto (antes da tipificação)"
+        "75": "UTI Infantil (antes da tipificação)"
+        "76": "UTI Neonatal (antes da tipificação)"
+    - name: val_uti
+      type: number
+      label: Valor UTI
+    - name: uti_int_in
+      type: integer
+      label: Dias UCI mês internação
+    - name: uti_int_an
+      type: integer
+      label: Dias UCI mês anterior
+    - name: uti_int_al
+      type: integer
+      label: Dias UCI mês alta
+    - name: uti_int_to
+      type: integer
+      label: Total dias UCI
+    - name: marca_uci
+      type: string
+      label: Tipo de UCI
+      x-decode:
+        "51": "UCI Adulto"
+        "52": "UCI Pediátrica/Neonatal convencional"
+        "53": "UCI Neonatal canguru"
+    - name: val_uci
+      type: number
+      label: Valor UCI
+
+    # ========================================================================
+    # Acompanhante e Valores Financeiros
+    # ========================================================================
+    - name: diar_acom
+      type: integer
+      label: Diárias de acompanhante
+    - name: val_sh
+      type: number
+      label: Valor serviços hospitalares
+    - name: val_sp
+      type: number
+      label: Valor serviços profissionais
+    - name: val_sadt
+      type: number
+      label: Valor SADT
+    - name: val_rn
+      type: number
+      label: Valor recém-nascido
+    - name: val_acomp
+      type: number
+      label: Valor acompanhante
+    - name: val_ortp
+      type: number
+      label: Valor órteses/próteses
+    - name: val_sangue
+      type: number
+      label: Valor sangue/hemoderivados
+    - name: val_sadtsr
+      type: number
+      label: Valor tomografia/ressonância
+    - name: val_transp
+      type: number
+      label: Valor transplantes
+    - name: val_obsang
+      type: number
+      label: Valor analgesia obstétrica
+    - name: val_ped1ac
+      type: number
+      label: Valor acompanhante pediatria
+    - name: val_tot
+      type: number
+      label: Valor total da AIH
+    - name: us_tot
+      type: number
+      label: Valor total (dólar referência)
+    - name: val_sh_fed
+      type: number
+      label: Complemento federal — SH
+    - name: val_sp_fed
+      type: number
+      label: Complemento federal — SP
+    - name: val_sh_ges
+      type: number
+      label: Complemento gestor — SH
+    - name: val_sp_ges
+      type: number
+      label: Complemento gestor — SP
+
+    # ========================================================================
+    # Financiamento
+    # ========================================================================
+    - name: financ
+      type: string
+      label: Tipo de financiamento
+      x-decode:
+        "01": "PAB — Piso da Atenção Básica"
+        "02": "MAC (antigo)"
+        "04": "FAEC — Fundo de Ações Estratégicas"
+        "05": "Incentivo MAC"
+        "06": "MAC — Média e Alta Complexidade"
+        "07": "Incentivo FAEC"
+    - name: faec_tp
+      type: string
+      label: Subtipo FAEC
+    - name: regct
+      type: string
+      label: Regra contratual
+    - name: rubrica
+      type: string
+      label: Rubrica orçamentária
+
+    # ========================================================================
+    # Dados Obstétricos / Trabalho
+    # ========================================================================
+    - name: num_filhos
+      type: integer
+      label: Número de filhos
+    - name: instru
+      type: string
+      label: Grau de instrução
+      x-decode:
+        "0": "Ignorado"
+        "1": "Analfabeto"
+        "2": "Ensino Fundamental"
+        "3": "Ensino Médio"
+        "4": "Ensino Superior"
+        "9": "Ignorado"
+    - name: contracep1
+      type: string
+      label: 1º método contraceptivo
+    - name: contracep2
+      type: string
+      label: 2º método contraceptivo
+    - name: gestrisco
+      type: string
+      label: Gestante alto risco
+      x-decode: { "0": "Não", "1": "Sim" }
+    - name: insc_pn
+      type: string
+      label: Inscrição pré-natal
+    - name: cnaer
+      type: string
+      label: CNAE (acidente de trabalho)
+    - name: vincprev
+      type: string
+      label: Vínculo previdenciário
+      x-decode: { "1": "Previdência social", "2": "Não", "9": "Ignorado" }
+    - name: ind_vdrl
+      type: string
+      label: Exame VDRL (sífilis)
+      x-decode:
+        "0": "Não realizado"
+        "1": "Reagente (positivo)"
+        "2": "Não reagente (negativo)"
+        "9": "Ignorado"
+
+    # ========================================================================
+    # Autorização e Auditoria
+    # ========================================================================
+    - name: num_proc
+      type: string
+      label: Número do processamento
+    - name: cpf_aut
+      type: string
+      label: CPF do autorizador
+    - name: gestor_cod
+      type: string
+      label: Código motivo autorização
+    - name: gestor_tp
+      type: string
+      label: Tipo gestor autorizador
+      x-decode:
+        "0": "Sem autorização"
+        "1": "Auditor"
+        "2": "Autorizador"
+    - name: gestor_cpf
+      type: string
+      label: CPF do gestor
+    - name: gestor_dt
+      type: date
+      label: Data de autorização
+      x-format: yyyyMMdd
+    - name: aud_just
+      type: string
+      label: Justificativa do auditor
+    - name: sis_just
+      type: string
+      label: Justificativa do sistema
+    - name: tot_pt_sp
+      type: integer
+      label: Total pontos serviços profissionais
+    - name: seq_aih5
+      type: string
+      label: Sequencial longa permanência
+
+    # ========================================================================
+    # Partições + proveniência (adicionados pelo ETL)
+    # ========================================================================
     - name: ano
       type: integer
+      label: Ano
       constraints: { required: true }
     - name: mes
       type: integer
-      constraints: { required: true, minimum: 1, maximum: 12 }
+      label: Mês
+      constraints: { minimum: 1, maximum: 12 }
     - name: uf
       type: string
+      label: UF
       constraints: { required: true, pattern: "^[A-Z]{2}$" }
+    - name: _fonte_arquivo
+      type: string
+      label: Arquivo fonte
+    - name: _data_extracao
+      type: string
+      label: Data de extração
+    - name: _hash_arquivo
+      type: string
+      label: Hash do arquivo
+    - name: _sistema
+      type: string
+      label: Sistema
+    - name: _grupo
+      type: string
+      label: Grupo
 x-source-format: dbc
 x-source-family: datasus_ftp
 x-source-prefix: RD
 x-partitions: [ano, uf, mes]
-x-version: "1.0.0"
+x-version: "2.0.0"
