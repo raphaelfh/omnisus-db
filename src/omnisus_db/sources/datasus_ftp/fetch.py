@@ -22,6 +22,12 @@ _PATH: dict[str, str] = {
     "sinasc_nv": "/dissemin/publicos/SINASC/NOV/DNRES",
     "sih_rd": "/dissemin/publicos/SIHSUS/200801_/Dados",
     "sia_bi": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_am": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_aq": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_atd": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_ad": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_abo": "/dissemin/publicos/SIASUS/200801_/Dados",
+    "sia_ps": "/dissemin/publicos/SIASUS/200801_/Dados",
     "cnes_st": "/dissemin/publicos/CNES/200508_/Dados/ST",
 }
 

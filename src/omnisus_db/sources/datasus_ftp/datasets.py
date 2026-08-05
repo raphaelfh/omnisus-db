@@ -17,6 +17,12 @@ REGISTRY: dict[str, DatasetConfig] = {
     "sinasc_nv": DatasetConfig(name="sinasc_nv", partition_by=("ano", "uf")),
     "sih_rd": DatasetConfig(name="sih_rd", partition_by=("ano", "uf", "mes"), monthly=True),
     "sia_bi": DatasetConfig(name="sia_bi", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_am": DatasetConfig(name="sia_am", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_aq": DatasetConfig(name="sia_aq", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_atd": DatasetConfig(name="sia_atd", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_ad": DatasetConfig(name="sia_ad", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_abo": DatasetConfig(name="sia_abo", partition_by=("ano", "uf", "mes"), monthly=True),
+    "sia_ps": DatasetConfig(name="sia_ps", partition_by=("ano", "uf", "mes"), monthly=True),
     "cnes_st": DatasetConfig(name="cnes_st", partition_by=("ano", "mes"), monthly=True),
 }
 

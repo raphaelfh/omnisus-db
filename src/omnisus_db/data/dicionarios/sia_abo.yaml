@@ -1,0 +1,292 @@
+name: sia_abo
+title: SIASUS — APAC de Cirurgia Bariátrica Acompanhamento (ABO)
+profile: tabular-data-resource
+# Gerado do header DBF REAL (ABOSP2401.dbf), nao do informe tecnico.
+# latin-1 obrigatorio: cifra do CNS usa 0x7B-0x84 (0x81 quebra cp1252).
+# NOTA: o header real tem 86 campos; 8 sem nome sao
+# descartados pelo dbfread2 e ficam fora do dicionario.
+encoding: latin-1
+schema:
+  fields:
+    - name: ap_mvm
+      type: yearmonth
+      label: Competência de processamento (AAAAMM)
+    - name: ap_condic
+      type: string
+      label: Ap condic
+    - name: ap_gestao
+      type: string
+      label: Ap gestao
+    - name: ap_coduni
+      type: string
+      label: CNES do estabelecimento
+    - name: ap_autoriz
+      type: string
+      label: Número da APAC
+    - name: ap_cmp
+      type: yearmonth
+      label: Competência do atendimento (AAAAMM)
+    - name: ap_pripal
+      type: string
+      label: Procedimento principal SIGTAP
+    - name: ap_vl_ap
+      type: number
+      label: Valor aprovado da APAC
+    - name: ap_ufmun
+      type: string
+      label: Ap ufmun
+    - name: ap_tpups
+      type: string
+      label: Ap tpups
+    - name: ap_tppre
+      type: string
+      label: Ap tppre
+    - name: ap_mn_ind
+      type: string
+      label: Ap mn ind
+    - name: ap_cnpjcpf
+      type: string
+      label: Ap cnpjcpf
+    - name: ap_cnpjmnt
+      type: string
+      label: Ap cnpjmnt
+    - name: ap_cnspcn
+      type: string
+      label: CNS do paciente (criptografado; chave de linkage intra-SIA)
+      x-crypto: datasus-cns
+    - name: ap_coidade
+      type: string
+      label: Ap coidade
+      x-decode:
+        "2": "Dias"
+        "3": "Meses"
+        "4": "Anos"
+    - name: ap_nuidade
+      type: string
+      label: Idade (na unidade de ap_coidade)
+    - name: ap_sexo
+      type: string
+      label: Ap sexo
+      x-decode:
+        "M": "Masculino"
+        "F": "Feminino"
+    - name: ap_racacor
+      type: string
+      label: Ap racacor
+      x-decode:
+        "01": "Branca"
+        "02": "Preta"
+        "03": "Parda"
+        "04": "Amarela"
+        "05": "Indígena"
+        "99": "Sem informação"
+    - name: ap_munpcn
+      type: string
+      label: Município de residência (UF+IBGE)
+    - name: ap_ufnacio
+      type: string
+      label: Ap ufnacio
+    - name: ap_ceppcn
+      type: string
+      label: CEP do paciente
+    - name: ap_ufdif
+      type: string
+      label: Ap ufdif
+      x-decode:
+        "0": "Mesma UF"
+        "1": "UF diferente"
+    - name: ap_mndif
+      type: string
+      label: Ap mndif
+      x-decode:
+        "0": "Mesmo município"
+        "1": "Município diferente"
+    - name: ap_dtinic
+      type: date
+      label: Início da validade da APAC
+      x-format: yyyyMMdd
+    - name: ap_dtfim
+      type: date
+      label: Fim da validade da APAC
+      x-format: yyyyMMdd
+    - name: ap_tpatend
+      type: string
+      label: Ap tpatend
+    - name: ap_tpapac
+      type: string
+      label: Ap tpapac
+      x-decode:
+        "1": "Inicial"
+        "2": "Continuidade"
+        "3": "Única"
+        "4": "Fora de rede (encerramento)"
+    - name: ap_motsai
+      type: string
+      label: Ap motsai
+    - name: ap_obito
+      type: string
+      label: Óbito no período
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_encerr
+      type: string
+      label: Ap encerr
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_perman
+      type: string
+      label: Ap perman
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_alta
+      type: string
+      label: Ap alta
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_transf
+      type: string
+      label: Ap transf
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_dtoocor
+      type: date
+      label: Data da ocorrência de saída
+      x-format: yyyyMMdd
+    - name: ap_codemi
+      type: string
+      label: Ap codemi
+    - name: ap_catend
+      type: string
+      label: Ap catend
+    - name: ap_apacan
+      type: string
+      label: Número da APAC anterior (encadeamento)
+    - name: ap_unisol
+      type: string
+      label: Ap unisol
+    - name: ap_dtsolic
+      type: date
+      label: Data da solicitação
+      x-format: yyyyMMdd
+    - name: ap_dtaut
+      type: date
+      label: Data da autorização
+      x-format: yyyyMMdd
+    - name: ap_cidcas
+      type: string
+      label: CID-10 causas associadas
+    - name: co_cidprim
+      type: string
+      label: CID-10 principal (variante ABO)
+    - name: co_cidsec
+      type: string
+      label: CID-10 secundário (variante ABO)
+    - name: ap_etnia
+      type: string
+      label: Ap etnia
+    - name: ab_imc
+      type: string
+      label: IMC
+    - name: ab_procaih
+      type: string
+      label: Procedimento SIGTAP da AIH da cirurgia
+    - name: ab_dtcirur
+      type: date
+      label: Data da cirurgia bariátrica
+      x-format: yyyyMMdd
+    - name: ab_numaih
+      type: string
+      label: Número da AIH da cirurgia (13 díg.; ponte determinística → SIH)
+    - name: ab_prcaih2
+      type: string
+      label: Ab prcaih2
+    - name: ab_t_prc2
+      type: string
+      label: Ab t prc2
+    - name: ab_prcaih3
+      type: string
+      label: Ab prcaih3
+    - name: ab_t_prc3
+      type: string
+      label: Ab t prc3
+    - name: ab_prcaih4
+      type: string
+      label: Ab prcaih4
+    - name: ab_t_prc4
+      type: string
+      label: Ab t prc4
+    - name: ab_prcaih5
+      type: string
+      label: Ab prcaih5
+    - name: ab_t_prc5
+      type: string
+      label: Ab t prc5
+    - name: ab_prcaih6
+      type: string
+      label: Ab prcaih6
+    - name: ab_t_prc6
+      type: string
+      label: Ab t prc6
+    - name: ab_numaih2
+      type: string
+      label: Número da AIH complementar
+    - name: ab_dtcirg2
+      type: date
+      label: Data da cirurgia complementar
+      x-format: yyyyMMdd
+    - name: ab_mesacom
+      type: string
+      label: Mês de acompanhamento
+    - name: ab_anoacom
+      type: string
+      label: Ano de acompanhamento
+    - name: ab_pontbar
+      type: string
+      label: Pontuação BAROS
+    - name: ab_tabbarr
+      type: string
+      label: Tabela BAROS
+    - name: ap_comorb
+      type: string
+      label: Ap comorb
+    - name: ap_cid_c1
+      type: string
+      label: Ap cid c1
+    - name: ap_cid_c2
+      type: string
+      label: Ap cid c2
+    - name: ap_cid_c3
+      type: string
+      label: Ap cid c3
+    - name: ap_cid_c4
+      type: string
+      label: Ap cid c4
+    - name: ap_cid_c5
+      type: string
+      label: Ap cid c5
+    - name: ap_cid_co
+      type: string
+      label: Ap cid co
+    - name: ap_medicam
+      type: string
+      label: Ap medicam
+    - name: ap_polivit
+      type: string
+      label: Ap polivit
+    - name: ap_atv_fis
+      type: string
+      label: Ap atv fis
+    - name: ap_reg_pes
+      type: string
+      label: Ap reg pes
+    - name: ap_adesao
+      type: string
+      label: Ap adesao
+    - name: ap_natjur
+      type: string
+      label: Ap natjur

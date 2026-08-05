@@ -1,0 +1,251 @@
+name: sia_atd
+title: SIASUS — APAC de Tratamento Dialítico (ATD)
+profile: tabular-data-resource
+# Gerado do header DBF REAL (ATDRR2401.dbf), nao do informe tecnico.
+# latin-1 obrigatorio: cifra do CNS usa 0x7B-0x84 (0x81 quebra cp1252).
+encoding: latin-1
+schema:
+  fields:
+    - name: ap_mvm
+      type: yearmonth
+      label: Competência de processamento (AAAAMM)
+    - name: ap_condic
+      type: string
+      label: Ap condic
+    - name: ap_gestao
+      type: string
+      label: Ap gestao
+    - name: ap_coduni
+      type: string
+      label: CNES do estabelecimento
+    - name: ap_autoriz
+      type: string
+      label: Número da APAC
+    - name: ap_cmp
+      type: yearmonth
+      label: Competência do atendimento (AAAAMM)
+    - name: ap_pripal
+      type: string
+      label: Procedimento principal SIGTAP
+    - name: ap_vl_ap
+      type: number
+      label: Valor aprovado da APAC
+    - name: ap_ufmun
+      type: string
+      label: Ap ufmun
+    - name: ap_tpups
+      type: string
+      label: Ap tpups
+    - name: ap_tippre
+      type: string
+      label: Ap tippre
+    - name: ap_mn_ind
+      type: string
+      label: Ap mn ind
+    - name: ap_cnpjcpf
+      type: string
+      label: Ap cnpjcpf
+    - name: ap_cnpjmnt
+      type: string
+      label: Ap cnpjmnt
+    - name: ap_cnspcn
+      type: string
+      label: CNS do paciente (criptografado; chave de linkage intra-SIA)
+      x-crypto: datasus-cns
+    - name: ap_coidade
+      type: string
+      label: Ap coidade
+      x-decode:
+        "2": "Dias"
+        "3": "Meses"
+        "4": "Anos"
+    - name: ap_nuidade
+      type: string
+      label: Idade (na unidade de ap_coidade)
+    - name: ap_sexo
+      type: string
+      label: Ap sexo
+      x-decode:
+        "M": "Masculino"
+        "F": "Feminino"
+    - name: ap_racacor
+      type: string
+      label: Ap racacor
+      x-decode:
+        "01": "Branca"
+        "02": "Preta"
+        "03": "Parda"
+        "04": "Amarela"
+        "05": "Indígena"
+        "99": "Sem informação"
+    - name: ap_munpcn
+      type: string
+      label: Município de residência (UF+IBGE)
+    - name: ap_ufnacio
+      type: string
+      label: Ap ufnacio
+    - name: ap_ceppcn
+      type: string
+      label: CEP do paciente
+    - name: ap_ufdif
+      type: string
+      label: Ap ufdif
+      x-decode:
+        "0": "Mesma UF"
+        "1": "UF diferente"
+    - name: ap_mndif
+      type: string
+      label: Ap mndif
+      x-decode:
+        "0": "Mesmo município"
+        "1": "Município diferente"
+    - name: ap_dtinic
+      type: date
+      label: Início da validade da APAC
+      x-format: yyyyMMdd
+    - name: ap_dtfim
+      type: date
+      label: Fim da validade da APAC
+      x-format: yyyyMMdd
+    - name: ap_tpaten
+      type: string
+      label: Ap tpaten
+    - name: ap_tpapac
+      type: string
+      label: Ap tpapac
+      x-decode:
+        "1": "Inicial"
+        "2": "Continuidade"
+        "3": "Única"
+        "4": "Fora de rede (encerramento)"
+    - name: ap_motsai
+      type: string
+      label: Ap motsai
+    - name: ap_obito
+      type: string
+      label: Óbito no período
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_encerr
+      type: string
+      label: Ap encerr
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_perman
+      type: string
+      label: Ap perman
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_alta
+      type: string
+      label: Ap alta
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_transf
+      type: string
+      label: Ap transf
+      x-decode:
+        "0": "Não"
+        "1": "Sim"
+    - name: ap_dtocor
+      type: date
+      label: Data da ocorrência de saída
+      x-format: yyyyMMdd
+    - name: ap_codemi
+      type: string
+      label: Ap codemi
+    - name: ap_catend
+      type: string
+      label: Ap catend
+    - name: ap_apacant
+      type: string
+      label: Número da APAC anterior (encadeamento)
+    - name: ap_unisol
+      type: string
+      label: Ap unisol
+    - name: ap_dtsolic
+      type: date
+      label: Data da solicitação
+      x-format: yyyyMMdd
+    - name: ap_dtaut
+      type: date
+      label: Data da autorização
+      x-format: yyyyMMdd
+    - name: ap_cidcas
+      type: string
+      label: CID-10 causas associadas
+    - name: ap_cidpri
+      type: string
+      label: CID-10 principal (sem ponto; justificativa de autorização)
+    - name: ap_cidsec
+      type: string
+      label: CID-10 secundário
+    - name: ap_etnia
+      type: string
+      label: Ap etnia
+    - name: atd_caract
+      type: string
+      label: Caracterização do atendimento
+    - name: atd_dtpdr
+      type: date
+      label: Data do primeiro tratamento dialítico
+      x-format: yyyyMMdd
+    - name: atd_dtcli
+      type: date
+      label: Data de início na clínica atual
+      x-format: yyyyMMdd
+    - name: atd_acevas
+      type: string
+      label: Acesso vascular
+    - name: atd_maisne
+      type: string
+      label: Mais de um acesso
+    - name: atd_sitini
+      type: string
+      label: Situação ao iniciar diálise
+    - name: atd_sittra
+      type: string
+      label: Situação de transplante
+    - name: atd_seapto
+      type: string
+      label: Apto a transplante
+    - name: atd_hb
+      type: string
+      label: Hemoglobina (g/dL)
+    - name: atd_fosfor
+      type: string
+      label: Fósforo sérico (mg/dL)
+    - name: atd_ktvsem
+      type: string
+      label: Kt/V semanal
+    - name: atd_tru
+      type: string
+      label: Taxa de redução de ureia (%)
+    - name: atd_albumi
+      type: string
+      label: Albumina sérica (g/dL)
+    - name: atd_pth
+      type: string
+      label: PTH (pg/mL)
+    - name: atd_hiv
+      type: string
+      label: Sorologia HIV
+    - name: atd_hcv
+      type: string
+      label: Sorologia HCV
+    - name: atd_hbsag
+      type: string
+      label: HBsAg
+    - name: atd_interc
+      type: string
+      label: Intercorrências
+    - name: atd_seperi
+      type: string
+      label: Peritonite (diálise peritoneal)
+    - name: ap_natjur
+      type: string
+      label: Ap natjur

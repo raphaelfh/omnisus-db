@@ -12,6 +12,12 @@ DATASET_PREFIX: dict[str, tuple[str, bool]] = {
     "sinasc_nv": ("DN", False),
     "sih_rd": ("RD", True),
     "sia_bi": ("BI", True),
+    "sia_am": ("AM", True),
+    "sia_aq": ("AQ", True),
+    "sia_atd": ("ATD", True),
+    "sia_ad": ("AD", True),
+    "sia_abo": ("ABO", True),
+    "sia_ps": ("PS", True),
     "cnes_st": ("ST", True),
 }
 
@@ -19,7 +25,10 @@ DATASET_PREFIX: dict[str, tuple[str, bool]] = {
 PREFIX_TO_DATASET: dict[str, str] = {p: name for name, (p, _) in DATASET_PREFIX.items()}
 
 _YEARLY_PATTERN = re.compile(r"^([A-Z]{2})([A-Z]{2})(\d{4})\.dbc$", re.IGNORECASE)
-_MONTHLY_PATTERN = re.compile(r"^([A-Z]{2})([A-Z]{2})(\d{2})(\d{2})\.dbc$", re.IGNORECASE)
+# Prefixes are 2 OR 3 letters (ATD, ABO); greedy {2,3} + backtracking resolves
+# the ambiguity because UF must be exactly 2 letters and the date 4 digits
+# (ATDRR2401 -> ATD+RR, never AT+DR; AMRR2401 backtracks AMR -> AM+RR).
+_MONTHLY_PATTERN = re.compile(r"^([A-Z]{2,3})([A-Z]{2})(\d{2})(\d{2})\.dbc$", re.IGNORECASE)
 
 
 def _yy_to_year(yy: int) -> int:

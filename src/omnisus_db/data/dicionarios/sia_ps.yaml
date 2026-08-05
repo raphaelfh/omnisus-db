@@ -1,0 +1,173 @@
+name: sia_ps
+title: SIASUS — RAAS Psicossocial (PS)
+profile: tabular-data-resource
+# Gerado do header DBF REAL (PSRR2401.dbf), nao do informe tecnico.
+# latin-1 obrigatorio: cifra do CNS usa 0x7B-0x84 (0x81 quebra cp1252).
+encoding: latin-1
+schema:
+  fields:
+    - name: cnes_exec
+      type: string
+      label: Cnes exec
+    - name: gestao
+      type: string
+      label: Gestao
+    - name: condic
+      type: string
+      label: Condic
+    - name: ufmun
+      type: string
+      label: Ufmun
+    - name: tpups
+      type: string
+      label: Tpups
+    - name: tippre
+      type: string
+      label: Tippre
+    - name: mn_ind
+      type: string
+      label: Mn ind
+    - name: cnpjcpf
+      type: string
+      label: Cnpjcpf
+    - name: cnpjmnt
+      type: string
+      label: Cnpjmnt
+    - name: dt_process
+      type: yearmonth
+      label: Dt process
+    - name: dt_atend
+      type: yearmonth
+      label: Dt atend
+    - name: cns_pac
+      type: string
+      label: CNS do paciente (criptografado; chave de linkage intra-SIA)
+      x-crypto: datasus-cns
+    - name: dtnasc
+      type: date
+      label: Data de nascimento
+      x-format: yyyyMMdd
+    - name: tpidadepac
+      type: string
+      label: Tpidadepac
+    - name: idadepac
+      type: string
+      label: Idadepac
+    - name: nacion_pac
+      type: string
+      label: Nacion pac
+    - name: sexopac
+      type: string
+      label: Sexo do paciente
+      x-decode:
+        "M": "Masculino"
+        "F": "Feminino"
+    - name: racacor
+      type: string
+      label: Racacor
+      x-decode:
+        "01": "Branca"
+        "02": "Preta"
+        "03": "Parda"
+        "04": "Amarela"
+        "05": "Indígena"
+        "99": "Sem informação"
+    - name: etnia
+      type: string
+      label: Etnia
+    - name: munpac
+      type: string
+      label: Município de residência (UF+IBGE)
+    - name: mot_cob
+      type: string
+      label: Mot cob
+    - name: dt_motcob
+      type: date
+      label: Dt motcob
+      x-format: yyyyMMdd
+    - name: catend
+      type: string
+      label: Catend
+    - name: cidpri
+      type: string
+      label: CID-10 principal (sem ponto)
+    - name: cidassoc
+      type: string
+      label: CID-10 associado
+    - name: origem_pac
+      type: string
+      label: Origem do paciente
+    - name: dt_inicio
+      type: date
+      label: Dt inicio
+      x-format: yyyyMMdd
+    - name: dt_fim
+      type: date
+      label: Dt fim
+      x-format: yyyyMMdd
+    - name: cob_esf
+      type: string
+      label: Coberto pela ESF
+      x-decode:
+        "S": "Sim"
+        "N": "Não"
+    - name: cnes_esf
+      type: string
+      label: CNES da equipe ESF
+    - name: destinopac
+      type: string
+      label: Destino do paciente
+    - name: pa_proc_id
+      type: string
+      label: Ação realizada (SIGTAP)
+    - name: pa_qtdpro
+      type: string
+      label: Pa qtdpro
+    - name: pa_qtdapr
+      type: string
+      label: Pa qtdapr
+    - name: pa_srv
+      type: string
+      label: Pa srv
+    - name: pa_class_s
+      type: string
+      label: Pa class s
+    - name: sit_rua
+      type: string
+      label: Paciente em situação de rua
+      x-decode:
+        "S": "Sim"
+        "N": "Não"
+    - name: tp_droga
+      type: string
+      label: Substância (álcool/crack/outras)
+      x-decode:
+        "A": "Álcool"
+        "C": "Crack"
+        "O": "Outras"
+    - name: loc_realiz
+      type: string
+      label: Local de realização (CAPS/território)
+      x-decode:
+        "C": "CAPS"
+        "T": "Território"
+    - name: inicio
+      type: date
+      label: Início do período assistencial
+      x-format: yyyyMMdd
+    - name: fim
+      type: date
+      label: Fim do período assistencial
+      x-format: yyyyMMdd
+    - name: permanen
+      type: string
+      label: Dias de permanência
+    - name: qtdate
+      type: string
+      label: Qtdate
+    - name: qtdpcn
+      type: string
+      label: Qtdpcn
+    - name: nat_jur
+      type: string
+      label: Nat jur
