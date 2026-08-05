@@ -11,6 +11,7 @@ DATASET_PREFIX: dict[str, tuple[str, bool]] = {
     "sim_do": ("DO", False),
     "sinasc_nv": ("DN", False),
     "sih_rd": ("RD", True),
+    "sia_bi": ("BI", True),
     "cnes_st": ("ST", True),
 }
 

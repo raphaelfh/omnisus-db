@@ -21,6 +21,7 @@ _PATH: dict[str, str] = {
     "sim_do": "/dissemin/publicos/SIM/CID10/DORES",
     "sinasc_nv": "/dissemin/publicos/SINASC/NOV/DNRES",
     "sih_rd": "/dissemin/publicos/SIHSUS/200801_/Dados",
+    "sia_bi": "/dissemin/publicos/SIASUS/200801_/Dados",
     "cnes_st": "/dissemin/publicos/CNES/200508_/Dados/ST",
 }
 

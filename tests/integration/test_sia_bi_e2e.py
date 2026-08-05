@@ -1,0 +1,47 @@
+"""End-to-end: BPA-I fixture -> generic runner -> lake -> query.
+
+Uses the runner directly (not a public ``import_sia_bi`` wrapper) because
+``omnisus_db/__init__.py`` currently carries unrelated uncommitted work;
+the public wrapper lands separately.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+import pytest
+
+from omnisus_db.lake import Lake
+from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp._runner import import_scope
+
+
+@pytest.mark.integration
+def test_import_sia_bi_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+    fixture_bytes = dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes()
+
+    async def fake_fetch(*, dataset, scope, **_kw):
+        return fixture_bytes
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch.fetch_dbc_bytes", fake_fetch)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
+
+    target = f"ducklake:{tmp_path}/test.ducklake"
+    lake = Lake.local(target)
+    result = asyncio.run(
+        import_scope(dataset="sia_bi", scope=ScopeKey(uf="RR", ano=2024, mes=1), lake=lake)
+    )
+    assert result.rows == 12_099
+
+    con = lake.connect()
+    rows = con.execute(
+        "SELECT count(*) FROM lake.sia_bi WHERE ano=2024 AND uf='RR' AND mes=1"
+    ).fetchone()[0]
+    assert rows == 12_099
+    # linkage key survived the trip into the lake
+    non_blank = con.execute(
+        "SELECT count(*) FROM lake.sia_bi WHERE trim(cns_pac) != ''"
+    ).fetchone()[0]
+    assert non_blank > 11_000
+    lake.close()

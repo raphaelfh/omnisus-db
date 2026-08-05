@@ -27,6 +27,7 @@ DATASET_FTP_PATH: dict[str, str] = {
     "sim_do": "/dissemin/publicos/SIM/CID10/DORES",
     "sinasc_nv": "/dissemin/publicos/SINASC/NOV/DNRES",
     "sih_rd": "/dissemin/publicos/SIHSUS/200801_/Dados",
+    "sia_bi": "/dissemin/publicos/SIASUS/200801_/Dados",
     "cnes_st": "/dissemin/publicos/CNES/200508_/Dados/ST",
 }
 
@@ -34,6 +35,7 @@ TARGETS: list[tuple[str, ScopeKey, str]] = [
     ("sim_do", ScopeKey(uf="RR", ano=2023), "sim_rr_2023_mini.dbc"),
     ("sinasc_nv", ScopeKey(uf="RR", ano=2022), "sinasc_rr_2022_mini.dbc"),
     ("sih_rd", ScopeKey(uf="RR", ano=2024, mes=1), "sih_rr_2024_01_mini.dbc"),
+    ("sia_bi", ScopeKey(uf="RR", ano=2024, mes=1), "sia_bi_rr_2024_01_mini.dbc"),
     ("cnes_st", ScopeKey(uf="RR", ano=2024, mes=1), "cnes_rr_2024_01_mini.dbc"),
 ]
 

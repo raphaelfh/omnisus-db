@@ -1,0 +1,177 @@
+name: sia_bi
+title: SIASUS — BPA Individualizado (BI)
+profile: tabular-data-resource
+# latin-1 e OBRIGATORIO: o CNS cifrado usa bytes 0x7B-0x84 e 0x81 e
+# indefinido em cp1252 (UnicodeDecodeError). Medido em BIAC2401/BIRR2401.
+encoding: latin-1
+schema:
+  fields:
+    # ========================================================================
+    # Estabelecimento e gestão
+    # ========================================================================
+    - name: coduni
+      type: string
+      label: CNES do estabelecimento executante
+    - name: gestao
+      type: string
+      label: UF + município de gestão
+    - name: condic
+      type: string
+      label: Tipo de gestão
+    - name: ufmun
+      type: string
+      label: UF + município do estabelecimento
+    - name: tpups
+      type: string
+      label: Tipo de unidade (tabela TPUPS)
+    - name: tippre
+      type: string
+      label: Tipo de prestador
+    - name: mn_ind
+      type: string
+      label: Estabelecimento mantido / individual
+      x-decode:
+        "M": "Mantido"
+        "I": "Individual"
+    - name: cnpjcpf
+      type: string
+      label: CNPJ/CPF do executante
+    - name: cnpjmnt
+      type: string
+      label: CNPJ da mantenedora
+    - name: cnpj_cc
+      type: string
+      label: CNPJ do órgão convenente
+    # ========================================================================
+    # Competência e produção
+    # ========================================================================
+    - name: dt_process
+      type: yearmonth
+      label: Competência de processamento (AAAAMM)
+    - name: dt_atend
+      type: yearmonth
+      label: Competência do atendimento (AAAAMM)
+    - name: proc_id
+      type: string
+      label: Procedimento SIGTAP (10 dígitos)
+    - name: tpfin
+      type: string
+      label: Tipo de financiamento
+      x-decode:
+        "01": "Atenção Básica (PAB)"
+        "04": "FAEC"
+        "06": "Média e Alta Complexidade (MAC)"
+        "07": "Incentivos"
+    - name: subfin
+      type: string
+      label: Subtipo de financiamento
+    - name: complex
+      type: string
+      label: Complexidade
+      x-decode:
+        "0": "Não se aplica"
+        "1": "Atenção Básica"
+        "2": "Média complexidade"
+        "3": "Alta complexidade"
+    - name: autoriz
+      type: string
+      label: Número da autorização
+    - name: cnsprof
+      type: string
+      label: CNS do profissional (criptografado)
+      x-crypto: datasus-cns
+    - name: cboprof
+      type: string
+      label: CBO do profissional
+    - name: cidpri
+      type: string
+      label: CID-10 principal (sem ponto)
+    - name: catend
+      type: string
+      label: Caráter do atendimento
+      x-decode:
+        "01": "Eletivo"
+        "02": "Urgência"
+        "03": "Acidente no local de trabalho"
+        "04": "Acidente no trajeto"
+        "05": "Outros acidentes de trânsito"
+        "06": "Outras lesões por agentes químicos/físicos"
+    # ========================================================================
+    # Paciente — chave de linkage
+    # ========================================================================
+    - name: cns_pac
+      type: string
+      label: CNS do paciente (criptografado; chave de linkage intra-SIA)
+      x-crypto: datasus-cns
+    - name: dtnasc
+      type: date
+      label: Data de nascimento
+      x-format: yyyyMMdd
+    - name: tpidadepac
+      type: string
+      label: Unidade da idade
+      # dominio medido em BIAC2401: 4=anos (99,2% consistente com DTNASC),
+      # 3=meses, 2=dias; valores 5 e 9 observados porem sem semantica
+      # documentada — passam sem decode.
+      x-decode:
+        "2": "Dias"
+        "3": "Meses"
+        "4": "Anos"
+    - name: idadepac
+      type: string
+      label: Idade do paciente (na unidade de tpidadepac)
+    - name: sexopac
+      type: string
+      label: Sexo do paciente
+      x-decode:
+        "M": "Masculino"
+        "F": "Feminino"
+    - name: racacor
+      type: string
+      label: Raça/cor
+      x-decode:
+        "01": "Branca"
+        "02": "Preta"
+        "03": "Parda"
+        "04": "Amarela"
+        "05": "Indígena"
+        "99": "Sem informação"
+    - name: munpac
+      type: string
+      label: Município de residência (UF+IBGE 6 dígitos)
+    # ========================================================================
+    # Quantidades e valores
+    # ========================================================================
+    - name: qt_apres
+      type: integer
+      label: Quantidade apresentada
+    - name: qt_aprov
+      type: integer
+      label: Quantidade aprovada
+    - name: vl_apres
+      type: number
+      label: Valor apresentado
+    - name: vl_aprov
+      type: number
+      label: Valor aprovado
+    # ========================================================================
+    # Indicadores e classificações
+    # ========================================================================
+    - name: ufdif
+      type: string
+      label: Residência em UF diferente do atendimento
+      x-decode:
+        "0": "Mesma UF"
+        "1": "UF diferente"
+    - name: mndif
+      type: string
+      label: Residência em município diferente do atendimento
+      x-decode:
+        "0": "Mesmo município"
+        "1": "Município diferente"
+    - name: etnia
+      type: string
+      label: Etnia indígena (preenchida quando racacor=05)
+    - name: nat_jur
+      type: string
+      label: Natureza jurídica do estabelecimento
