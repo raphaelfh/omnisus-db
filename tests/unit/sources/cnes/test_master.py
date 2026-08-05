@@ -1,0 +1,327 @@
+"""Tests for the CNES Master importer (API → lake.cnes_master)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import httpx
+import respx
+
+from omnisus_db import import_cnes_master
+from omnisus_db.lake import Lake
+
+
+def _api_url(cnes_unpadded: str) -> str:
+    return f"https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes_unpadded}"
+
+
+def _api_response(cnes_int: int, *, nome_fantasia: str, razao: str) -> dict:
+    return {
+        "codigo_cnes": cnes_int,
+        "nome_fantasia": nome_fantasia,
+        "nome_razao_social": razao,
+        "codigo_tipo_unidade": 5,
+    }
+
+
+def _seed_cnes_st(lake: Lake, cnes_codes: list[str]) -> None:
+    """Minimal cnes_st with one row per code so import_cnes_master() finds them."""
+    con = lake.connect()
+    con.execute(
+        f"""
+        CREATE TABLE {lake.alias}.cnes_st (
+            cnes VARCHAR, tp_unid VARCHAR, codufmun VARCHAR,
+            ano INTEGER, mes INTEGER
+        )
+        """
+    )
+    con.executemany(
+        f"INSERT INTO {lake.alias}.cnes_st VALUES (?, '05', '355030', 2024, 1)",
+        [(c,) for c in cnes_codes],
+    )
+
+
+@respx.mock
+def test_import_cnes_master_writes_table_and_refreshes_view(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["2789590", "0123456"])
+
+    # API uses unpadded integer paths
+    respx.get(_api_url("2789590")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(
+                _api_response(2789590, nome_fantasia="HOSPITAL BRASIL", razao="REDE DOR")
+            ),
+        )
+    )
+    respx.get(_api_url("123456")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(
+                _api_response(123456, nome_fantasia="UBS BAIRRO X", razao="MUNICIPIO X")
+            ),
+        )
+    )
+
+    n = import_cnes_master(target=target)
+    assert n == 2
+
+    with Lake.local(target) as lake:
+        rows = (
+            lake.connect()
+            .execute(
+                f"SELECT cnes, nome, nome_fantasia, razao_social "
+                f"FROM {lake.alias}.cnes_master ORDER BY cnes"
+            )
+            .fetchall()
+        )
+        assert rows == [
+            ("0123456", "UBS BAIRRO X", "UBS BAIRRO X", "MUNICIPIO X"),
+            ("2789590", "HOSPITAL BRASIL", "HOSPITAL BRASIL", "REDE DOR"),
+        ]
+        # aux_cnes view now joins names
+        view_rows = (
+            lake.connect()
+            .execute(f"SELECT cnes, nome FROM {lake.alias}.aux_cnes ORDER BY cnes")
+            .fetchall()
+        )
+        assert view_rows == [
+            ("0123456", "UBS BAIRRO X"),
+            ("2789590", "HOSPITAL BRASIL"),
+        ]
+
+
+@respx.mock
+def test_import_cnes_master_skips_404_and_network_failures(tmp_path: Path) -> None:
+    """One CNES returns 200, another 404, another times out — only the 200 lands."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1111111", "2222222", "3333333"])
+
+    respx.get(_api_url("1111111")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(_api_response(1111111, nome_fantasia="OK", razao="OK SA")),
+        )
+    )
+    respx.get(_api_url("2222222")).mock(return_value=httpx.Response(404))
+    respx.get(_api_url("3333333")).mock(side_effect=httpx.ConnectError("boom"))
+
+    n = import_cnes_master(target=target)
+    assert n == 1
+
+    with Lake.local(target) as lake:
+        rows = (
+            lake.connect()
+            .execute(f"SELECT cnes FROM {lake.alias}.cnes_master ORDER BY cnes")
+            .fetchall()
+        )
+        assert rows == [("1111111",)]
+
+
+@respx.mock
+def test_import_cnes_master_fallbacks_to_razao_when_nome_fantasia_empty(
+    tmp_path: Path,
+) -> None:
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1234567"])
+
+    respx.get(_api_url("1234567")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(
+                _api_response(1234567, nome_fantasia="", razao="HOSPITAL DA RAZAO SA")
+            ),
+        )
+    )
+
+    import_cnes_master(target=target)
+    with Lake.local(target) as lake:
+        nome = (
+            lake.connect()
+            .execute(f"SELECT nome FROM {lake.alias}.cnes_master WHERE cnes = '1234567'")
+            .fetchone()[0]
+        )
+        assert nome == "HOSPITAL DA RAZAO SA"
+
+
+@respx.mock
+def test_import_cnes_master_drops_records_with_no_usable_name(tmp_path: Path) -> None:
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["9999999"])
+
+    respx.get(_api_url("9999999")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(_api_response(9999999, nome_fantasia="", razao="")),
+        )
+    )
+
+    n = import_cnes_master(target=target)
+    assert n == 0
+    with Lake.local(target) as lake:
+        rows = (
+            lake.connect().execute(f"SELECT COUNT(*) FROM {lake.alias}.cnes_master").fetchone()[0]
+        )
+        assert rows == 0
+
+
+def test_import_cnes_master_returns_zero_when_cnes_st_missing(tmp_path: Path) -> None:
+    """Without cnes_st (and without explicit codes), there's nothing to fetch."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    n = import_cnes_master(target=target)
+    assert n == 0
+
+
+@respx.mock
+def test_import_cnes_master_accepts_explicit_codes(tmp_path: Path) -> None:
+    """Explicit codes bypasses the cnes_st discovery."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+
+    respx.get(_api_url("7654321")).mock(
+        return_value=httpx.Response(
+            200,
+            content=json.dumps(_api_response(7654321, nome_fantasia="EXPLICIT", razao="X SA")),
+        )
+    )
+
+    n = import_cnes_master(codes=["7654321"], target=target)
+    assert n == 1
+    with Lake.local(target) as lake:
+        nome = lake.connect().execute(f"SELECT nome FROM {lake.alias}.cnes_master").fetchone()[0]
+        assert nome == "EXPLICIT"
+
+
+def test_aux_cnes_view_works_without_cnes_master_loaded(tmp_path: Path) -> None:
+    """The view degrades gracefully: nome is NULL when cnes_master doesn't exist yet."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1234567"])
+        assert lake.ensure_aux_cnes_view() is True
+
+        rows = (
+            lake.connect()
+            .execute(f"SELECT cnes, nome, tp_unid FROM {lake.alias}.aux_cnes")
+            .fetchall()
+        )
+        assert rows == [("1234567", None, "05")]
+
+
+# ---------------------------------------------------------------------------
+# Incremental runs + progress callback
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
+def test_import_cnes_master_only_missing_skips_already_fetched(tmp_path: Path) -> None:
+    """Re-running with only_missing=True (default) only fetches new codes."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1111111", "2222222"])
+
+    # First run — both fetched
+    respx.get(_api_url("1111111")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(1111111, nome_fantasia="A", razao="A SA"))
+        )
+    )
+    respx.get(_api_url("2222222")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(2222222, nome_fantasia="B", razao="B SA"))
+        )
+    )
+    assert import_cnes_master(target=target) == 2
+
+    # Add a new code to cnes_st; re-run — only the new one should be fetched.
+    with Lake.local(target) as lake:
+        lake.connect().execute(
+            f"INSERT INTO {lake.alias}.cnes_st VALUES ('3333333', '02', '355030', 2024, 1)"
+        )
+
+    respx.get(_api_url("3333333")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(3333333, nome_fantasia="C", razao="C SA"))
+        )
+    )
+
+    n = import_cnes_master(target=target)
+    assert n == 1  # only the new code
+
+    # Original two records were preserved (upsert, not REPLACE TABLE).
+    with Lake.local(target) as lake:
+        all_rows = (
+            lake.connect()
+            .execute(f"SELECT cnes FROM {lake.alias}.cnes_master ORDER BY cnes")
+            .fetchall()
+        )
+        assert all_rows == [("1111111",), ("2222222",), ("3333333",)]
+
+
+@respx.mock
+def test_import_cnes_master_only_missing_false_refetches_all(tmp_path: Path) -> None:
+    """only_missing=False forces re-fetching everything (e.g. names changed)."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1234567"])
+
+    respx.get(_api_url("1234567")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(1234567, nome_fantasia="OLD", razao="X SA"))
+        )
+    )
+    import_cnes_master(target=target)
+
+    # Re-mock with new name; only_missing=False should re-fetch and upsert.
+    respx.get(_api_url("1234567")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(1234567, nome_fantasia="NEW", razao="X SA"))
+        )
+    )
+    n = import_cnes_master(target=target, only_missing=False)
+    assert n == 1
+    with Lake.local(target) as lake:
+        nome = (
+            lake.connect()
+            .execute(f"SELECT nome FROM {lake.alias}.cnes_master WHERE cnes = '1234567'")
+            .fetchone()[0]
+        )
+        assert nome == "NEW"
+
+
+@respx.mock
+def test_import_cnes_master_invokes_progress_callback(tmp_path: Path) -> None:
+    """Progress callback fires once per CNES code processed (success or failure)."""
+    target = f"ducklake:{tmp_path}/x.ducklake"
+    with Lake.local(target) as lake:
+        _seed_cnes_st(lake, ["1111111", "2222222", "3333333"])
+
+    respx.get(_api_url("1111111")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(1111111, nome_fantasia="A", razao="A SA"))
+        )
+    )
+    respx.get(_api_url("2222222")).mock(return_value=httpx.Response(404))
+    respx.get(_api_url("3333333")).mock(
+        return_value=httpx.Response(
+            200, content=json.dumps(_api_response(3333333, nome_fantasia="C", razao="C SA"))
+        )
+    )
+
+    calls: list[tuple[int, int]] = []
+
+    def on_progress(done: int, total: int) -> None:
+        calls.append((done, total))
+
+    import_cnes_master(target=target, progress=on_progress)
+
+    # 3 codes total → 3 progress callbacks; final must reach (3, 3).
+    assert len(calls) == 3
+    assert calls[-1] == (3, 3)
+    assert all(total == 3 for _, total in calls)
+    # Order is non-deterministic (concurrent), but done values must be 1,2,3.
+    assert sorted(d for d, _ in calls) == [1, 2, 3]

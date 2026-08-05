@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
 from omnisus_db.lake import Lake
@@ -160,13 +160,54 @@ def import_cnes_st(
     ufs: Sequence[str] | None = None,
     target: str = "ducklake:./omnisus.ducklake",
 ) -> list[ImportResult]:
-    """Import CNES-ST (estabelecimentos) — monthly. (years x ufs x months)."""
-    return _import_dataset_ftp_monthly(
+    """Import CNES-ST (estabelecimentos) — monthly. (years x ufs x months).
+
+    After the import succeeds, refreshes the ``aux_cnes`` view (latest snapshot
+    per CNES) so downstream consumers can resolve CNES → name without picking
+    a partition.
+    """
+    results = _import_dataset_ftp_monthly(
         "cnes_st",
         years=years,
         ufs=ufs,
         months=months,
         target=target,
+    )
+    with Lake.local(target) as lake:
+        lake.ensure_aux_cnes_view()
+    return results
+
+
+def import_cnes_master(
+    *,
+    codes: Sequence[str] | None = None,
+    target: str = "ducklake:./omnisus.ducklake",
+    concurrency: int = 5,
+    only_missing: bool = True,
+    progress: Callable[[int, int], None] | None = None,
+) -> int:
+    """Fetch CNES establishment names from the public API → ``lake.cnes_master``.
+
+    The DATASUS public CNES-ST DBF doesn't carry establishment names; this
+    pulls them from ``apidadosabertos.saude.gov.br`` and joins them into
+    ``aux_cnes`` so downstream tools (e.g. the Explorer) can resolve a CNES
+    code to a human-readable name.
+
+    With ``codes=None`` and ``only_missing=True`` (defaults), runs are
+    incremental — only CNES codes present in ``cnes_st`` but absent from
+    ``cnes_master`` are fetched. Pass ``progress=(done, total) -> None`` to
+    stream job progress (e.g. from the backend admin UI).
+    """
+    from omnisus_db.sources.cnes.importers.master import (
+        import_cnes_master as _impl,
+    )
+
+    return _impl(
+        codes=codes,
+        target=target,
+        concurrency=concurrency,
+        only_missing=only_missing,
+        progress=progress,
     )
 
 
@@ -176,6 +217,7 @@ __all__ = [
     "Lake",
     "ScopeKey",
     "__version__",
+    "import_cnes_master",
     "import_cnes_st",
     "import_ibge_pop",
     "import_sih",

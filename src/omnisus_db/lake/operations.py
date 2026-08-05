@@ -111,6 +111,59 @@ class Lake:
                 finally:
                     os.unlink(tmp_path)
 
+    def ensure_aux_cnes_view(self) -> bool:
+        """Create or refresh ``aux_cnes`` — one row per CNES, joining
+        ``cnes_st`` (operational, monthly snapshots) with ``cnes_master``
+        (names from the API).
+
+        Output columns:
+            cnes        : 7-digit code
+            nome        : establishment name (NULL if cnes_master not loaded)
+            tp_unid     : unit type, latest snapshot
+            codufmun    : município IBGE, latest snapshot
+            yyyymm_max  : ``ano*100+mes`` of the latest cnes_st snapshot
+
+        Behaviour:
+            - ``cnes_st`` missing → no-op, returns ``False``.
+            - ``cnes_master`` missing → view still works, but ``nome`` is NULL.
+              Run ``import_cnes_master()`` to populate names.
+        """
+        tables = set(self.tables())
+        if "cnes_st" not in tables:
+            return False
+
+        if "cnes_master" in tables:
+            nome_select = "m.nome"
+            join_clause = f"LEFT JOIN {self._alias}.cnes_master m USING (cnes)"
+        else:
+            nome_select = "CAST(NULL AS VARCHAR) AS nome"
+            join_clause = ""
+
+        self._con.execute(
+            f"""
+            CREATE OR REPLACE VIEW {self._alias}.aux_cnes AS
+            WITH latest AS (
+                SELECT
+                    cnes,
+                    ARG_MAX(tp_unid,  ano * 100 + mes) AS tp_unid,
+                    ARG_MAX(codufmun, ano * 100 + mes) AS codufmun,
+                    MAX(ano * 100 + mes) AS yyyymm_max
+                FROM {self._alias}.cnes_st
+                WHERE cnes IS NOT NULL
+                GROUP BY cnes
+            )
+            SELECT
+                latest.cnes,
+                {nome_select},
+                latest.tp_unid,
+                latest.codufmun,
+                latest.yyyymm_max
+            FROM latest
+            {join_clause}
+            """
+        )
+        return True
+
     def ingest(
         self,
         table: str,

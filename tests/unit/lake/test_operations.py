@@ -60,3 +60,91 @@ def test_lake_context_manager(tmp_path: Path) -> None:
     target = f"ducklake:{tmp_path}/cm.ducklake"
     with Lake.local(target) as lake:
         assert lake.tables() == []
+
+
+# ---------------------------------------------------------------------------
+# ensure_aux_cnes_view — derived view over cnes_st
+# ---------------------------------------------------------------------------
+
+
+def _seed_cnes_st(lake: Lake) -> None:
+    """Seed ``lake.cnes_st`` with two snapshots for the same CNES so that
+    the view's ARG_MAX picks the latest tp_unid/codufmun.
+
+    Reflects the real DATASUS CNES-ST schema: no name fields — establishment
+    metadata is limited to type (``tp_unid``) and município (``codufmun``).
+    """
+    con = lake.connect()
+    con.execute(
+        f"""
+        CREATE TABLE {lake.alias}.cnes_st (
+            cnes VARCHAR,
+            tp_unid VARCHAR,
+            codufmun VARCHAR,
+            ano INTEGER,
+            mes INTEGER
+        )
+        """
+    )
+    con.execute(
+        f"""
+        INSERT INTO {lake.alias}.cnes_st VALUES
+            ('1234567', '05', '355030', 2024, 1),
+            ('1234567', '07', '355030', 2024, 3),
+            ('7654321', '02', '354780', 2024, 1)
+        """
+    )
+
+
+def test_ensure_aux_cnes_view_skips_when_cnes_st_missing(tmp_path: Path) -> None:
+    with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
+        assert lake.ensure_aux_cnes_view() is False
+        assert "aux_cnes" not in lake.tables()
+
+
+def test_ensure_aux_cnes_view_picks_latest_snapshot_per_cnes(tmp_path: Path) -> None:
+    with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
+        _seed_cnes_st(lake)
+        assert lake.ensure_aux_cnes_view() is True
+
+        rows = (
+            lake.connect()
+            .execute(
+                f"SELECT cnes, tp_unid, codufmun, yyyymm_max "
+                f"FROM {lake.alias}.aux_cnes ORDER BY cnes"
+            )
+            .fetchall()
+        )
+        assert rows == [
+            ("1234567", "07", "355030", 202403),
+            ("7654321", "02", "354780", 202401),
+        ]
+
+
+def test_ensure_aux_cnes_view_is_idempotent(tmp_path: Path) -> None:
+    with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
+        _seed_cnes_st(lake)
+        assert lake.ensure_aux_cnes_view() is True
+        # Refreshing twice must not raise (CREATE OR REPLACE).
+        assert lake.ensure_aux_cnes_view() is True
+        n = lake.connect().execute(f"SELECT COUNT(*) FROM {lake.alias}.aux_cnes").fetchone()[0]
+        assert n == 2  # one row per distinct CNES, regardless of how many calls
+
+
+def test_ensure_aux_cnes_view_reflects_new_snapshots(tmp_path: Path) -> None:
+    """The view is a thin SQL projection — re-creating the view (or simply
+    re-querying it) must surface rows added to ``cnes_st`` afterwards.
+    """
+    with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
+        _seed_cnes_st(lake)
+        lake.ensure_aux_cnes_view()
+
+        con = lake.connect()
+        con.execute(
+            f"INSERT INTO {lake.alias}.cnes_st VALUES ('1234567', '15', '355030', 2024, 7)"
+        )
+        # No need to call ensure_* again — view re-reads cnes_st.
+        tp_unid = con.execute(
+            f"SELECT tp_unid FROM {lake.alias}.aux_cnes WHERE cnes = '1234567'"
+        ).fetchone()[0]
+        assert tp_unid == "15"

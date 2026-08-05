@@ -1,30 +1,110 @@
 name: cnes_st
-title: CNES — Estabelecimentos
+title: CNES — Estabelecimentos (ST)
 profile: tabular-data-resource
 encoding: cp1252
+description: |
+  Cadastro Nacional de Estabelecimentos de Saúde (CNES) — arquivo ST.
+  Os arquivos públicos CNES-ST do DATASUS NÃO carregam o nome do
+  estabelecimento (RAZAO_SOCIAL/NOMEFANT) — esses campos foram retirados na
+  anonimização. Para obter o nome, é necessário a API CNES
+  (``cnes.datasus.gov.br/services/estabelecimentos/{cnes}``), que é outro
+  pipeline. Este YAML reflete apenas o que o DBF público carrega.
 schema:
   fields:
     - name: cnes
       type: string
-      description: "Código CNES"
-    - name: nome_fantasia
-      type: string
-    - name: tp_unid
-      type: integer
-      description: "Tipo de unidade"
+      label: CNES
+      description: "Código CNES (7 dígitos)"
+      constraints: { required: true }
     - name: codufmun
       type: string
+      label: Município (IBGE)
       x-transform: lpad_6
       foreignKeys:
         - { fields: codufmun, reference: { resource: aux_municipios, fields: codigo_ibge } }
+    - name: cnpj_man
+      type: string
+      label: CNPJ da mantenedora
+    - name: tp_unid
+      type: string
+      label: Tipo de unidade
+      x-decode:
+        "01": "Posto de Saúde"
+        "02": "Centro de Saúde / UBS"
+        "04": "Policlínica"
+        "05": "Hospital Geral"
+        "07": "Hospital Especializado"
+        "15": "Unidade Mista"
+        "20": "Pronto Socorro Geral"
+        "21": "Pronto Socorro Especializado"
+        "22": "Consultório Isolado"
+        "32": "Unidade Móvel Fluvial"
+        "36": "Clínica / Centro de Especialidade"
+        "39": "Unidade de Apoio Diagnose e Terapia (SADT Isolado)"
+        "40": "Unidade Móvel Terrestre"
+        "42": "Unidade Móvel Pré-Hospitalar (Urgência)"
+        "43": "Farmácia"
+        "50": "Unidade de Vigilância em Saúde"
+        "60": "Cooperativa ou Empresa de Cessão de Trabalhadores"
+        "61": "Centro de Parto Normal Isolado"
+        "62": "Hospital/Dia Isolado"
+        "63": "Unidade Autorizadora"
+        "64": "Central de Regulação de Serviços de Saúde"
+        "67": "Laboratório Central de Saúde Pública (LACEN)"
+        "68": "Central de Gestão em Saúde"
+        "69": "Centro de Atenção Hemoterápica/Hematológica"
+        "70": "Centro de Atenção Psicossocial (CAPS)"
+        "71": "Centro de Apoio à Saúde da Família"
+        "72": "Unidade de Atenção à Saúde Indígena"
+        "73": "Pronto Atendimento"
+        "74": "Polo Academia da Saúde"
+        "75": "Telessaúde"
+        "76": "Central de Regulação Médica das Urgências"
+        "77": "Serviço de Atenção Domiciliar Isolado"
+        "78": "Unidade de Atenção em Regime Residencial"
+        "79": "Oficina Ortopédica"
+        "80": "Laboratório de Saúde Pública"
+        "81": "Central de Regulação do Acesso"
+        "82": "Central de Notificação, Captação e Distribuição de Órgãos"
+        "83": "Polo de Prevenção de Doenças e Promoção da Saúde"
+        "84": "Central de Abastecimento"
+    - name: nat_jur
+      type: string
+      label: Natureza jurídica (CONCLA)
+    - name: turno_at
+      type: string
+      label: Turno de atendimento
+      x-decode:
+        "1": "Manhã"
+        "2": "Tarde"
+        "3": "Manhã / Tarde"
+        "4": "Manhã / Tarde / Noite"
+        "5": "Manhã / Noite"
+        "6": "Tarde / Noite"
+        "7": "Atendimento contínuo (24h)"
+    - name: nivate_a
+      type: string
+      label: Nível de atenção
+    - name: dt_atual
+      type: string
+      label: Data de atualização
+    - name: competen
+      type: string
+      label: Competência (YYYYMM)
     - name: ano
       type: integer
+      label: Ano
       constraints: { required: true }
     - name: mes
       type: integer
+      label: Mês
       constraints: { required: true, minimum: 1, maximum: 12 }
+    - name: uf
+      type: string
+      label: UF
+      constraints: { required: true, pattern: "^[A-Z]{2}$" }
 x-source-format: dbc
 x-source-family: datasus_ftp
 x-source-prefix: ST
 x-partitions: [ano, mes]
-x-version: "1.0.0"
+x-version: "2.0.0"
