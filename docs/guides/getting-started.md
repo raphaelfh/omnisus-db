@@ -49,7 +49,9 @@ omnisus-db import ibge-pop --years 2010-2024
 
 ## Cloud target
 
+Every command takes `--target/-t`; there is no environment variable for it.
+
 ```bash
-export OMNISUS_DB_TARGET="ducklake:postgresql://user:pwd@host/db?storage=s3://bucket/lake"
-omnisus-db import sim --year 2024
+omnisus-db import sim --year 2024 \
+  --target "ducklake:postgresql://user:pwd@host/db?storage=s3://bucket/lake"
 ```

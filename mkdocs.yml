@@ -5,6 +5,12 @@ repo_url: https://github.com/raphaelfh/omnisus-db
 repo_name: raphaelfh/omnisus-db
 copyright: "(c) 2026 Raphael Federicci"
 
+# Internal specs, plans and ledgers live under docs/ for proximity to the
+# code they describe, but they are working documents and are not published.
+exclude_docs: |
+  superpowers/
+
+
 theme:
   name: material
   features:
@@ -31,6 +37,7 @@ nav:
       - CNES-ST: sources/cnes_st.md
   - Decisions:
       - 0001 Rust DBF: decisions/0001-rust-dbf.md
+      - 0002 Registry as Catalog: decisions/0002-registry-as-catalog.md
 
 markdown_extensions:
   - admonition

@@ -1,13 +1,20 @@
 # Architecture
 
-For the full design rationale, see the
-[design spec](https://github.com/raphaelfh/omnisus/blob/main/docs/superpowers/specs/2026-05-02-omnisus-db-design.md).
+For the full design rationale, see the structural design spec at
+`docs/superpowers/specs/2026-09-09-repo-structure-design.md` in the repository.
+It is deliberately not published to this site.
 
-## Three core abstractions
+## Two core abstractions
 
-- **`Source`** — a family (DATASUS-FTP, IBGE, CNES). Knows how to *discover* and *fetch bytes*.
-- **`Dataset`** — an immutable product (SIM-DO, SINASC-NV, IBGE-pop). Declares schema + partitions.
-- **`Importer`** — a function that orchestrates fetch + parse + sink for one `(dataset, scope)`.
+- **`Dataset`** — an immutable registry row (SIM-DO, SINASC-NV, IBGE-pop). Holds
+  identity and location only: prefix, FTP directory, cadence, partitioning,
+  coverage. Anything behavioural becomes an importer module, never a flag on the
+  row.
+- **`Importer`** — a function that orchestrates fetch + parse + sink for one
+  `(dataset, scope)`.
+
+A third abstraction, `Source`, was removed: it was a protocol no class ever
+implemented, so its declaration was an unmet promise.
 
 ## Data flow
 

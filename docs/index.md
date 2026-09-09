@@ -6,9 +6,10 @@ into a [DuckLake](https://ducklake.select)-backed lakehouse.
 ## What it does
 
 - **Fetches** DBC files from DATASUS FTP, JSON from IBGE SIDRA.
-- **Decompresses** DBC -> DBF -> Polars in memory (no temp files for the heavy steps).
+- **Decompresses** DBC -> DBF -> Polars, streaming records in 100k batches.
 - **Persists** as Parquet under a DuckLake catalog (SQLite or Postgres).
 - **Queries** via DuckDB with the `ducklake` extension.
+- **Inventories** the FTP server, so an import can plan from what is really published.
 
 ## Install
 

@@ -16,7 +16,7 @@ def fixtures_dir() -> Path:
 
 @pytest.fixture
 def dbc_fixture(fixtures_dir: Path) -> Callable[[str], Path]:
-    """Factory: dbc_fixture('sim_sp_2024_mini') -> Path."""
+    """Factory: dbc_fixture('sim_rr_2023_mini') -> Path."""
 
     def _resolve(name: str) -> Path:
         path = fixtures_dir / "dbc" / f"{name}.dbc"
