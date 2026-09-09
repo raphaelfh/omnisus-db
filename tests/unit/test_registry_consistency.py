@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from importlib.resources import files
 
+import pytest
+
 import omnisus_db as odb
 import omnisus_db.cli.main as cli_main
 from omnisus_db.cli.main import dataset_choices
@@ -77,3 +79,19 @@ def test_coverage_is_well_formed() -> None:
         if last is not None:
             assert 1 <= last[1] <= 12, d.name
             assert last >= first, d.name
+
+
+def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None:
+    """Tier 2 (c), spec §6: available() accepts every registry key and alias,
+    and rejects everything else. Offline — the listing is stubbed."""
+    from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
+    from omnisus_db.sources.datasus_ftp.inventory import available
+
+    monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr(
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list", lambda _p, _t: []
+    )
+    for name in (*REGISTRY, *ALIASES):
+        assert available(name) == [], name
+    with pytest.raises(ValueError, match="unknown dataset"):
+        available("definitely_not_a_dataset")
