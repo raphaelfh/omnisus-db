@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Lake Parquet files are now zstd-compressed.** DuckLake rewrites ingested
+  files with its own writer settings and was discarding the staging file's
+  zstd, producing lake files ~3.3× larger than necessary. The connection now
+  sets `parquet_compression=zstd`. Existing files keep their size until
+  compacted (`omnisus-db lake optimize`).
+
 ## v0.1.0 — 2026-05-02
 
 Initial release. Greenfield Python library replacing the old

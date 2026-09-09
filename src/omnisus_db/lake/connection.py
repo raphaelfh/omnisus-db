@@ -36,6 +36,11 @@ def make_connection(
     con = duckdb.connect(":memory:")
     con.execute("INSTALL ducklake; LOAD ducklake;")
     con.execute(f"ATTACH 'ducklake:{catalog_uri}' AS {alias} (DATA_PATH '{storage_root}')")
+    # DuckLake rewrites every ingested Parquet with its own writer settings and
+    # does not inherit the staging file's compression. Without this, lake files
+    # come out ~3.3x larger than the zstd staging (spec §5.2 item 5). Files
+    # already in a lake keep their size until compacted.
+    con.execute(f"CALL {alias}.set_option('parquet_compression', 'zstd')")
     return con
 
 
