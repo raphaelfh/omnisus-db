@@ -31,6 +31,17 @@ def dataset_choices() -> list[str]:
     return sorted({*REGISTRY, *ALIASES, *_NON_FTP})
 
 
+def ftp_dataset_choices() -> list[str]:
+    """Every name ``omnisus-db inventory`` accepts.
+
+    A subset of :func:`dataset_choices`: the inventory reads the DATASUS FTP
+    server, so datasets that do not come from it (``_NON_FTP``) have nothing
+    to list. Offering a name the command then rejects is a declaration that
+    lies (spec I5).
+    """
+    return sorted({*REGISTRY, *ALIASES})
+
+
 @app.command()
 def init(
     target: str = typer.Option(
@@ -111,7 +122,7 @@ def import_cmd(
 @app.command()
 def inventory(
     dataset: str | None = typer.Argument(
-        None, help=f"One of: {', '.join(dataset_choices())}. Omit when using --path."
+        None, help=f"One of: {', '.join(ftp_dataset_choices())}. Omit when using --path."
     ),
     path: str | None = typer.Option(
         None, "--path", "-p", help="Browse any FTP path instead (e.g. /dissemin/publicos/SINAN)"
@@ -148,7 +159,7 @@ def inventory(
             d = resolve(dataset)
         except ValueError as exc:
             raise typer.BadParameter(
-                f"{exc}. Choose from: {', '.join(dataset_choices())}"
+                f"{exc}. Choose from: {', '.join(ftp_dataset_choices())}"
             ) from exc
         scopes = odb.available(d, refresh=refresh)
         table = RichTable("UF", "Ano", "Mês")

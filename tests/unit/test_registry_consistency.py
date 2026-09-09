@@ -81,6 +81,14 @@ def test_coverage_is_well_formed() -> None:
             assert last >= first, d.name
 
 
+def test_d_inventory_advertises_exactly_what_available_accepts() -> None:
+    """The CLI's advertised set and the function's accepted set are the same
+    set. A name offered in help that `available` rejects is I5 in the UI."""
+    from omnisus_db.cli.main import ftp_dataset_choices
+
+    assert set(ftp_dataset_choices()) == {*REGISTRY, *ALIASES}
+
+
 def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None:
     """Tier 2 (c), spec §6: available() accepts every registry key and alias,
     and rejects everything else. Offline — the listing is stubbed."""
