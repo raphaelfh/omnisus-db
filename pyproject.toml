@@ -2,7 +2,7 @@
 name = "omnisus-db"
 dynamic = ["version"]
 description = "Python library for ingesting Brazilian public health databases into DuckLake"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Raphael Federicci", email = "rfh.federicci@gmail.com" }]
 readme = "README.md"
@@ -11,6 +11,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
@@ -108,6 +109,6 @@ markers = [
 addopts = "-ra --strict-markers"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.12"
 strict = false
 ignore_missing_imports = true

@@ -4,6 +4,14 @@
 
 ### Added
 
+- **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**
+  `requires-python` was `>=3.13` for no recorded reason — there is no 3.13-only
+  syntax in the package and the full suite passes on 3.12 — while `datasus-dbc`
+  ships cp313 wheels only for manylinux aarch64/armv7l/ppc64le/s390x. So every
+  mainstream install resolved to the sdist and needed cargo. The floor is now
+  `>=3.12`, where wheels exist, and CI tests that floor rather than merely
+  declaring it. Users already on 3.13 still need cargo until upstream ships
+  cp313 wheels; CI runs that case non-blocking so the gap stays visible.
 - **Multi-year imports work at all.** DATASUS changes its layouts between
   eras — SIM-DO is 42 columns in 1996, 45 in 2005, 61 in 2010, 90 in 2015 and
   89 in 2020, adding *and* removing columns. `Lake.ingest` created the table

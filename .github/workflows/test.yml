@@ -12,26 +12,30 @@ concurrency:
 
 jobs:
   test:
+    name: test (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Our users are epidemiologists on Windows, and we have FTP and path
-        # code. Only meaningful together with the install-gate job below:
-        # GitHub runners ship a Rust toolchain that users do not have, so a
-        # windows job alone would pass and mislead.
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Windows because our users are epidemiologists on Windows and we have
+        # FTP and path code. 3.12 because that is the declared floor, and a
+        # requires-python we never run is a claim we have not checked.
+        include:
+          - { os: ubuntu-latest, python: "3.13" }
+          - { os: macos-latest, python: "3.13" }
+          - { os: windows-latest, python: "3.13" }
+          - { os: ubuntu-latest, python: "3.12" }
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
       - name: Setup Python
-        run: uv python install 3.13
+        run: uv python install ${{ matrix.python }}
       - name: Sync deps
         # --frozen enforces the committed lockfile. Without it, green CI does
         # not mean the lockfile resolves.
-        run: uv sync --frozen --extra dev
+        run: uv sync --frozen -p ${{ matrix.python }} --extra dev
       - name: Lint
         run: uv run ruff check .
       - name: Format check
@@ -44,43 +48,45 @@ jobs:
       - name: Unit + integration tests
         # `not e2e` is what keeps DATASUS off the pull-request path. Anything
         # that touches the live server must carry BOTH markers.
-        run: uv run pytest -m "not e2e and not perf" --cov=omnisus_db --cov-fail-under=85
+        run: uv run -p ${{ matrix.python }} pytest -m "not e2e and not perf" --cov=omnisus_db --cov-fail-under=85
       - name: Frictionless validate dicionarios
         if: hashFiles('src/omnisus_db/data/dicionarios/*.yaml') != ''
         run: uv run frictionless validate src/omnisus_db/data/dicionarios/*.yaml
 
   install-gate:
-    # The real "does it install for a user" test: build the wheel, then install
-    # it into a clean environment where NOTHING may be built from source.
+    # The real "does it install for a user": build the wheel, then install it
+    # where NOTHING may be built from source. Everything else in CI is green
+    # only because the runners ship a Rust toolchain that users do not have.
     #
-    # Expected to FAIL today, which is why it does not block. Verified by hand
-    # on macOS/cp313: "all versions of datasus-dbc have no usable wheels".
-    # datasus-dbc 0.1.3 publishes cp313 wheels only for manylinux
-    # aarch64/armv7l/ppc64le/s390x, so on every mainstream platform
-    # `pip install omnisus-db` resolves to the sdist and needs a Rust
-    # toolchain. The rest of CI is green only because the runners ship cargo.
+    # 3.12 must pass — that is the declared floor and what `pip install
+    # omnisus-db` resolves to for a user without cargo.
     #
-    # It runs anyway so the gap stays visible and so the day upstream ships
-    # wheels, this turns green on its own. release.yml runs the same check as a
-    # HARD gate — we must not publish a package most users cannot install.
-    name: wheel-only install (${{ matrix.os }}, known-failing)
+    # 3.13 is expected to fail and does not block: datasus-dbc 0.1.3 publishes
+    # cp313 wheels only for manylinux aarch64/armv7l/ppc64le/s390x, so on 3.13
+    # the install still falls back to the sdist. It runs anyway so the gap
+    # stays visible and turns green on its own when upstream ships wheels.
+    name: wheel-only install (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
+    continue-on-error: ${{ !matrix.required }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - { os: ubuntu-latest, python: "3.12", required: true }
+          - { os: macos-latest, python: "3.12", required: true }
+          - { os: windows-latest, python: "3.12", required: true }
+          - { os: ubuntu-latest, python: "3.13", required: false }
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv python install 3.13
+      - run: uv python install ${{ matrix.python }}
       - name: Build the wheel
         run: uv build --wheel
       - name: Install it, binary dependencies only
         shell: bash
         run: |
-          uv venv -p 3.13 .gate
+          uv venv -p ${{ matrix.python }} .gate
           uv pip install --python .gate --only-binary=:all: dist/*.whl
       - name: Import the installed package
         shell: bash
-        run: uv run --python .gate --no-project python -c "import omnisus_db; print(omnisus_db.__version__)"
+        run: uv run --no-project --python .gate python -c "import omnisus_db; print(omnisus_db.__version__)"

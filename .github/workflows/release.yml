@@ -6,12 +6,10 @@ on:
 
 jobs:
   gate:
-    # Publishing is gated on the wheel-only install (spec §7.1.1 and §7.2).
-    # Releasing before this passes on all three platforms ships a package most
-    # users cannot install: datasus-dbc has no cp313 wheels for mainstream
-    # targets, so `pip install omnisus-db` needs a Rust toolchain.
-    #
-    # No continue-on-error here. This is the whole point of the gate.
+    # Publishing is gated on the wheel-only install (spec §7.1.1 and §7.2):
+    # we must not ship a package users cannot install without a Rust toolchain.
+    # Run at the declared floor (3.12), which is what pip resolves to for a
+    # user without cargo. No continue-on-error — this is the point of a gate.
     name: wheel-only install (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -21,12 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv python install 3.13
+      - run: uv python install 3.12
       - run: uv build --wheel
       - name: Install it, binary dependencies only
         shell: bash
         run: |
-          uv venv -p 3.13 .gate
+          uv venv -p 3.12 .gate
           uv pip install --python .gate --only-binary=:all: dist/*.whl
       - name: Import the installed package
         shell: bash
