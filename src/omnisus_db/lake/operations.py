@@ -7,6 +7,7 @@ import re
 from typing import TYPE_CHECKING, Self
 
 import duckdb
+import structlog
 
 from omnisus_db.lake.catalog import CatalogURI, parse_target
 from omnisus_db.lake.connection import close_connection, make_connection
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
     import polars as pl
 
     from omnisus_db.sources._base import ImportResult
+
+logger = structlog.get_logger(__name__)
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -34,6 +37,9 @@ class Lake:
         self._ensured: set[str] = set()
         """Tables this handle has already created and partitioned. Ensuring a
         table costs a schema read of the staging file; once per run is enough."""
+        self._columns: dict[str, set[str]] = {}
+        """Known column names per table, so schema reconciliation does not
+        re-query the catalog for every scope."""
         self._con = make_connection(
             catalog_uri=target.catalog_uri,
             storage_root=target.storage_root,
@@ -207,17 +213,38 @@ class Lake:
         )
         return True
 
-    def _ensure_table(self, table: str, staging: str, partition_by: tuple[str, ...]) -> None:
-        """Create the table (schema only) and set its partitioning, once.
+    def _staging_columns(self, staging: str) -> list[tuple[str, str]]:
+        """(name, type) of the staging file, read from the Parquet footer."""
+        return [
+            (str(name), str(dtype))
+            for name, dtype, *_ in self._con.execute(
+                f"DESCRIBE SELECT * FROM read_parquet('{staging}')"
+            ).fetchall()
+        ]
 
-        Both steps are per-table, not per-scope: creating reads the staging
-        file for its schema, and re-running the ALTER on an existing table
-        would write a schema-change snapshot for nothing. ``SET PARTITIONED
-        BY`` applies to files written after it, which is why it has to happen
-        before the first INSERT.
+    def _table_columns(self, table: str) -> set[str]:
+        if table not in self._columns:
+            rows = self._con.execute(
+                """
+                SELECT column_name FROM information_schema.columns
+                WHERE table_catalog = ? AND table_name = ?
+                """,
+                [self._alias, table],
+            ).fetchall()
+            self._columns[table] = {str(name) for (name,) in rows}
+        return self._columns[table]
+
+    def _ensure_table(self, table: str, staging: str, partition_by: tuple[str, ...]) -> None:
+        """Create the table and set its partitioning, then keep its schema wide
+        enough for what is being inserted.
+
+        DATASUS changes its layouts between eras: SIM-DO goes 42 columns in
+        1996, 45 in 2005, 61 in 2010, 90 in 2015 and 89 in 2020, adding *and*
+        removing columns. A table created from whichever scope landed first
+        therefore rejects most of the others, which is why a multi-year import
+        could not build a lake at all. New columns are added as they appear;
+        columns a given era lacks are left NULL by ``INSERT ... BY NAME``.
         """
-        if table in self._ensured:
-            return
         if table not in set(self.tables()):
             self._con.execute(
                 f"CREATE TABLE {self._alias}.{table} AS "
@@ -229,6 +256,23 @@ class Lake:
                     raise ValueError(f"partition_by must be plain identifiers; got {bad}")
                 cols = ", ".join(partition_by)
                 self._con.execute(f"ALTER TABLE {self._alias}.{table} SET PARTITIONED BY ({cols})")
+            self._columns.pop(table, None)
+            self._ensured.add(table)
+            return
+
+        known = self._table_columns(table)
+        missing = [(n, t) for n, t in self._staging_columns(staging) if n not in known]
+        for name, dtype in missing:
+            if not _IDENTIFIER.match(name):
+                raise ValueError(f"refusing to add a non-identifier column: {name!r}")
+            self._con.execute(f"ALTER TABLE {self._alias}.{table} ADD COLUMN {name} {dtype}")
+            known.add(name)
+        if missing:
+            logger.info(
+                "lake.schema_widened",
+                table=table,
+                added=[n for n, _ in missing],
+            )
         self._ensured.add(table)
 
     def ingest(
@@ -267,10 +311,14 @@ class Lake:
             bytes_written = staging.stat().st_size
 
             self._ensure_table(table, str(staging), partition_by)
+            # BY NAME, not positional: eras differ in both column count and
+            # order, and a column this era lacks must land as NULL rather than
+            # shifting every value one place to the left.
             # INSERT reports its own row count, so the separate
             # SELECT count(*) over the same staging file is pure waste.
             inserted = self._con.execute(
-                f"INSERT INTO {self._alias}.{table} SELECT * FROM read_parquet('{staging}')"
+                f"INSERT INTO {self._alias}.{table} BY NAME "
+                f"SELECT * FROM read_parquet('{staging}')"
             ).fetchone()
             rows = 0 if inserted is None else int(inserted[0])
 

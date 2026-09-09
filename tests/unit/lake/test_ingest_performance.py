@@ -120,8 +120,14 @@ def test_repeated_ingests_do_not_re_ensure_the_table(tmp_path: Path) -> None:
 
     joined = " ".join(spy.sql)
     assert "CREATE TABLE" not in joined, "the table was already ensured this run"
-    assert joined.count("read_parquet") == 1, (
-        "staging must be read once (the INSERT), not three times:\n" + "\n".join(spy.sql)
+    assert "count(*)" not in joined, (
+        "the row count comes from the INSERT itself; the extra scan is gone"
+    )
+    scans = [q for q in spy.sql if "read_parquet" in q and not q.startswith("DESCRIBE")]
+    assert len(scans) == 1, (
+        "staging must be scanned exactly once (the INSERT). The DESCRIBE that "
+        "reconciles era schemas reads only the Parquet footer, not the data.\n"
+        + "\n".join(spy.sql)
     )
 
 
@@ -148,3 +154,46 @@ def test_snapshots_lists_history_instead_of_raising(tmp_path: Path) -> None:
         snaps = lake.snapshots()
     assert snaps, "a lake with an ingest has snapshots"
     assert {"snapshot_id", "snapshot_time", "changes"} == set(snaps[0])
+
+
+# --- schema drift across DATASUS eras --------------------------------------
+
+
+def _era(cols: dict[str, list[object]]) -> pl.LazyFrame:
+    return pl.DataFrame(cols).lazy()
+
+
+def test_a_later_era_with_new_columns_widens_the_table(tmp_path: Path) -> None:
+    """DATASUS changes its layouts between eras: SIM-DO is 42 columns in 1996,
+    45 in 2005, 61 in 2010, 90 in 2015, 89 in 2020. A table created from the
+    first scope to land rejected every wider era, so a multi-year import could
+    not build a lake at all — the failure only appears against real data,
+    because every fixture is a single year."""
+    with Lake.local(f"ducklake:{tmp_path}/w.ducklake") as lake:
+        lake.ingest("t", _era({"ano": [1996], "uf": ["RR"], "a": [1]}))
+        lake.ingest("t", _era({"ano": [2015], "uf": ["RR"], "a": [2], "novo": ["x"]}))
+        rows = lake.connect().execute("SELECT ano, a, novo FROM lake.t ORDER BY ano").fetchall()
+
+    assert rows == [(1996, 1, None), (2015, 2, "x")]
+
+
+def test_an_earlier_era_missing_columns_lands_as_null(tmp_path: Path) -> None:
+    """The other direction: columns get removed too (`crm` vanished after 2015).
+    A narrower era must land as NULL, never shift values one column left."""
+    with Lake.local(f"ducklake:{tmp_path}/n.ducklake") as lake:
+        lake.ingest("t", _era({"ano": [2015], "uf": ["RR"], "a": [1], "crm": ["123"]}))
+        lake.ingest("t", _era({"ano": [2020], "uf": ["RR"], "a": [2]}))
+        rows = lake.connect().execute("SELECT ano, a, crm FROM lake.t ORDER BY ano").fetchall()
+
+    assert rows == [(2015, 1, "123"), (2020, 2, None)]
+
+
+def test_columns_are_matched_by_name_not_position(tmp_path: Path) -> None:
+    """Positional INSERT would silently write `uf` into `a` when the column
+    order differs between eras — corrupt data rather than a loud failure."""
+    with Lake.local(f"ducklake:{tmp_path}/o.ducklake") as lake:
+        lake.ingest("t", _era({"ano": [2020], "uf": ["RR"], "a": [7]}))
+        lake.ingest("t", _era({"a": [8], "ano": [2021], "uf": ["AC"]}))
+        rows = lake.connect().execute("SELECT ano, uf, a FROM lake.t ORDER BY ano").fetchall()
+
+    assert rows == [(2020, "RR", 7), (2021, "AC", 8)]

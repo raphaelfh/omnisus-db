@@ -4,6 +4,14 @@
 
 ### Added
 
+- **Multi-year imports work at all.** DATASUS changes its layouts between
+  eras — SIM-DO is 42 columns in 1996, 45 in 2005, 61 in 2010, 90 in 2015 and
+  89 in 2020, adding *and* removing columns. `Lake.ingest` created the table
+  from the first scope it saw and inserted positionally, so every other era was
+  rejected outright. It now widens the table as new columns appear and inserts
+  `BY NAME`, so a column an era lacks lands as NULL instead of shifting every
+  value one place left. Only real multi-year data surfaces this; every test
+  fixture is a single year.
 - **Import tolerance.** A wide import no longer dies on the first file DATASUS
   never published. `import_dataset` returns an `ImportReport` of per-scope
   outcomes — `ok`, `skipped` (not published upstream; normal), `failed`
