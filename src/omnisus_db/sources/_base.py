@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
-
-import pyarrow as pa
 
 
 @dataclass(frozen=True)
@@ -24,17 +21,6 @@ class ScopeKey:
         if self.mes is None:
             return f"{self.uf}_{self.ano}"
         return f"{self.uf}_{self.ano}_{self.mes:02d}"
-
-
-@dataclass(frozen=True)
-class Dataset:
-    """Immutable description of a dataset (e.g., SIM-DO)."""
-
-    family: str
-    name: str
-    canonical_schema: pa.Schema
-    partition_by: tuple[str, ...]
-    dictionary_path: Path
 
 
 @dataclass

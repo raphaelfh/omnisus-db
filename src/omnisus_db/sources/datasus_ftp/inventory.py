@@ -5,24 +5,10 @@ from __future__ import annotations
 import re
 
 from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, resolve
 
-# Dataset name -> (filename prefix, monthly?)
-DATASET_PREFIX: dict[str, tuple[str, bool]] = {
-    "sim_do": ("DO", False),
-    "sinasc_nv": ("DN", False),
-    "sih_rd": ("RD", True),
-    "sia_bi": ("BI", True),
-    "sia_am": ("AM", True),
-    "sia_aq": ("AQ", True),
-    "sia_atd": ("ATD", True),
-    "sia_ad": ("AD", True),
-    "sia_abo": ("ABO", True),
-    "sia_ps": ("PS", True),
-    "cnes_st": ("ST", True),
-}
-
-# Reverse map: prefix -> dataset
-PREFIX_TO_DATASET: dict[str, str] = {p: name for name, (p, _) in DATASET_PREFIX.items()}
+# Derived from the registry (spec §3.1) — never hand-maintained here.
+PREFIX_TO_DATASET: dict[str, str] = {d.prefix: d.name for d in REGISTRY.values()}
 
 _YEARLY_PATTERN = re.compile(r"^([A-Z]{2})([A-Z]{2})(\d{4})\.dbc$", re.IGNORECASE)
 # Prefixes are 2 OR 3 letters (ATD, ABO); greedy {2,3} + backtracking resolves
@@ -57,8 +43,7 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
     if prefix not in PREFIX_TO_DATASET:
         raise ValueError(f"unknown dataset prefix: {prefix}")
     dataset = PREFIX_TO_DATASET[prefix]
-    _, is_monthly = DATASET_PREFIX[dataset]
-    if is_monthly:
+    if REGISTRY[dataset].monthly:
         m = _MONTHLY_PATTERN.match(name)
         if not m:
             raise ValueError(f"expected monthly filename: {name}")
@@ -71,14 +56,16 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
     return ScopeKey(uf=uf.upper(), ano=int(yyyy)), dataset
 
 
-def scope_to_filename(dataset: str, scope: ScopeKey) -> str:
-    """Build the DATASUS DBC filename for a given (dataset, scope)."""
-    if dataset not in DATASET_PREFIX:
-        raise ValueError(f"unknown dataset: {dataset}")
-    prefix, monthly = DATASET_PREFIX[dataset]
+def scope_to_filename(dataset: str | Dataset, scope: ScopeKey) -> str:
+    """Build the DATASUS DBC filename for a given (dataset, scope).
+
+    Accepts a registry key, an alias, or a ``Dataset`` value (spec §3.3.1),
+    so an ad-hoc dataset can name its files without being registered.
+    """
+    d = resolve(dataset)
     yy = scope.ano % 100
-    if monthly:
+    if d.monthly:
         if scope.mes is None:
-            raise ValueError(f"{dataset} requires mes; got: {scope}")
-        return f"{prefix}{scope.uf}{yy:02d}{scope.mes:02d}.dbc"
-    return f"{prefix}{scope.uf}{scope.ano:04d}.dbc"
+            raise ValueError(f"{d.name} requires mes; got: {scope}")
+        return f"{d.prefix}{scope.uf}{yy:02d}{scope.mes:02d}.dbc"
+    return f"{d.prefix}{scope.uf}{scope.ano:04d}.dbc"

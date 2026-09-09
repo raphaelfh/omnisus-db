@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pyarrow as pa
-import pytest
-
-from omnisus_db.sources._base import Dataset, ImportResult, ScopeKey
+from omnisus_db.sources._base import ImportResult, ScopeKey
 
 
 def test_scope_key_is_hashable_and_immutable() -> None:
@@ -22,18 +17,6 @@ def test_scope_key_is_hashable_and_immutable() -> None:
 def test_scope_key_str_excludes_none_fields() -> None:
     assert str(ScopeKey(uf="SP", ano=2024, mes=None)) == "SP_2024"
     assert str(ScopeKey(uf="MG", ano=2024, mes=1)) == "MG_2024_01"
-
-
-def test_dataset_is_frozen() -> None:
-    d = Dataset(
-        family="datasus_ftp",
-        name="sim_do",
-        canonical_schema=pa.schema([("numerodo", pa.string())]),
-        partition_by=("ano", "uf"),
-        dictionary_path=Path("/tmp/sim_do.yaml"),
-    )
-    with pytest.raises((AttributeError, TypeError)):
-        d.name = "other"  # type: ignore[misc]
 
 
 def test_import_result_defaults() -> None:
