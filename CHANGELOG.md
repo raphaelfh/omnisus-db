@@ -21,8 +21,20 @@
 - **Lake Parquet files are now zstd-compressed.** DuckLake rewrites ingested
   files with its own writer settings and was discarding the staging file's
   zstd, producing lake files ~3.3× larger than necessary. The connection now
-  sets `parquet_compression=zstd`. Existing files keep their size until
-  compacted (`omnisus-db lake optimize`).
+  sets `parquet_compression=zstd`. Files already in a lake keep their current
+  (uncompressed) size — recompressing them requires rewriting the table, and
+  a later release will provide a command for that.
+
+### Removed
+
+- `omnisus_db.sources.datasus_ftp.datasets.DatasetConfig` — replaced by
+  `Dataset`.
+- `omnisus_db.sources.datasus_ftp.inventory.DATASET_PREFIX` — derive the
+  prefix map from `REGISTRY` / `PREFIX_TO_DATASET` instead.
+- `omnisus_db.sources._base.Dataset` (unused) — replaced by
+  `omnisus_db.Dataset`.
+
+`get_config` is kept as a compatibility wrapper over `resolve`.
 
 ## v0.1.0 — 2026-05-02
 

@@ -104,3 +104,17 @@ def test_adhoc_monthly_dataset_builds_monthly_filename() -> None:
 
     d = _adhoc(name="sia_pa", prefix="PA", cadence="monthly", partition_by=("ano", "uf", "mes"))
     assert scope_to_filename(d, ScopeKey(uf="RR", ano=2024, mes=3)) == "PARR2403.dbc"
+
+
+def test_dataset_is_keyword_only() -> None:
+    """ADR 0002: ``Dataset`` is constructible only by keyword, never
+    positionally — a positional call must raise ``TypeError``."""
+    with pytest.raises(TypeError):
+        Dataset(  # type: ignore[misc]
+            "custom",
+            "DO",
+            "/dissemin/publicos/X",
+            "yearly",
+            ("ano", "uf"),
+            ((2000, 1), None),
+        )

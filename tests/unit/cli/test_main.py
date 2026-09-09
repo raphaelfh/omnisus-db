@@ -166,12 +166,27 @@ def test_import_help_lists_registry_names_and_aliases() -> None:
 
 
 def test_dataset_choices_cover_registry_aliases_and_non_ftp() -> None:
+    import omnisus_db.cli.main as cli_main
     from omnisus_db.cli.main import dataset_choices
     from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
 
     choices = set(dataset_choices())
-    assert set(REGISTRY) | set(ALIASES) <= choices
+    assert choices == set(REGISTRY) | set(ALIASES) | set(cli_main._NON_FTP)
     assert "ibge-pop" in choices
+
+
+def test_import_dispatch_fails_loudly_on_non_ftp_entry_without_importer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``_NON_FTP`` entry with no matching importer must raise, never
+    silently mis-route to another dataset's importer."""
+    import omnisus_db.cli.main as cli_main
+
+    monkeypatch.setitem(cli_main._NON_FTP, "bogus-nonftp", "bogus")
+
+    result = runner.invoke(app, ["import", "bogus-nonftp", "--year", "2024"])
+    assert result.exit_code != 0
+    assert "imported" not in result.output
 
 
 def test_cli_default_target_is_the_lake_default() -> None:

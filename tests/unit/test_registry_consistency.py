@@ -10,11 +10,13 @@ from __future__ import annotations
 from importlib.resources import files
 
 import omnisus_db as odb
+import omnisus_db.cli.main as cli_main
 from omnisus_db.cli.main import dataset_choices
 from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
 
-NON_FTP_DATASETS = {"ibge_pop"}
-"""Datasets with their own importer and YAML but no registry row (spec §3.4)."""
+NON_FTP_DATASETS = set(cli_main._NON_FTP.values())
+"""Datasets with their own importer and YAML but no registry row (spec §3.4).
+Derived from the CLI's own dispatch table — one fact source (I4)."""
 
 
 def _packaged_yaml_stems() -> set[str]:
@@ -28,7 +30,7 @@ def test_a_every_row_has_a_packaged_dictionary() -> None:
 
 
 def test_b_cli_accepts_every_row_and_alias() -> None:
-    assert set(REGISTRY) | set(ALIASES) <= set(dataset_choices())
+    assert set(dataset_choices()) == set(REGISTRY) | set(ALIASES) | set(cli_main._NON_FTP)
 
 
 def test_b_python_api_accepts_every_row() -> None:
@@ -62,3 +64,16 @@ def test_keys_equal_names_and_aliases_point_at_keys() -> None:
     for alias, key in ALIASES.items():
         assert key in REGISTRY, alias
         assert alias not in REGISTRY, alias
+
+
+def test_coverage_is_well_formed() -> None:
+    """``coverage`` is written but never checked elsewhere — validate the
+    shape here so a bad ``(year, month)`` pair can't silently sit in the
+    registry (spec I5: a row must not lie)."""
+    for d in REGISTRY.values():
+        first, last = d.coverage
+        assert 1 <= first[1] <= 12, d.name
+        assert first[0] >= 1979, d.name
+        if last is not None:
+            assert 1 <= last[1] <= 12, d.name
+            assert last >= first, d.name

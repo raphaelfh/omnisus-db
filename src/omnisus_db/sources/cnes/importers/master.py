@@ -24,7 +24,7 @@ from collections.abc import Callable, Sequence
 import httpx
 import structlog
 
-from omnisus_db.lake import Lake
+from omnisus_db.lake import DEFAULT_TARGET, Lake
 
 logger = structlog.get_logger(__name__)
 
@@ -154,7 +154,7 @@ def _upsert_master(lake: Lake, records: list[dict]) -> None:
 def import_cnes_master(
     *,
     codes: Sequence[str] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
     concurrency: int = 5,
     only_missing: bool = True,
     progress: ProgressCallback | None = None,

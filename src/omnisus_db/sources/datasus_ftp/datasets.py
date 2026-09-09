@@ -22,7 +22,7 @@ YM = tuple[int, int]
 Cadence = Literal["yearly", "monthly"]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Dataset:
     """Identity and location of one DATASUS-FTP dataset.
 
@@ -43,7 +43,8 @@ class Dataset:
     """How DATASUS publishes files. Decides filename shape (upstream fact)."""
 
     partition_by: tuple[str, ...]
-    """How the lake table is laid out (our storage policy, spec §5.2 item 4)."""
+    """How the lake table will be laid out (our storage policy). Not yet
+    applied by ``Lake.ingest`` — spec §5.2 item 4."""
 
     coverage: tuple[YM, YM | None]
     """``(first, last)`` published; ``last=None`` means ongoing.

@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 import omnisus_db as odb
 from omnisus_db.lake import Lake
 from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 
 
 def test_scopes_for_yearly_ignores_months() -> None:
@@ -100,3 +103,41 @@ def test_default_target_is_exported_from_lake() -> None:
 
     assert DEFAULT_TARGET == "ducklake:./omnisus.ducklake"
     assert odb.DEFAULT_TARGET is DEFAULT_TARGET
+
+
+_FIXTURE_FOR: dict[str, tuple[str, ScopeKey]] = {
+    "sim_do": ("sim_rr_2023_mini", ScopeKey(uf="RR", ano=2023)),
+    "sinasc_nv": ("sinasc_rr_2022_mini", ScopeKey(uf="RR", ano=2022)),
+    "sih_rd": ("sih_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_bi": ("sia_bi_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_am": ("sia_am_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_aq": ("sia_aq_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_atd": ("sia_atd_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_ad": ("sia_ad_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_ps": ("sia_ps_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+    "sia_abo": ("sia_abo_sp_2024_01_mini", ScopeKey(uf="SP", ano=2024, mes=1)),
+    "cnes_st": ("cnes_rr_2024_01_mini", ScopeKey(uf="RR", ano=2024, mes=1)),
+}
+
+
+def test_fixture_map_covers_every_registry_row() -> None:
+    """A new registry row without a fixture here would silently skip Tier 2
+    coverage — assert the map is complete instead."""
+    assert set(_FIXTURE_FOR) == set(REGISTRY)
+
+
+@pytest.mark.parametrize("dataset_name", sorted(REGISTRY))
+def test_import_dataset_reaches_every_registry_row(
+    dataset_name: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, dbc_fixture
+) -> None:
+    """Tier 2: every registry row is proven end to end, not just sia_atd and
+    sia_bi (spec §6) — this is what makes the SIA gap impossible."""
+    fixture_name, scope = _FIXTURE_FOR[dataset_name]
+    _fake_fetch_from(monkeypatch, dbc_fixture(fixture_name).read_bytes())
+    target = f"ducklake:{tmp_path}/{dataset_name}.ducklake"
+
+    results = odb.import_dataset(dataset_name, scopes=[scope], target=target)
+
+    assert results[0].rows > 0
+    with Lake.local(target) as lake:
+        assert dataset_name in lake.tables()

@@ -32,10 +32,12 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
     yearly = _YEARLY_PATTERN.match(name)
     monthly = _MONTHLY_PATTERN.match(name)
 
-    # Use the shape of the file (post-prefix digits) plus dataset registry:
-    # - yearly datasets have prefix + UF + YYYY (8 chars before .dbc)
-    # - monthly datasets have prefix + UF + YYMM (8 chars before .dbc) — same length!
-    # Distinguish by prefix lookup against DATASET_PREFIX.
+    # Prefix length varies (2 or 3 letters) and cadence isn't encoded in the
+    # filename, so try both patterns and disambiguate by looking the matched
+    # prefix up in PREFIX_TO_DATASET. This is unambiguous: the UF is a fixed
+    # 2 letters and a digit can never be a UF letter, so the greedy `{2,3}`
+    # prefix group in _MONTHLY_PATTERN backtracks to the correct split
+    # (ATDRR2401 -> ATD+RR, never AT+DR; AMRR2401 backtracks AMR -> AM+RR).
     candidate = monthly or yearly
     if not candidate:
         raise ValueError(f"unrecognized filename: {name}")

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import typer
 from rich.console import Console
 
@@ -16,9 +18,12 @@ app = typer.Typer(
 )
 console = Console()
 
-_NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop"}
-"""CLI names of datasets that are not DATASUS-FTP rows (spec §3.4). Each has
-its own named importer."""
+_NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop", "ibge_pop": "ibge_pop"}
+"""CLI names of datasets that are not DATASUS-FTP rows (spec §3.4), mapped to
+their dataset name. Dispatch (in ``import_cmd``) looks up the importer for
+that dataset name in a second, importer-keyed mapping built inside the
+command body — a mapping entry with no importer raises ``KeyError`` loudly
+rather than silently importing the wrong dataset."""
 
 
 def dataset_choices() -> list[str]:
@@ -57,6 +62,10 @@ def import_cmd(
     """Import a dataset into the lake."""
     import omnisus_db as odb
 
+    non_ftp_importers: dict[str, Callable[..., list[odb.ImportResult]]] = {
+        "ibge_pop": lambda **kw: odb.import_ibge_pop(**kw),
+    }
+
     # Resolve years
     if years_range:
         a, b = years_range.split("-")
@@ -70,7 +79,9 @@ def import_cmd(
     month_list = [int(x) for x in months.split(",")] if months else None
 
     if dataset in _NON_FTP:
-        results = odb.import_ibge_pop(years=yrs, target=target)
+        name = _NON_FTP[dataset]
+        importer = non_ftp_importers[name]
+        results = importer(years=yrs, target=target)
     else:
         try:
             d = resolve(dataset)
