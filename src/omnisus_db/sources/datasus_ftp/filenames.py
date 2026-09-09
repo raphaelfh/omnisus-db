@@ -75,3 +75,17 @@ def scope_to_filename(dataset: str | Dataset, scope: ScopeKey) -> str:
             raise ValueError(f"{d.name} requires mes; got: {scope}")
         return f"{d.prefix}{scope.uf}{yy:02d}{scope.mes:02d}.dbc"
     return f"{d.prefix}{scope.uf}{scope.ano:04d}.dbc"
+
+
+def decode(name: str) -> tuple[ScopeKey, str] | None:
+    """Best-effort :func:`parse_filename`: ``None`` instead of raising.
+
+    A DATASUS directory holds files from many datasets, most of which this
+    package does not model (SIASUS/200801_/Dados carries ``PA*`` and ``SAD*``
+    alongside the APAC family). Callers that scan a directory need to skip
+    those, not fail on them.
+    """
+    try:
+        return parse_filename(name)
+    except ValueError:
+        return None
