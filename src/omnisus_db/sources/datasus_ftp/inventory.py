@@ -19,10 +19,15 @@ from __future__ import annotations
 import contextlib
 import ftplib
 import time
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime
 
 import structlog
+
+from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
+from omnisus_db.sources.datasus_ftp.filenames import decode
 
 logger = structlog.get_logger(__name__)
 
@@ -198,3 +203,92 @@ def list_dir(
         logger.info("inventory.listed", path=path, entries=len(entries), skipped=skipped)
         return Listing(entries=tuple(entries), skipped=skipped, path=path)
     raise FtpUnavailable(f"{path}: {max_retries} attempts failed") from last_exc
+
+
+def list_dir_cached(
+    path: str,
+    *,
+    refresh: bool = False,
+    ttl_hours: float = 24.0,
+    timeout_seconds: float = 60.0,
+    max_retries: int = 3,
+) -> Listing:
+    """:func:`list_dir` with the Parquet cache in front of it.
+
+    The cache is never authoritative (spec I8): a miss, a stale entry or an
+    unreadable file all fall through to the network.
+    """
+    from omnisus_db.sources.datasus_ftp import _cache
+
+    if not refresh:
+        cached = _cache.read_cached(path, ttl_hours=ttl_hours)
+        if cached is not None:
+            logger.debug("inventory.cache_hit", path=path, entries=len(cached.entries))
+            return cached
+    listing = list_dir(path, timeout_seconds=timeout_seconds, max_retries=max_retries)
+    _cache.write_cache(listing)
+    return listing
+
+
+def crawl(path: str, *, depth: int = 1, refresh: bool = False) -> Iterator[FtpEntry]:
+    """Walk a remote subtree, yielding entries as they are found.
+
+    Open-world: any path, no decoding, so it reaches families this package
+    does not model (SINAN, CIHA, PCE). ``depth=1`` lists ``path`` only.
+    Recursion is bounded by ``depth`` and the walk is sequential — no queue,
+    no pool (spec §4.1, I7).
+
+    A subdirectory that cannot be listed is logged and skipped; the entry for
+    the directory itself is still yielded, so a denied subtree never silently
+    truncates the walk.
+    """
+    if depth < 1:
+        raise ValueError(f"depth must be >= 1; got {depth}")
+    frontier: list[tuple[str, int]] = [(path, depth)]
+    while frontier:
+        current, remaining = frontier.pop(0)
+        try:
+            listing = list_dir_cached(current, refresh=refresh)
+        except (FtpPathNotFound, FtpUnavailable) as exc:
+            if current == path:
+                raise
+            logger.warning("inventory.crawl_skipped", path=current, error=str(exc))
+            continue
+        for entry in listing.entries:
+            yield entry
+            if entry.is_dir and remaining > 1:
+                frontier.append((entry.path, remaining - 1))
+
+
+def available(
+    dataset: str | Dataset,
+    *,
+    years: Iterable[int] | None = None,
+    refresh: bool = False,
+) -> list[ScopeKey]:
+    """Scopes DATASUS actually publishes for ``dataset``, newest last.
+
+    Closed-world counterpart to :func:`crawl`: the same listing, with each
+    filename decoded through the registry. Names belonging to other datasets
+    in the same directory — SIASUS/200801_/Dados holds ``PA*`` and ``SAD*``
+    alongside the APAC family — are skipped, not raised on.
+
+    This is the planner's input (spec §5.1) and the Tier 3 oracle (spec §6).
+    """
+    d = resolve(dataset)
+    wanted = set(years) if years is not None else None
+    listing = list_dir_cached(d.ftp_dir, refresh=refresh)
+    scopes: list[ScopeKey] = []
+    for entry in listing.files:
+        decoded = decode(entry.name)
+        if decoded is None:
+            continue
+        scope, name = decoded
+        if name != d.name:
+            continue
+        if wanted is not None and scope.ano not in wanted:
+            continue
+        scopes.append(scope)
+    scopes.sort(key=lambda s: (s.ano, s.uf, s.mes or 0))
+    logger.info("inventory.available", dataset=d.name, scopes=len(scopes))
+    return scopes
