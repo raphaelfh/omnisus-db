@@ -16,8 +16,17 @@ This module has no dependency on ``Lake``.
 
 from __future__ import annotations
 
+import contextlib
+import ftplib
+import time
 from dataclasses import dataclass
 from datetime import datetime
+
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+FTP_HOST = "ftp.datasus.gov.br"
 
 _DIR_MARKER = "<DIR>"
 
@@ -122,3 +131,70 @@ def _parse_msdos_line(line: str, parent: str) -> FtpEntry | None:
         size_bytes=size,
         modified=modified,
     )
+
+
+def _blocking_list(path: str, timeout_seconds: float) -> list[str]:
+    """One anonymous-FTP LIST of ``path``. The patch seam for tests.
+
+    ``encoding = "latin-1"`` is required: ftplib defaults to UTF-8 and raises
+    UnicodeDecodeError on real DATASUS listings (spec §4.2).
+    """
+    lines: list[str] = []
+    with contextlib.closing(ftplib.FTP(FTP_HOST, timeout=timeout_seconds)) as ftp:
+        ftp.encoding = "latin-1"
+        ftp.login()  # anonymous
+        ftp.voidcmd("TYPE I")
+        ftp.cwd(path)
+        ftp.dir(lines.append)
+    return lines
+
+
+def list_dir(
+    path: str,
+    *,
+    timeout_seconds: float = 60.0,
+    max_retries: int = 3,
+    backoff_seconds: float = 1.0,
+) -> Listing:
+    """List one remote directory. The primitive every other layer builds on.
+
+    Raises:
+        FtpPathNotFound: the directory is missing or access was denied (550).
+            Terminal — never retried.
+        FtpUnavailable: transient failures exhausted ``max_retries``.
+
+    An existing but empty directory returns an empty :class:`Listing`; empty
+    and failed are never the same value (spec I6). Every connection attempt is
+    fresh, because a long-lived FTP control connection to DATASUS does not
+    survive a transient error.
+
+    ``path`` is normalised exactly once, on entry — trailing slashes stripped
+    — so ``Listing.path`` and every ``FtpEntry.parent`` carry the canonical
+    form regardless of what the caller passed (a caller-supplied ``/x/`` and
+    ``/x`` must never diverge downstream, e.g. in the Task 5 cache).
+    """
+    path = path.rstrip("/") or "/"
+    last_exc: Exception | None = None
+    for attempt in range(max_retries):
+        try:
+            raw = _blocking_list(path, timeout_seconds)
+        except ftplib.error_perm as exc:
+            raise FtpPathNotFound(f"{path}: {exc}") from exc
+        except (*ftplib.all_errors, OSError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt + 1 < max_retries:
+                time.sleep(backoff_seconds * (2**attempt))
+            continue
+        entries: list[FtpEntry] = []
+        skipped = 0
+        for line in raw:
+            entry = _parse_msdos_line(line, path)
+            if entry is None:
+                skipped += 1
+            else:
+                entries.append(entry)
+        if skipped:
+            logger.warning("inventory.skipped_lines", path=path, skipped=skipped)
+        logger.info("inventory.listed", path=path, entries=len(entries), skipped=skipped)
+        return Listing(entries=tuple(entries), skipped=skipped, path=path)
+    raise FtpUnavailable(f"{path}: {max_retries} attempts failed") from last_exc
