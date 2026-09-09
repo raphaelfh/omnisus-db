@@ -78,5 +78,17 @@ def test_inventory_reports_a_missing_path_clearly(monkeypatch: pytest.MonkeyPatc
     assert "not found" in result.output.lower()
 
 
+def test_inventory_reports_ftp_unavailable_clearly(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(_p: str, _t: float) -> list[str]:
+        raise TimeoutError("dropped")
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", boom)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory.time.sleep", lambda _s: None)
+    result = runner.invoke(app, ["inventory", "--path", "/nope"])
+    assert result.exit_code != 0
+    assert "unreachable" in result.output.lower()
+    assert "Traceback" not in result.output
+
+
 def test_inventory_appears_in_top_level_help() -> None:
     assert "inventory" in runner.invoke(app, ["--help"]).output
