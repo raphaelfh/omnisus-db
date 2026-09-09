@@ -13,6 +13,7 @@ never an error. It knows nothing about FTP.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import re
@@ -97,7 +98,8 @@ def write_cache(listing: Listing) -> Path:
         )
         os.replace(tmp, target)
     except Exception:
-        tmp.unlink(missing_ok=True)
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
         raise
     return target
 

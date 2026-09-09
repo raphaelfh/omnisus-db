@@ -131,6 +131,23 @@ def test_list_dir_cached_writes_the_cache_file() -> None:
     assert cache_path(SIM_DIR).exists()
 
 
+def test_an_unwritable_cache_does_not_veto_a_good_listing() -> None:
+    """I8 on the write side. The network answer is already in hand; a cache
+    that cannot be written must not be able to throw it away."""
+    with (
+        patch(
+            "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+            return_value=[_file("DOAC1996.dbc")],
+        ),
+        patch(
+            "omnisus_db.sources.datasus_ftp._cache.write_cache",
+            side_effect=PermissionError("read-only file system"),
+        ),
+    ):
+        scopes = available("sim_do")
+    assert scopes == [ScopeKey(uf="AC", ano=1996)]
+
+
 def test_refresh_still_writes_the_cache_it_bypassed() -> None:
     """I8's other half. A call count proves the read was skipped; only the
     file's mtime proves the write still happened."""

@@ -238,7 +238,10 @@ def list_dir_cached(
             logger.debug("inventory.cache_hit", path=path, entries=len(cached.entries))
             return cached
     listing = list_dir(path, timeout_seconds=timeout_seconds, max_retries=max_retries)
-    _cache.write_cache(listing)
+    try:
+        _cache.write_cache(listing)
+    except Exception as exc:  # I8: a cache we cannot write is still not authoritative
+        logger.warning("inventory.cache_write_failed", path=path, error=str(exc))
     return listing
 
 
