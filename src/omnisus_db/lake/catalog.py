@@ -45,3 +45,7 @@ def parse_target(target: str) -> CatalogURI:
         catalog_uri=f"sqlite:{catalog_path}",
         storage_root=str(storage_path),
     )
+
+
+DEFAULT_TARGET = "ducklake:./omnisus.ducklake"
+"""Default lake target for the Python API and the CLI — its single home (spec I4)."""

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Added
+
+- **Every registered dataset is now reachable.** `import_dataset(name, scopes=...)`
+  imports any DATASUS-FTP dataset — including the whole SIA/APAC family
+  (`sia_bi`, `sia_am`, `sia_aq`, `sia_atd`, `sia_ad`, `sia_abo`, `sia_ps`),
+  which had been registered but had no public door.
+- `scopes_for(name, years=..., ufs=..., months=...)` — the product planner.
+  Planning is composition: pass its result, or any `list[ScopeKey]`, to
+  `import_dataset`.
+- `Dataset` is public. A caller can construct one for a dataset the package
+  does not curate, point `dictionary=` at their own Frictionless YAML, and
+  ingest it through the same code path.
+- `DEFAULT_TARGET` exported from `omnisus_db` and `omnisus_db.lake`.
+
 ### Changed
 
 - **Lake Parquet files are now zstd-compressed.** DuckLake rewrites ingested

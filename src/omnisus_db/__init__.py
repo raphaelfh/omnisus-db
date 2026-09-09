@@ -6,9 +6,10 @@ import asyncio
 from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
-from omnisus_db.lake import Lake
+from omnisus_db.lake import DEFAULT_TARGET, Lake
 from omnisus_db.sources._base import ImportResult, ScopeKey
 from omnisus_db.sources.datasus_ftp._runner import import_scope as _import_scope_ftp
+from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 
 ALL_UFS: tuple[str, ...] = (
     "AC",
@@ -41,59 +42,55 @@ ALL_UFS: tuple[str, ...] = (
 )
 
 
-def _import_dataset_ftp(
-    dataset: str,
+def scopes_for(
+    dataset: str | Dataset,
     *,
     years: Iterable[int],
-    ufs: Sequence[str] | None,
-    target: str = "ducklake:./omnisus.ducklake",
+    ufs: Sequence[str] | None = None,
+    months: Iterable[int] | None = None,
+) -> list[ScopeKey]:
+    """The product planner: every (uf, year[, month]) for a dataset.
+
+    ``months`` is ignored for yearly datasets and defaults to 1..12 for
+    monthly ones. Order is year -> uf -> month. Planning is composition
+    (spec §5.1): pass the result — or any other ``list[ScopeKey]`` — to
+    :func:`import_dataset`.
+    """
+    d = resolve(dataset)
+    uf_list = tuple(ufs) if ufs is not None else ALL_UFS
+    month_list = tuple(months) if months is not None else tuple(range(1, 13))
+    scopes: list[ScopeKey] = []
+    for year in years:
+        for uf in uf_list:
+            if d.monthly:
+                scopes.extend(ScopeKey(uf=uf, ano=year, mes=m) for m in month_list)
+            else:
+                scopes.append(ScopeKey(uf=uf, ano=year))
+    return scopes
+
+
+def import_dataset(
+    dataset: str | Dataset,
+    *,
+    scopes: Sequence[ScopeKey],
+    target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
-    """Bulk import: every (uf, year) combo for a DATASUS-FTP yearly dataset."""
-    if ufs is None:
-        ufs = ALL_UFS
+    """Import the given scopes of any DATASUS-FTP dataset into the lake.
+
+    ``dataset`` is a registry key (``"sia_bi"``), an alias (``"sim"``) or a
+    ``Dataset`` value. The loop iterates ``scopes`` and never asks where they
+    came from — build them with :func:`scopes_for` or by hand.
+
+    Per-scope tolerance and ``ImportReport`` arrive in a later plan (spec
+    §5.1); until then a missing file raises, as it always has.
+    """
+    d = resolve(dataset)
 
     async def run() -> list[ImportResult]:
         results: list[ImportResult] = []
         with Lake.local(target) as lake:
-            for year in years:
-                for uf in ufs:
-                    results.append(
-                        await _import_scope_ftp(
-                            dataset=dataset,
-                            scope=ScopeKey(uf=uf, ano=year),
-                            lake=lake,
-                        )
-                    )
-        return results
-
-    return asyncio.run(run())
-
-
-def _import_dataset_ftp_monthly(
-    dataset: str,
-    *,
-    years: Iterable[int],
-    ufs: Sequence[str] | None,
-    months: Iterable[int],
-    target: str,
-) -> list[ImportResult]:
-    """Bulk import: every (uf, year, month) combo for a monthly DATASUS-FTP dataset."""
-    if ufs is None:
-        ufs = ALL_UFS
-
-    async def run() -> list[ImportResult]:
-        results: list[ImportResult] = []
-        with Lake.local(target) as lake:
-            for year in years:
-                for uf in ufs:
-                    for mes in months:
-                        results.append(
-                            await _import_scope_ftp(
-                                dataset=dataset,
-                                scope=ScopeKey(uf=uf, ano=year, mes=mes),
-                                lake=lake,
-                            )
-                        )
+            for scope in scopes:
+                results.append(await _import_scope_ftp(dataset=d, scope=scope, lake=lake))
         return results
 
     return asyncio.run(run())
@@ -103,22 +100,11 @@ def import_sim(
     *,
     years: Iterable[int],
     ufs: Sequence[str] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
-    """Import SIM-DO (declarações de óbito) for the given years/UFs."""
-    return _import_dataset_ftp("sim_do", years=years, ufs=ufs, target=target)
-
-
-def import_sih(
-    *,
-    years: Iterable[int],
-    ufs: Sequence[str] | None = None,
-    months: Iterable[int] = range(1, 13),
-    target: str = "ducklake:./omnisus.ducklake",
-) -> list[ImportResult]:
-    """Import SIH-RD (AIH reduzida) — monthly. (years x ufs x months)."""
-    return _import_dataset_ftp_monthly(
-        "sih_rd", years=years, ufs=ufs, months=months, target=target
+    """Import SIM-DO (declarações de óbito). Alias for ``import_dataset("sim_do", ...)``."""
+    return import_dataset(
+        "sim_do", scopes=scopes_for("sim_do", years=years, ufs=ufs), target=target
     )
 
 
@@ -126,16 +112,33 @@ def import_sinasc(
     *,
     years: Iterable[int],
     ufs: Sequence[str] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
-    """Import SINASC-NV (nascidos vivos) for the given years/UFs."""
-    return _import_dataset_ftp("sinasc_nv", years=years, ufs=ufs, target=target)
+    """Import SINASC-NV (nascidos vivos). Alias for ``import_dataset("sinasc_nv", ...)``."""
+    return import_dataset(
+        "sinasc_nv", scopes=scopes_for("sinasc_nv", years=years, ufs=ufs), target=target
+    )
+
+
+def import_sih(
+    *,
+    years: Iterable[int],
+    ufs: Sequence[str] | None = None,
+    months: Iterable[int] = range(1, 13),
+    target: str = DEFAULT_TARGET,
+) -> list[ImportResult]:
+    """Import SIH-RD (AIH reduzida), monthly. Alias for ``import_dataset("sih_rd", ...)``."""
+    return import_dataset(
+        "sih_rd",
+        scopes=scopes_for("sih_rd", years=years, ufs=ufs, months=months),
+        target=target,
+    )
 
 
 def import_ibge_pop(
     *,
     years: Iterable[int] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
     """Import IBGE population estimates for the given years."""
     from omnisus_db.sources.ibge.importers.pop import import_pop_year
@@ -158,19 +161,19 @@ def import_cnes_st(
     years: Iterable[int],
     months: Iterable[int] = range(1, 13),
     ufs: Sequence[str] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
-    """Import CNES-ST (estabelecimentos) — monthly. (years x ufs x months).
+    """Import CNES-ST (estabelecimentos), monthly, then refresh ``aux_cnes``.
 
-    After the import succeeds, refreshes the ``aux_cnes`` view (latest snapshot
-    per CNES) so downstream consumers can resolve CNES → name without picking
-    a partition.
+    This stays a named function rather than a bare alias because the view
+    refresh is *behaviour*, and behaviour lives in importers, not in the
+    registry row (spec I2). ``import_dataset("cnes_st", ...)`` loads the
+    table but does not refresh the view; call
+    ``Lake.ensure_aux_cnes_view()`` afterwards if you use that path.
     """
-    results = _import_dataset_ftp_monthly(
+    results = import_dataset(
         "cnes_st",
-        years=years,
-        ufs=ufs,
-        months=months,
+        scopes=scopes_for("cnes_st", years=years, ufs=ufs, months=months),
         target=target,
     )
     with Lake.local(target) as lake:
@@ -181,7 +184,7 @@ def import_cnes_st(
 def import_cnes_master(
     *,
     codes: Sequence[str] | None = None,
-    target: str = "ducklake:./omnisus.ducklake",
+    target: str = DEFAULT_TARGET,
     concurrency: int = 5,
     only_missing: bool = True,
     progress: Callable[[int, int], None] | None = None,
@@ -213,14 +216,18 @@ def import_cnes_master(
 
 __all__ = [
     "ALL_UFS",
+    "DEFAULT_TARGET",
+    "Dataset",
     "ImportResult",
     "Lake",
     "ScopeKey",
     "__version__",
     "import_cnes_master",
     "import_cnes_st",
+    "import_dataset",
     "import_ibge_pop",
     "import_sih",
     "import_sim",
     "import_sinasc",
+    "scopes_for",
 ]
