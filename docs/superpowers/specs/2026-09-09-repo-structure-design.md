@@ -1,7 +1,7 @@
 # omnisus-db — Structural Design Spec
 
 **Date:** 2026-09-09
-**Status:** Proposed
+**Status:** Proposed — revised after adversarial review round 2 (same day)
 **Supersedes:** nothing. Complements the v0.1.0 design spec in the parent
 `omnisus` repository (`docs/superpowers/specs/2026-05-02-omnisus-db-design.md`).
 **Scope:** how this repository is structured so it grows to ~40 datasets
@@ -11,8 +11,9 @@ without accumulating locks, duplicated facts, or dead configuration.
 
 ## 1. Why
 
-Four defects motivated this spec. All were verified against the codebase or
-the live DATASUS server, not inferred.
+Four defects motivated this spec. Each was verified against the codebase or
+the live DATASUS server; where a claim is inferred rather than observed, it
+says so.
 
 ### 1.1 Seven of eleven datasets are unreachable
 
@@ -42,6 +43,9 @@ Live listing of the server (2026-09-09):
 /dissemin/publicos/SIHSUS   -> 199201_200712, 200801_, 2008..2014, DBF, CSV, XML
 /dissemin/publicos/CNES     -> 200508_
 ```
+
+The listing is observed. What `1996_` and `1997_1995` contain has not been
+inspected; the era reading of `CID9` and `199407_200712` is by name.
 
 Our rows point at `SIM/CID10/DORES`, `SIASUS/200801_`, `SIHSUS/200801_`.
 Three of four families have era directories a single-string field cannot
@@ -78,7 +82,7 @@ I2 and I7 decide whether this ages well. The rest are mechanically checkable.
 
 **Operational contract.** Adding a dataset is: one registry row, one
 `data/dicionarios/<name>.yaml`, one test fixture. CLI, API, docs and inventory
-follow automatically. Editing a fifth file means an invariant broke.
+follow automatically. Editing a fourth file means an invariant broke.
 
 ---
 
@@ -92,22 +96,36 @@ YM = tuple[int, int]   # (year, month), e.g. (2008, 1)
 
 @dataclass(frozen=True)
 class Dataset:
-    name: str                       # registry key = table = YAML stem = CLI name
-    prefix: str                     # DATASUS filename prefix: DO, DN, RD, BI, ATD
-    ftp_dir: str                    # /dissemin/publicos/...
-    partition_by: tuple[str, ...]   # ("ano","uf") | ("ano","uf","mes")
-    coverage: tuple[YM, YM | None]  # (first, last|None) published
-    aliases: tuple[str, ...] = ()   # CLI back-compat: "sim" -> sim_do
+    name: str                          # registry key = table = YAML stem = CLI name
+    prefix: str                        # DATASUS filename prefix: DO, DN, RD, BI, ATD
+    ftp_dir: str                       # /dissemin/publicos/...
+    cadence: Literal["yearly", "monthly"]   # how DATASUS publishes files (upstream fact)
+    partition_by: tuple[str, ...]      # how WE lay the table out (our choice)
+                                       # today: ("ano","uf") | ("ano","uf","mes") | ("ano","mes")
+    coverage: tuple[YM, YM | None]     # (first, last|None) published
+    aliases: tuple[str, ...] = ()      # CLI back-compat: "sim" -> sim_do
+    dictionary: Path | None = None     # None -> packaged dicionarios/<name>.yaml
 
     @property
-    def monthly(self) -> bool:      return "mes" in self.partition_by
-    @property
-    def dictionary(self) -> Path:   return DICIONARIOS / f"{self.name}.yaml"
+    def monthly(self) -> bool: return self.cadence == "monthly"
 ```
 
-`monthly` becomes derived, removing the duplicated fact between
-`datasets.py` and `inventory.py`. `coverage` lets the planner reject
-impossible scopes offline, before a socket opens.
+`monthly` is derived from `cadence`, removing the duplicated fact between
+`datasets.py` and `inventory.py`.
+
+**`cadence` and `partition_by` are deliberately two fields.** The first is a
+fact about DATASUS (it decides filename shape); the second is our storage
+policy (it decides Parquet layout). An earlier draft derived `monthly` from
+`"mes" in partition_by`, which would have let a query-driven change to
+partitioning silently change filename generation — the consistent-wrongness
+failure mode this spec exists to prevent. They coincide today; Tier 2 asserts
+that they agree rather than making one stand in for the other. (`cnes_st` is
+already the case that shows they are different concepts: monthly files,
+partitioned `("ano","mes")` without `uf`.)
+
+`coverage` lets the planner reject impossible scopes offline, before a socket
+opens. `dictionary` is a field, not a property, because an ad-hoc `Dataset`
+(section 3.3) must be able to point at a YAML outside the package.
 
 ### 3.1 What stops being hand-maintained
 
@@ -120,7 +138,9 @@ impossible scopes offline, before a socket opens.
 | CLI `elif` ladder (~15 lines) | choices from `REGISTRY` keys + aliases |
 | `mkdocs.yml` sources nav | generated `docs/datasets.md` |
 
-Net: fewer lines than today.
+Net **for the kernel refactor**: fewer lines than today. The spec as a whole
+adds code — the inventory, tolerance, and concurrency are net-new — so the
+claim is about section 3 only.
 
 ### 3.2 Eras are rows, not fields
 
@@ -151,6 +171,14 @@ async def import_scope(*, dataset: Dataset, scope: ScopeKey, lake: Lake) -> Impo
 code path — no second, untyped mode. This is what keeps the registry from
 becoming a lock (I3).
 
+**Uncurated is not schemaless.** The parse step requires a Frictionless YAML;
+an ad-hoc `Dataset` supplies its own via `dictionary=Path(...)`. Without one,
+`import_scope` fails fast with a clear error — it does not fall back to
+all-strings, because that would be the untyped mode rejected in section 8.
+Today `load_dicionario(name)` reads packaged resources only
+(`importlib.resources.files(...)`), so this door is closed at the parse layer
+until the loader also accepts a `Path`. That change is part of step 1.
+
 ### 3.3.1 Names at the edge, values inside
 
 To avoid ambiguity in every signature below: **public helpers accept dataset
@@ -180,7 +208,7 @@ name promised.
 ### 4.1 Three layers
 
 ```python
-list_dir(path, *, timeout=60, retries=3) -> list[FtpEntry]   # one LIST. The primitive.
+list_dir(path, *, timeout=60, retries=3) -> Listing           # one LIST. The primitive.
 crawl(path, *, depth=1) -> Iterator[FtpEntry]                # bounded recursion, sequential
 available(dataset, *, years=None, refresh=False) -> list[ScopeKey]
 ```
@@ -202,7 +230,17 @@ class FtpEntry:
     is_dir: bool
     size_bytes: int
     modified: datetime # detects DATASUS republishing a file already ingested
+
+@dataclass(frozen=True)
+class Listing:
+    entries: tuple[FtpEntry, ...]
+    skipped: int       # malformed LIST lines — surfaced, never silently dropped
+    path: str
 ```
+
+`crawl` yields `FtpEntry` and logs skipped counts per directory; `list_dir`
+returns them structurally so the Tier 3 probe can assert `skipped == 0` for
+registry directories.
 
 ### 4.2 Protocol facts (verified against the live server)
 
@@ -220,7 +258,7 @@ class FtpEntry:
 | Directory exists, no entries | `[]` — a legitimate answer |
 | `550` (missing or denied) | raise `FtpPathNotFound` — terminal, never retried |
 | Transient (timeout, dropped socket) | bounded retry, capped backoff, fresh connection per attempt, then `FtpUnavailable` |
-| Malformed LIST line | skip it, count it, surface the count — never drop the listing |
+| Malformed LIST line | skip it, count it in `Listing.skipped` — never drop the listing |
 
 No bare `except Exception`. Empty and failed are never the same value (I6).
 This matters doubly because the inventory is also the Tier 3 test oracle: a
@@ -294,11 +332,24 @@ class ImportReport:
 
 `ImportReport` is truthy-agnostic: callers inspect `failed`, never a bool.
 
+**Compatibility.** Today `import_sim` / `import_sinasc` / `import_sih` return
+`list[ImportResult]`. As one-line aliases over `import_dataset` they return
+`ImportReport`. That is a breaking change, permitted at 0.x, and it is
+recorded in `CHANGELOG.md` under `Unreleased` rather than hidden. Callers who
+want the old shape use `[o.result for o in report.outcomes if o.status == "ok"]`.
+
+**CLI exit status.** `omnisus-db import` exits **non-zero iff any outcome is
+`failed`**. `skipped` (550, out of coverage) is a normal outcome and exits
+zero. This is what lets Airflow/Prefect tasks fail correctly.
+
 - **Python:** planning is composition. `scopes=product(years, ufs)` (dumb) or
   `scopes=odb.available("sim_do", years=...)` (inventory-planned). No flag in
   the library.
 - **CLI:** `--plan` is sugar selecting which planner fills `scopes`. One line
-  of branching, in `main.py` only.
+  of branching, in `main.py` only. **`--plan` implies `refresh=True`**: a
+  planner reading a 23-hour-old cache would silently omit a month DATASUS
+  published this morning, and the run is about to use the network anyway.
+  The 24h TTL is for interactive browsing, not for deciding what to fetch.
 - **Tolerance is unconditional.** A 550 is a `Skipped` outcome, never an
   exception. `ImportReport` carries `ok / skipped / failed`, so a 702-scope run
   reports what happened instead of dying on scope 3. `coverage` rejects
@@ -308,10 +359,39 @@ class ImportReport:
 
 | # | Defect (live today) | Fix | Expected |
 |---|---|---|---|
-| 1 | Fetch and parse fully serialized — connect, RETR, parse, insert, one at a time | Bounded producer/consumer: N fetches in flight, parse+sink consuming as bytes land | Wall clock from `sum(fetch)+sum(parse)` to about `max(sum(fetch)/N, sum(parse))` |
-| 2 | One DuckLake snapshot per scope — 702 commits for a wide SIM import | Accumulate M scopes per commit (default M=24) | 702 -> ~30 commits |
+| 1 | Fetch and parse fully serialized — connect, RETR, parse, insert, one at a time | Bounded producer/consumer: N fetches in flight, **one** consumer doing parse + sink | Wall clock from `sum(fetch)+sum(parse+sink)` to about `max(sum(fetch)/N, sum(parse+sink))` |
+| 2 | One DuckLake snapshot per scope — 702 commits for a wide SIM import | Wrap M ingests in `BEGIN … COMMIT` | 702 -> ~30 commits |
 | 3 | Staging Parquet read three times (`CREATE...WHERE 1=0`, `INSERT...SELECT`, `SELECT count(*)`) | Row count from the Parquet footer; create the table once per run | ~1/3 of the sink stage, free |
-| 4 | `partition_by` accepted then discarded (`del partition_by`) | Actually partition | Query pruning, and the row stops lying (I5) |
+| 4 | `partition_by` accepted then discarded (`del partition_by`) | `ALTER TABLE … SET PARTITIONED BY (…)` before first insert | Query pruning, and the row stops lying (I5) |
+| 5 | **Lake files are 3.3x larger than staging.** `ingest()` sinks with `zstd` + 1M row groups, then DuckLake rewrites the file with its own defaults and discards that tuning | `CALL lake.set_option('parquet_compression', 'zstd')` at connection time | 801,067 B -> 241,497 B on the probe; one line |
+
+Items 2, 4 and 5 were verified against DuckLake `415a9ebd` (DuckDB 1.5.2)
+rather than assumed:
+
+- **2.** One transaction of five INSERTs produced one snapshot, not five.
+  Batching is therefore just explicit transaction boundaries around the
+  existing `INSERT`s. M starts at 24 and is tuned in step 9; it is not derived
+  from anything.
+- **4.** `SET PARTITIONED BY (ano, uf)` is recorded in the catalog and a
+  60,000-row insert landed as `ano=2020/uf=MG/ducklake-….parquet`. It applies
+  to files written **after** the ALTER; existing files are left as they are.
+  Each of our scopes is already one `(uf, ano[, mes])`, so partitioning costs
+  nothing at write time. Existing lakes need a one-time `ALTER` per table.
+- **5.** `INSERT … FROM read_parquet(staging)` makes DuckLake write its own
+  copy; the staging file's compression is not inherited. With the option set,
+  the rewrite is byte-for-byte the size of staging. Files already in a lake
+  keep their size until compacted.
+
+**`ducklake_add_data_files` considered and rejected.** It registers the
+staging file in place with zero rewrite — but it fails on partitioned tables
+("invalid partition value for the table configuration") and would require
+staging to stop being a temp dir. Partitioning (I5, pruning) wins; item 5
+removes the size penalty that made the rewrite look expensive.
+
+**Single consumer is a correctness requirement, not a tuning choice.** The
+`Lake` holds one DuckDB connection, which is not safe for concurrent use from
+multiple threads, and Polars already saturates cores inside a single parse.
+Parallelism belongs to fetch only.
 
 **Batching and failure semantics.** Batching trades atomicity granularity for
 commit count: a failure mid-batch loses that batch's uncommitted scopes, not
@@ -321,11 +401,13 @@ tunable; M=1 restores per-scope atomicity for callers that want it.
 
 **Politeness constraint.** DATASUS FTP is a shared public resource.
 Concurrency is bounded and politely defaulted (6). This is deliberately not
-"as fast as the network allows".
+"as fast as the network allows". Whether DATASUS enforces a per-IP connection
+limit is not known; 6 is below what qds ran (8) without reported issues.
 
 **Staging stays.** `sink_parquet` streams, bounding memory on national-scale
-scopes. Materializing to Arrow to skip the disk hop would trade bounded memory
-for a modest saving — the wrong trade for a 30 M-record import.
+scopes. With item 5 the rewrite costs one extra local write and no extra
+disk; removing staging would trade bounded memory for that — the wrong trade
+for a 30 M-record import.
 
 ### 5.3 Rust DBF: right call, wrong time
 
@@ -353,7 +435,7 @@ consistently wrong. So one tier must check the row against DATASUS itself.
 | Tier | Proves | Cost | Runs |
 |---|---|---|---|
 | **1. Golden filenames** | `(dataset, scope) -> filename` exact for all rows: 2-vs-3-letter prefix ambiguity (`ATDRR2401` is `ATD`+`RR`, never `AT`+`DR`), `yy<80` century rollover, month zero-padding, `mes=None` rejection. Plus a `hypothesis` round-trip property: `parse_filename(scope_to_filename(d, s)) == (s, d)`. | offline, ms | every PR |
-| **2. Registry consistency** | Precisely: (a) every `REGISTRY` key has a `dicionarios/<key>.yaml`; (b) `cli_dataset_choices() == set(REGISTRY) \| aliases`; (c) `available()` accepts exactly `set(REGISTRY)`; (d) prefixes are unique; (e) `("mes" in partition_by) == monthly`; (f) every non-`aux_*` YAML is owned by exactly one dataset, where the owner set is `REGISTRY` **plus the declared non-FTP datasets** (`ibge_pop`). `aux_*.yaml` are bootstrap tables and exempt. This is the test that makes the SIA gap impossible. | offline, ms | every PR |
+| **2. Registry consistency** | Precisely: (a) every `REGISTRY` key has a `dicionarios/<key>.yaml`; (b) `cli_dataset_choices() == set(REGISTRY) \| aliases`; (c) `available()` accepts exactly `set(REGISTRY)`; (d) prefixes are unique; (e) `cadence == "monthly"` iff `"mes" in partition_by` — agreement between the two fields, not derivation; (f) every non-`aux_*` YAML is owned by exactly one dataset, where the owner set is `REGISTRY` **plus the declared non-FTP datasets** (`ibge_pop`). `aux_*.yaml` are bootstrap tables and exempt. This is the test that makes the SIA gap impossible. | offline, ms | every PR |
 | **3. Ground-truth probe** | The row matches reality: `ftp_dir` exists, at least one file carries `prefix`, `coverage` matches the earliest file actually published. The only tier that catches a wrong path or a DATASUS reorganisation. | network, flaky upstream | scheduled |
 
 The inventory is the Tier 3 oracle. The feature and its own test harness are
@@ -373,11 +455,37 @@ uses `pyfakefs`, already a dev dependency and currently unused.
 |---|---|
 | `uv sync --frozen` | The lockfile is committed and never enforced; green CI is not reproducible |
 | `mypy` in pre-commit and CI | We ship `py.typed` and verify it nowhere |
-| `--cov-fail-under=85` replacing the orphan `coverage.xml` | The XML is written and consumed by nothing; 85 is at or below current measured coverage, so it ratchets rather than blocks |
+| `--cov-fail-under=80` replacing the orphan `coverage.xml` | The XML is written and consumed by nothing. Measured coverage is **84%** (174 cases); an earlier draft said 85, which would have failed CI on day one. 80 is a floor to raise, never lower. |
 | New `probe.yml`: Tier 3 on a weekly cron plus `workflow_dispatch` | Catches DATASUS reorganisations before users do; off the PR path because upstream is flaky |
 | `concurrency:` groups on both workflows | Stacked pushes race the Pages deploy |
-| `windows-latest` in the matrix | Our users are epidemiologists on Windows; we have FTP and path code and test neither there |
+| **Wheel-only install gate** (`uv sync --no-build` in a fresh env, Linux/macOS/Windows) | See 7.1.1. This is the real "does it install on Windows" test; a `windows-latest` job alone would *pass* and mislead, because GitHub runners ship a Rust toolchain that users do not have. |
+| `windows-latest` in the matrix | Our users are epidemiologists on Windows; we have FTP and path code and test neither there. Only meaningful together with the gate above. |
 | `dependabot.yml` (actions + uv) | |
+
+#### 7.1.1 The `datasus-dbc` wheel gap
+
+Verified against PyPI and with `uv pip compile --only-binary :all:`:
+`datasus-dbc 0.1.3` ships cp312 wheels for Linux x86_64, macOS and Windows,
+but **cp313 wheels only for manylinux aarch64/armv7l/ppc64le/s390x** and no
+cp314 at all. Under `requires-python >=3.13` every mainstream platform
+resolves to the sdist, which is why `uv.lock` records zero wheels and why
+`pip install omnisus-db` on a laptop without `cargo` fails today.
+
+CI is green only because the runners have Rust preinstalled. This is the
+blocker for section 7.2, not a nice-to-have.
+
+Plan, in order:
+
+1. **Upstream fix** — a PR to `datasus-dbc` adding cp313/cp314 for the
+   mainstream targets. Their matrix already builds cp313 for the exotic
+   arches, so this is a cibuildwheel configuration change, not new work.
+2. **The gate above**, so this class of regression is caught for any
+   dependency, permanently.
+3. **Until 1 lands:** document the Rust requirement in the install guide.
+
+**Open decision (owner's call, not made here):** keep `>=3.13` and wait on
+step 1, or relax to `>=3.12` where wheels exist today. The spec assumes the
+former; the latter is a one-line `pyproject.toml` change if preferred.
 
 ### 7.2 Release — delete the runbook
 
@@ -387,6 +495,11 @@ with PEP 740 build attestations. No long-lived token — simpler *and* stronger.
 Version has one home: `_version.py`, with hatch `dynamic = ["version"]`.
 This removes the two-file `sed` dance and its macOS-only `sed -i ''`.
 `RELEASE.md` shrinks to "tag and push".
+
+**Publishing is gated on 7.1.1.** Releasing to PyPI before the wheel-only
+install passes on all three platforms ships a package most users cannot
+install. The `release.yml` job runs the gate first and refuses to publish on
+failure.
 
 ### 7.3 Docs — stop maintaining what the registry knows
 
@@ -402,7 +515,7 @@ This removes the two-file `sed` dance and its macOS-only `sed -i ''`.
 - An **API reference page**, which finally makes the already-configured
   `mkdocstrings` do something.
 - **CHANGELOG:** add `Unreleased`, backfill the six commits since v0.1.0, and
-  correct stale counts (8 -> 15 YAMLs, 84 -> 140 tests, 5 -> 11 datasets).
+  correct stale counts (8 -> 15 YAMLs, 84 -> 174 test cases, 5 -> 11 datasets).
   Discipline, not a bot gate.
 
 ---
@@ -415,7 +528,7 @@ This removes the two-file `sed` dance and its macOS-only `sed -i ''`.
 | Plugin/entry-point dataset registry | One author, eleven datasets. Ceremony bought against a hypothetical. |
 | `eras` as a field on `Dataset` | One row implies one dictionary, but CID9 and CID10 differ in columns. The row would lie (I5). |
 | Free-threaded Python (PEP 703) | Available on 3.13, but the Polars/DuckDB/PyArrow wheel ecosystem is immature under it — and unnecessary: `ftplib` in `to_thread` releases the GIL on I/O, and Polars/DuckDB parallelize in native threads. Revisit in a year. |
-| Process pool for parsing | Pickling Arrow batches across processes eats the gain. |
+| Process pool for parsing | Polars already uses every core inside one parse; a pool would oversubscribe, and the single-consumer rule (5.2) forbids parallel sinks anyway. |
 | Replacing `ftplib` with an async FTP client | `to_thread` plus bounded concurrency gives the same overlap without depending on a thinner-maintained library. |
 | A generic untyped ingestion path | `crawl` provides reach; ingestion stays typed through `Dataset` values (I3). Two ingestion modes would blur the product. |
 | qds's thread pool + queue + lock crawler | Exists to survive a full recursive crawl. The registry means our common case lists eleven known directories. |
@@ -445,18 +558,21 @@ knowledge (section 4.2) is validated and adopted. These are not:
 
 | Step | Delivers | Depends on |
 |---|---|---|
-| 1 | Unified `Dataset` row; derive `_PATH`, prefix maps; `monthly` derived | — |
-| 2 | `import_dataset` + registry-driven CLI; three aliases kept | 1 |
-| 3 | Tier 1 + Tier 2 tests | 1, 2 |
+| 0 | `parquet_compression='zstd'` at connection time (5.2 item 5) | — one line, ships first |
+| 1 | Unified `Dataset` row (`cadence`, `dictionary`); derive `_PATH`, prefix maps; `load_dicionario` accepts a `Path` | — |
+| 2 | `import_dataset` + registry-driven CLI; three aliases kept; CHANGELOG notes the return-type change | 1 |
+| 3 | Tier 1 + Tier 2 (a, b, d, e, f) | 1, 2 |
 | 4 | `filenames.py` rename; `inventory.py` with `list_dir` / `crawl` / `available` | 1 |
-| 5 | Tier 3 probe + `probe.yml` | 4 |
-| 6 | Import tolerance, `ImportReport`, `coverage` pre-filtering | 2 |
-| 7 | Bounded concurrency; snapshot batching; staging triple-read; `partition_by` | 6 |
-| 8 | CI hardening, `release.yml`, generated docs, CHANGELOG | — |
-| 9 | Re-run benchmarks; re-evaluate ADR 0001 Rust gate with fetch overlapped | 7 |
+| 5 | Tier 2 (c) + Tier 3 probe + `probe.yml` | 4 |
+| 6 | Import tolerance, `ImportReport`, `coverage` pre-filtering, CLI exit status | 2 |
+| 7 | Bounded concurrency (single consumer); `BEGIN…COMMIT` batching; staging triple-read; `SET PARTITIONED BY` | 6 |
+| 8 | CI hardening incl. wheel-only gate, `release.yml`, generated docs, CHANGELOG; upstream `datasus-dbc` PR | — |
+| 9 | Re-run benchmarks; tune M; re-evaluate ADR 0001 Rust gate with fetch overlapped | 7 |
 
 Steps 1-3 are one coherent change and close the defect in section 1.1.
-Step 8 is independent and can land at any time.
+Step 0 and step 8 are independent and can land at any time. Tier 2 (c) moved
+to step 5 because it asserts against `available()`, which does not exist
+until step 4.
 
 ## 10. Non-goals
 
@@ -465,4 +581,6 @@ Step 8 is independent and can land at any time.
 - A Streamlit or web UI. That belongs to the Explorer application, not to an
   ingestion library.
 - Vendoring a C decompressor. `datasus-dbc` (Rust) is 6% of the parse pipeline.
+  The wheel gap (7.1.1) is a packaging problem to fix upstream, not a reason
+  to take on a C build.
 - Multi-writer coordination beyond what DuckLake's Postgres catalog provides.

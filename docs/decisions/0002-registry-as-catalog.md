@@ -42,6 +42,12 @@ correct: it surfaces a real schema break instead of hiding it.
 ## Consequences
 
 - `ftp_dir: str` survives; `since` becomes `coverage: (first, last | None)`.
+- `cadence` (how DATASUS publishes) and `partition_by` (how we store) are
+  separate fields. Deriving one from the other would let a storage change
+  silently alter filename generation.
+- `dictionary` is a field so an ad-hoc `Dataset` can point at a YAML outside
+  the package. Uncurated does not mean schemaless: without a YAML the import
+  fails fast rather than falling back to all-strings.
 - Adding an era is the same operation as adding a dataset: one row, one YAML.
 - The row's schema becomes semi-public (users may construct it). Changes are
   additive and keyword-only.
