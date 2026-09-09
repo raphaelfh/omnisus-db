@@ -15,6 +15,19 @@
   does not curate, point `dictionary=` at their own Frictionless YAML, and
   ingest it through the same code path.
 - `DEFAULT_TARGET` exported from `omnisus_db` and `omnisus_db.lake`.
+- **A real FTP inventory.** `available(dataset)` lists the scopes DATASUS
+  actually publishes (registry-decoded); `browse(path, depth=)` lists any FTP
+  path, reaching subsystems this package does not model (SINAN, CIHA, PCE).
+  Both come from one listing primitive and need no lake. Listings cache to
+  Parquet under `${XDG_CACHE_HOME:-~/.cache}/omnisus-db/inventory/`
+  (override with `OMNISUS_CACHE_DIR`), 24h TTL, `refresh=True` to bypass.
+  DuckDB reads those files directly.
+- **CLI:** `omnisus-db inventory <dataset>` and
+  `omnisus-db inventory --path <ftp-path> [--depth N]`.
+- **Tier 3 ground-truth probe** (`tests/integration/test_registry_probe.py`,
+  weekly `probe.yml`): validates every registry row's `ftp_dir`, `prefix` and
+  `coverage` against the live server — the only tier that catches a wrong row
+  or a DATASUS reorganisation.
 
 ### Changed
 
@@ -24,6 +37,9 @@
   sets `parquet_compression=zstd`. Files already in a lake keep their current
   (uncompressed) size — recompressing them requires rewriting the table, and
   a later release will provide a command for that.
+- `sources.datasus_ftp.inventory` was a filename codec; it is now the actual
+  inventory. The codec moved to `sources.datasus_ftp.filenames` with
+  identical signatures, plus a non-raising `decode()`.
 
 ### Removed
 
@@ -33,6 +49,20 @@
   prefix map from `REGISTRY` / `PREFIX_TO_DATASET` instead.
 - `omnisus_db.sources._base.Dataset` (unused) — replaced by
   `omnisus_db.Dataset`.
+- `omnisus_db.sources._base.Source` — a protocol no class ever implemented.
+  Discovery ships as `inventory.available()` / `inventory.crawl()` instead of
+  a `Source` method, so the declaration was an unmet promise (spec I5).
+
+### Fixed
+
+- **Registry `coverage` for three APAC subtypes.** `sia_atd`, `sia_abo` and
+  `sia_ps` declared `coverage` starting `(2008, 1)`, inherited from the rest
+  of the SIA/APAC family without per-subtype verification. The Tier 3
+  ground-truth probe found the server's earliest published file for each is
+  later: `sia_atd` starts `(2014, 8)`, `sia_abo` starts `(2014, 1)`, `sia_ps`
+  starts `(2012, 11)`. `sia_ad`, `sia_am`, `sia_aq` and `sia_bi` were checked
+  and are correct at `(2008, 1)`. Anyone relying on these three datasets'
+  declared coverage window should note it changed.
 
 `get_config` is kept as a compatibility wrapper over `resolve`.
 

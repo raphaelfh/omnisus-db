@@ -1,9 +1,8 @@
-"""Source / Dataset / Importer protocols and base types."""
+"""Shared value types for source families: ScopeKey and ImportResult."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
 
 
 @dataclass(frozen=True)
@@ -31,12 +30,3 @@ class ImportResult:
     bytes_written: int
     duration_seconds: float
     snapshot_id: int | None = None
-
-
-class Source(Protocol):
-    """Protocol for a source family (DATASUS-FTP, IBGE, CNES)."""
-
-    name: str
-
-    async def list_available(self, dataset: str) -> list[ScopeKey]: ...
-    async def fetch_bytes(self, dataset: str, scope: ScopeKey) -> bytes: ...
