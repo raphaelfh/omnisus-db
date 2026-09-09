@@ -10,6 +10,13 @@ from omnisus_db.lake import DEFAULT_TARGET, Lake
 from omnisus_db.sources._base import ImportResult, ScopeKey
 from omnisus_db.sources.datasus_ftp._runner import import_scope as _import_scope_ftp
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
+from omnisus_db.sources.datasus_ftp.inventory import (
+    FtpEntry,
+    FtpPathNotFound,
+    FtpUnavailable,
+    available,
+)
+from omnisus_db.sources.datasus_ftp.inventory import crawl as _crawl
 
 ALL_UFS: tuple[str, ...] = (
     "AC",
@@ -67,6 +74,15 @@ def scopes_for(
             else:
                 scopes.append(ScopeKey(uf=uf, ano=year))
     return scopes
+
+
+def browse(path: str, *, depth: int = 1, refresh: bool = False) -> list[FtpEntry]:
+    """List any DATASUS FTP path — the open-world counterpart to :func:`available`.
+
+    Reaches subsystems this package does not model (SINAN, CIHA, PCE).
+    ``depth=1`` lists ``path`` only; recursion is bounded (spec §4.1).
+    """
+    return list(_crawl(path, depth=depth, refresh=refresh))
 
 
 def import_dataset(
@@ -218,10 +234,15 @@ __all__ = [
     "ALL_UFS",
     "DEFAULT_TARGET",
     "Dataset",
+    "FtpEntry",
+    "FtpPathNotFound",
+    "FtpUnavailable",
     "ImportResult",
     "Lake",
     "ScopeKey",
     "__version__",
+    "available",
+    "browse",
     "import_cnes_master",
     "import_cnes_st",
     "import_dataset",

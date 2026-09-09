@@ -109,6 +109,61 @@ def import_cmd(
 
 
 @app.command()
+def inventory(
+    dataset: str | None = typer.Argument(
+        None, help=f"One of: {', '.join(dataset_choices())}. Omit when using --path."
+    ),
+    path: str | None = typer.Option(
+        None, "--path", "-p", help="Browse any FTP path instead (e.g. /dissemin/publicos/SINAN)"
+    ),
+    depth: int = typer.Option(1, "--depth", "-d", help="Recursion depth for --path"),
+    refresh: bool = typer.Option(False, "--refresh", help="Bypass the 24h listing cache"),
+) -> None:
+    """Show what DATASUS actually publishes, from a cached FTP listing."""
+    from rich.table import Table as RichTable
+
+    import omnisus_db as odb
+    from omnisus_db.sources.datasus_ftp.datasets import resolve
+    from omnisus_db.sources.datasus_ftp.inventory import FtpPathNotFound, FtpUnavailable
+
+    if (dataset is None) == (path is None):
+        raise typer.BadParameter("provide exactly one of DATASET or --path")
+
+    try:
+        if path is not None:
+            entries = odb.browse(path, depth=depth, refresh=refresh)
+            table = RichTable("Name", "Type", "Size", "Modified")
+            for e in entries:
+                table.add_row(
+                    e.name,
+                    "dir" if e.is_dir else "file",
+                    "" if e.is_dir else f"{e.size_bytes:,}",
+                    e.modified.strftime("%Y-%m-%d %H:%M"),
+                )
+            console.print(table)
+            console.print(f"[dim]{len(entries)} entry(ies) under {path}[/dim]")
+            return
+        try:
+            d = resolve(dataset)
+        except ValueError as exc:
+            raise typer.BadParameter(
+                f"{exc}. Choose from: {', '.join(dataset_choices())}"
+            ) from exc
+        scopes = odb.available(d, refresh=refresh)
+        table = RichTable("UF", "Ano", "Mês")
+        for s in scopes:
+            table.add_row(s.uf, str(s.ano), "" if s.mes is None else f"{s.mes:02d}")
+        console.print(table)
+        console.print(f"[dim]{len(scopes)} scope(s) available for {d.name}[/dim]")
+    except FtpPathNotFound as exc:
+        console.print(f"[red]x[/red] not found on the server: {exc}")
+        raise typer.Exit(code=1) from exc
+    except FtpUnavailable as exc:
+        console.print(f"[red]x[/red] DATASUS FTP unreachable: {exc}")
+        raise typer.Exit(code=1) from exc
+
+
+@app.command()
 def query(
     sql: str = typer.Argument(..., help="SQL to run against the lake"),
     target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
