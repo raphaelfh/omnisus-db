@@ -80,10 +80,10 @@ _ROWS: tuple[Dataset, ...] = (
     Dataset(name="sia_bi",    prefix="BI",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
     Dataset(name="sia_am",    prefix="AM",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
     Dataset(name="sia_aq",    prefix="AQ",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
-    Dataset(name="sia_atd",   prefix="ATD", ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
+    Dataset(name="sia_atd",   prefix="ATD", ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2014, 8), None)),
     Dataset(name="sia_ad",    prefix="AD",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
-    Dataset(name="sia_abo",   prefix="ABO", ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
-    Dataset(name="sia_ps",    prefix="PS",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None)),
+    Dataset(name="sia_abo",   prefix="ABO", ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2014, 1), None)),
+    Dataset(name="sia_ps",    prefix="PS",  ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2012, 11), None)),
     Dataset(name="cnes_st",   prefix="ST",  ftp_dir=_CNES_ST, cadence="monthly", partition_by=("ano", "mes"), coverage=((2005, 8), None), aliases=("cnes-st",)),
 )
 # fmt: on
