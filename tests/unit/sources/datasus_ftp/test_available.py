@@ -7,6 +7,7 @@ decoded. Patched at _blocking_list. No network.
 from __future__ import annotations
 
 import ftplib
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -130,6 +131,25 @@ def test_list_dir_cached_writes_the_cache_file() -> None:
     assert cache_path(SIM_DIR).exists()
 
 
+def test_refresh_still_writes_the_cache_it_bypassed() -> None:
+    """I8's other half. A call count proves the read was skipped; only the
+    file's mtime proves the write still happened."""
+    from omnisus_db.sources.datasus_ftp._cache import cache_path
+
+    with patch(
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+        return_value=[_file("DOAC1996.dbc")],
+    ):
+        list_dir_cached(SIM_DIR)
+        first = cache_path(SIM_DIR).stat().st_mtime_ns
+        os.utime(cache_path(SIM_DIR), ns=(first - 1_000_000_000, first - 1_000_000_000))
+        aged = cache_path(SIM_DIR).stat().st_mtime_ns
+
+        list_dir_cached(SIM_DIR, refresh=True)
+
+    assert cache_path(SIM_DIR).stat().st_mtime_ns > aged
+
+
 # --- crawl -----------------------------------------------------------------
 
 
@@ -200,3 +220,39 @@ def test_crawl_raises_when_the_root_itself_is_missing() -> None:
         pytest.raises(FtpPathNotFound),
     ):
         list(crawl("/nope", depth=1))
+
+
+def test_crawl_is_open_world_where_available_is_closed() -> None:
+    """The design's central claim, asserted in one place: given identical
+    server output, ``crawl`` yields what ``available`` refuses to. If someone
+    ever teaches ``crawl`` to decode, this fails — every other test in this
+    file would still pass."""
+    lines = [_file("DOAC1996.dbc"), _file("readme.txt"), _file("PARR2401.dbc")]
+    with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
+        crawled = {e.name for e in crawl(SIM_DIR)}
+        scopes = available("sim_do", refresh=True)
+
+    assert crawled == {"DOAC1996.dbc", "readme.txt", "PARR2401.dbc"}
+    assert scopes == [ScopeKey(uf="AC", ano=1996)]
+    assert len(crawled) > len(scopes)
+
+
+def test_crawl_refresh_propagates_into_recursion() -> None:
+    """``refresh`` must reach every level, not just the root — a stale cached
+    subdirectory would otherwise survive a refresh that claimed to be total."""
+    by_path = {
+        SIM_DIR: [_dir("SUBDIR")],
+        f"{SIM_DIR}/SUBDIR": [_file("DOAC1996.dbc")],
+    }
+
+    with patch(
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+        side_effect=lambda path, _timeout: by_path[path],
+    ) as spy:
+        list(crawl(SIM_DIR, depth=2))
+        assert spy.call_count == 2
+        list(crawl(SIM_DIR, depth=2))
+        assert spy.call_count == 2, "second crawl should be fully cached"
+        list(crawl(SIM_DIR, depth=2, refresh=True))
+
+    assert spy.call_count == 4, "refresh must refetch the subdirectory too, not only the root"
