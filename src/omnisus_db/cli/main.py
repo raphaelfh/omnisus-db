@@ -5,7 +5,8 @@ from __future__ import annotations
 import typer
 from rich.console import Console
 
-from omnisus_db.lake import Lake
+from omnisus_db.lake import DEFAULT_TARGET, Lake
+from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY, resolve
 
 app = typer.Typer(
     name="omnisus-db",
@@ -15,7 +16,14 @@ app = typer.Typer(
 )
 console = Console()
 
-DEFAULT_TARGET = "ducklake:./omnisus.ducklake"
+_NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop"}
+"""CLI names of datasets that are not DATASUS-FTP rows (spec §3.4). Each has
+its own named importer."""
+
+
+def dataset_choices() -> list[str]:
+    """Every name ``omnisus-db import`` accepts — derived, never listed by hand."""
+    return sorted({*REGISTRY, *ALIASES, *_NON_FTP})
 
 
 @app.command()
@@ -37,7 +45,7 @@ def init(
 
 @app.command(name="import")
 def import_cmd(
-    dataset: str = typer.Argument(..., help="sim | sinasc | sih | ibge-pop | cnes-st"),
+    dataset: str = typer.Argument(..., help=f"One of: {', '.join(dataset_choices())}"),
     year: list[int] | None = typer.Option(
         None, "--year", "-y", help="Repeatable; e.g. -y 2023 -y 2024"
     ),
@@ -59,21 +67,28 @@ def import_cmd(
         raise typer.BadParameter("provide --year/-y or --years RANGE")
 
     uf_list = [u.strip().upper() for u in ufs.split(",")] if ufs else None
+    month_list = [int(x) for x in months.split(",")] if months else None
 
-    if dataset == "sim":
-        results = odb.import_sim(years=yrs, ufs=uf_list, target=target)
-    elif dataset == "sinasc":
-        results = odb.import_sinasc(years=yrs, ufs=uf_list, target=target)
-    elif dataset == "ibge-pop":
+    if dataset in _NON_FTP:
         results = odb.import_ibge_pop(years=yrs, target=target)
-    elif dataset == "sih":
-        m = [int(x) for x in months.split(",")] if months else range(1, 13)
-        results = odb.import_sih(years=yrs, ufs=uf_list, months=m, target=target)
-    elif dataset == "cnes-st":
-        m = [int(x) for x in months.split(",")] if months else range(1, 13)
-        results = odb.import_cnes_st(years=yrs, ufs=uf_list, months=m, target=target)
     else:
-        raise typer.BadParameter(f"unknown dataset: {dataset}")
+        try:
+            d = resolve(dataset)
+        except ValueError as exc:
+            raise typer.BadParameter(
+                f"{exc}. Choose from: {', '.join(dataset_choices())}"
+            ) from exc
+        if d.name == "cnes_st":
+            # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
+            results = odb.import_cnes_st(
+                years=yrs, ufs=uf_list, months=month_list or range(1, 13), target=target
+            )
+        else:
+            results = odb.import_dataset(
+                d,
+                scopes=odb.scopes_for(d, years=yrs, ufs=uf_list, months=month_list),
+                target=target,
+            )
 
     total_rows = sum(r.rows for r in results)
     console.print(

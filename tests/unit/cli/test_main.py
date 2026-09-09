@@ -127,3 +127,55 @@ def test_lake_update_auxiliares(tmp_path: Path) -> None:
         ["lake", "update-auxiliares", "--target", target],
     )
     assert result.exit_code == 0
+
+
+def test_import_sia_bi_via_cli(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+    """The CLI must reach every registry row, not a hand-maintained subset."""
+    fixture_bytes = dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes()
+
+    async def fake_fetch(*, dataset, scope, **_kw: object) -> bytes:
+        return fixture_bytes
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
+
+    target = f"ducklake:{tmp_path}/sia.ducklake"
+    result = runner.invoke(
+        app,
+        ["import", "sia_bi", "--year", "2024", "--months", "1", "--ufs", "RR", "--target", target],
+    )
+    assert result.exit_code == 0, result.output
+
+    from omnisus_db.lake import Lake
+
+    with Lake.local(target) as lake:
+        assert "sia_bi" in lake.tables()
+
+
+def test_import_unknown_dataset_lists_the_choices() -> None:
+    result = runner.invoke(app, ["import", "bogus", "--year", "2024"])
+    assert result.exit_code != 0
+    assert "unknown dataset" in result.output
+    assert "sia_bi" in result.output
+
+
+def test_import_help_lists_registry_names_and_aliases() -> None:
+    result = runner.invoke(app, ["import", "--help"])
+    assert result.exit_code == 0
+    for name in ("sim", "sia_atd", "cnes-st", "ibge-pop"):
+        assert name in result.output
+
+
+def test_dataset_choices_cover_registry_aliases_and_non_ftp() -> None:
+    from omnisus_db.cli.main import dataset_choices
+    from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
+
+    choices = set(dataset_choices())
+    assert set(REGISTRY) | set(ALIASES) <= choices
+    assert "ibge-pop" in choices
+
+
+def test_cli_default_target_is_the_lake_default() -> None:
+    from omnisus_db.cli.main import DEFAULT_TARGET as CLI_DEFAULT_TARGET
+    from omnisus_db.lake import DEFAULT_TARGET
+
+    assert CLI_DEFAULT_TARGET is DEFAULT_TARGET
