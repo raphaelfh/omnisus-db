@@ -127,7 +127,7 @@ def inventory(
     path: str | None = typer.Option(
         None, "--path", "-p", help="Browse any FTP path instead (e.g. /dissemin/publicos/SINAN)"
     ),
-    depth: int = typer.Option(1, "--depth", "-d", help="Recursion depth for --path"),
+    depth: int = typer.Option(1, "--depth", "-d", help="Recursion depth for --path (1-4)"),
     refresh: bool = typer.Option(False, "--refresh", help="Bypass the 24h listing cache"),
 ) -> None:
     """Show what DATASUS actually publishes, from a cached FTP listing."""
@@ -139,6 +139,8 @@ def inventory(
 
     if (dataset is None) == (path is None):
         raise typer.BadParameter("provide exactly one of DATASET or --path")
+    if path is not None and not 1 <= depth <= 4:
+        raise typer.BadParameter("--depth must be between 1 and 4")
 
     try:
         if path is not None:

@@ -81,6 +81,12 @@ def browse(path: str, *, depth: int = 1, refresh: bool = False) -> list[FtpEntry
 
     Reaches subsystems this package does not model (SINAN, CIHA, PCE).
     ``depth=1`` lists ``path`` only; recursion is bounded (spec §4.1).
+
+    Deliberately eager — a CLI table needs the whole result before it can be
+    rendered — so :func:`~omnisus_db.sources.datasus_ftp.inventory.crawl`'s
+    laziness (a huge tree can be interrupted, spec I7) is not reachable
+    through this public function. In-process callers who need that should
+    call ``crawl`` directly instead of ``browse``.
     """
     return list(_crawl(path, depth=depth, refresh=refresh))
 

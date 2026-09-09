@@ -59,6 +59,19 @@ def test_inventory_requires_exactly_one_of_dataset_or_path() -> None:
     assert neither.exit_code != 0
 
 
+def test_inventory_rejects_out_of_range_depth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """--depth is unguarded in both directions (spec I7: everything bounded).
+    depth=0 would previously reach `crawl`'s ValueError as a raw traceback;
+    an unbounded depth could LIST the whole DATASUS tree."""
+    _patch(monkeypatch)
+    result = runner.invoke(
+        app, ["inventory", "--path", "/dissemin/publicos/SINAN", "--depth", "0"]
+    )
+    assert result.exit_code != 0
+    assert "depth" in result.output.lower()
+    assert "Traceback" not in result.output
+
+
 def test_inventory_unknown_dataset_lists_choices(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch(monkeypatch)
     result = runner.invoke(app, ["inventory", "bogus"])

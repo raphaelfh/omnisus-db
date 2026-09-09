@@ -148,6 +148,20 @@ def test_an_unwritable_cache_does_not_veto_a_good_listing() -> None:
     assert scopes == [ScopeKey(uf="AC", ano=1996)]
 
 
+def test_cache_hit_and_miss_agree_on_the_canonical_path() -> None:
+    """list_dir promises Listing.path is canonical (trailing slash stripped)
+    regardless of what the caller passed. A miss builds it from list_dir; a
+    hit must not silently rebuild it from the raw, un-normalised argument."""
+    with patch(
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+        return_value=[_file("DOAC1996.dbc")],
+    ):
+        miss = list_dir_cached(SIM_DIR + "/")
+        hit = list_dir_cached(SIM_DIR + "/")
+    assert miss.path == SIM_DIR
+    assert hit.path == miss.path
+
+
 def test_refresh_still_writes_the_cache_it_bypassed() -> None:
     """I8's other half. A call count proves the read was skipped; only the
     file's mtime proves the write still happened."""

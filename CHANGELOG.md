@@ -63,6 +63,32 @@
   starts `(2012, 11)`. `sia_ad`, `sia_am`, `sia_aq` and `sia_bi` were checked
   and are correct at `(2008, 1)`. Anyone relying on these three datasets'
   declared coverage window should note it changed.
+- **A cache write failure no longer discards a successful FTP listing.**
+  `available()`/`browse()` could raise `PermissionError` (or any other
+  write-side error) even though the network answer was already in hand —
+  an unwritable `OMNISUS_CACHE_DIR`, a read-only `$HOME`, or a full disk
+  now only logs a warning and returns the listing (spec I8: the cache is
+  never authoritative).
+- **`omnisus-db inventory` no longer lists a rejected dataset name in its
+  own error message.** The command's help and its "unknown dataset" error
+  now enumerate only the FTP-backed names it actually accepts, not the
+  full `import`-command set (which includes `ibge-pop`/`ibge_pop`, which
+  `inventory` has always rejected).
+- **Only a 550 FTP response means "path not found."** A login failure
+  (530) or a `TYPE`/`CWD` error other than 550 was previously reported as
+  `FtpPathNotFound` with zero retries — the same code path the Tier 3
+  probe treats as ground truth, so a busy or refusing server could look
+  like a wrong registry row. Those errors are now retried to the normal
+  budget and reported as `FtpUnavailable` if they persist; 550 behaviour
+  is unchanged (terminal, never retried).
+- **`Listing.path` is canonical on a cache hit, not just a miss.**
+  `list_dir_cached("/x/")` returned `.path == "/x/"` on a cache hit and
+  `"/x"` on a miss; a hit now reads the canonical path recorded at write
+  time, matching what `list_dir` itself always promised.
+- **`omnisus-db inventory --path ... --depth N` bounds `--depth` to 1-4.**
+  `--depth 0` previously surfaced a raw traceback; an unbounded depth could
+  sequentially LIST an entire DATASUS subtree against the shared public
+  server (spec I7).
 
 `get_config` is kept as a compatibility wrapper over `resolve`.
 

@@ -224,12 +224,16 @@ def list_dir_cached(
     ttl_hours: float = 24.0,
     timeout_seconds: float = 60.0,
     max_retries: int = 3,
+    backoff_seconds: float = 1.0,
 ) -> Listing:
     """:func:`list_dir` with the Parquet cache in front of it.
 
     The cache is never authoritative (spec I8): a miss, a stale entry or an
     unreadable file all fall through to the network.
     """
+    # Imported inside the function, not at module scope: _cache imports this
+    # module (inventory) at module scope, so a top-level import here would be
+    # a cycle and fail at import time.
     from omnisus_db.sources.datasus_ftp import _cache
 
     if not refresh:
@@ -237,7 +241,12 @@ def list_dir_cached(
         if cached is not None:
             logger.debug("inventory.cache_hit", path=path, entries=len(cached.entries))
             return cached
-    listing = list_dir(path, timeout_seconds=timeout_seconds, max_retries=max_retries)
+    listing = list_dir(
+        path,
+        timeout_seconds=timeout_seconds,
+        max_retries=max_retries,
+        backoff_seconds=backoff_seconds,
+    )
     try:
         _cache.write_cache(listing)
     except Exception as exc:  # I8: a cache we cannot write is still not authoritative

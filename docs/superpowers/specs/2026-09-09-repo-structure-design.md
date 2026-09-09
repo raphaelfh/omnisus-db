@@ -270,13 +270,22 @@ silently short listing would report a valid registry path as missing.
   by `OMNISUS_CACHE_DIR`. No new dependency.
 - **Format:** one Parquet per listed directory, named from the slugified path,
   so `ls` is debuggable.
-- **Staleness:** a `fetched_at` column *inside* the file. Default TTL 24h;
-  `refresh=True` forces. No sidecar metadata to desynchronise.
+- **Staleness:** `fetched_at` and `skipped` in the file's Parquet **key-value
+  metadata**, not a column. A zero-row listing (an existing but empty
+  directory, spec I6) cannot carry a fact in a column — there are no rows to
+  carry it — so both live in metadata, which a zero-row frame has just as
+  well as a full one. This is a deliberate deviation from an earlier design
+  that put `fetched_at` in a column; the column would have been a second
+  place to state the same fact, which spec I4 ("no fact stated twice")
+  forbids, and it would have been the copy that goes stale. Default TTL 24h;
+  `refresh=True` forces. No sidecar file to desynchronise.
 - **Atomicity:** temp file plus `os.replace`.
 - **Never authoritative:** unreadable means miss, never error (I8).
 
-Parquet earns its place beyond taste: DuckDB reads it directly, so the
-inventory is queryable through the SQL already shipped, with no ingestion.
+Parquet earns its place beyond taste: DuckDB reads the entries directly with
+no ingestion. It does not see the freshness stamp — `fetched_at` and
+`skipped` live in metadata a SQL `SELECT` cannot reach — so a query against
+the cache file sees what was listed but not when, or whether it is stale.
 
 ### 4.5 Surface
 

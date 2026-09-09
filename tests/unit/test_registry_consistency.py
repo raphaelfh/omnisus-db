@@ -89,17 +89,28 @@ def test_d_inventory_advertises_exactly_what_available_accepts() -> None:
     assert set(ftp_dataset_choices()) == {*REGISTRY, *ALIASES}
 
 
+def _file(name: str, when: str = "01-31-20  02:48PM", size: int = 76107) -> str:
+    return f"{when}         {size:>12} {name}"
+
+
 def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None:
     """Tier 2 (c), spec §6: available() accepts every registry key and alias,
-    and rejects everything else. Offline — the listing is stubbed."""
+    and rejects everything else. Offline — the stubbed listing includes one
+    real line, so this doesn't also pass against an available() that always
+    returns []."""
+    from omnisus_db.sources._base import ScopeKey
     from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
     from omnisus_db.sources.datasus_ftp.inventory import available
 
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setattr(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list", lambda _p, _t: []
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+        lambda _p, _t: [_file("DOAC1996.dbc")],
     )
     for name in (*REGISTRY, *ALIASES):
-        assert available(name) == [], name
+        available(name)  # accepted: must not raise, for every key and alias
+    assert available("sim_do") == [ScopeKey(uf="AC", ano=1996)], (
+        "the row whose prefix matches the stubbed line must decode it"
+    )
     with pytest.raises(ValueError, match="unknown dataset"):
         available("definitely_not_a_dataset")

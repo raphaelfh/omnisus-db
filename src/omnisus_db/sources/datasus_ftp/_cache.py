@@ -116,6 +116,7 @@ def read_cached(remote_path: str, *, ttl_hours: float = 24.0) -> Listing | None:
         meta = pl.read_parquet_metadata(target)
         fetched_at = datetime.fromisoformat(meta[_KEY_FETCHED_AT])
         skipped = int(meta[_KEY_SKIPPED])
+        listing_path = meta[_KEY_LISTING_PATH]
     except Exception as exc:
         if target.exists():
             logger.warning("inventory.cache_unreadable", path=str(target), error=str(exc))
@@ -138,4 +139,4 @@ def read_cached(remote_path: str, *, ttl_hours: float = 24.0) -> Listing | None:
     except Exception as exc:
         logger.warning("inventory.cache_malformed", path=str(target), error=str(exc))
         return None
-    return Listing(entries=entries, skipped=skipped, path=remote_path)
+    return Listing(entries=entries, skipped=skipped, path=listing_path)
