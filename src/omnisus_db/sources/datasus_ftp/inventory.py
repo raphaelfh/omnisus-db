@@ -26,23 +26,17 @@ from datetime import datetime
 import structlog
 
 from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp._ftp import (
+    FTP_HOST,
+    TRANSIENT_FTP_ERRORS,
+    is_missing,
+)
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 from omnisus_db.sources.datasus_ftp.filenames import decode
 
 logger = structlog.get_logger(__name__)
 
-FTP_HOST = "ftp.datasus.gov.br"
-
 _DIR_MARKER = "<DIR>"
-
-_TRANSIENT_FTP_ERRORS: tuple[type[BaseException], ...] = (
-    *ftplib.all_errors,
-    OSError,
-    TimeoutError,
-)
-"""Named so mypy can verify the except clause (see fetch.py:64 for the same
-pattern unpacked inline, which mypy cannot check through a starred tuple
-literal)."""
 
 
 class FtpPathNotFound(Exception):  # noqa: N818
@@ -192,11 +186,11 @@ def list_dir(
     for attempt in range(max_retries):
         try:
             raw = _blocking_list(path, timeout_seconds)
-        except _TRANSIENT_FTP_ERRORS as exc:
-            # ftplib.error_perm is itself a member of _TRANSIENT_FTP_ERRORS
+        except TRANSIENT_FTP_ERRORS as exc:
+            # ftplib.error_perm is itself a member of TRANSIENT_FTP_ERRORS
             # (via ftplib.all_errors), so this single clause also catches it;
             # only a 550 ("path not found") is terminal (spec §4.3).
-            if isinstance(exc, ftplib.error_perm) and str(exc).startswith("550"):
+            if is_missing(exc):
                 raise FtpPathNotFound(f"{path}: {exc}") from exc
             last_exc = exc
             if attempt + 1 < max_retries:

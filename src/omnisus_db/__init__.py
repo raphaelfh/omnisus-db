@@ -7,8 +7,13 @@ from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, Lake
-from omnisus_db.sources._base import ImportResult, ScopeKey
-from omnisus_db.sources.datasus_ftp._runner import import_scope as _import_scope_ftp
+from omnisus_db.sources._base import (
+    ImportReport,
+    ImportResult,
+    ScopeKey,
+    ScopeOutcome,
+)
+from omnisus_db.sources.datasus_ftp._runner import run_scopes as _run_scopes_ftp
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 from omnisus_db.sources.datasus_ftp.inventory import (
     FtpEntry,
@@ -96,24 +101,30 @@ def import_dataset(
     *,
     scopes: Sequence[ScopeKey],
     target: str = DEFAULT_TARGET,
-) -> list[ImportResult]:
+) -> ImportReport:
     """Import the given scopes of any DATASUS-FTP dataset into the lake.
 
     ``dataset`` is a registry key (``"sia_bi"``), an alias (``"sim"``) or a
     ``Dataset`` value. The loop iterates ``scopes`` and never asks where they
-    came from — build them with :func:`scopes_for` or by hand.
+    came from — planning is composition:
 
-    Per-scope tolerance and ``ImportReport`` arrive in a later plan (spec
-    §5.1); until then a missing file raises, as it always has.
+        odb.import_dataset("sim_do", scopes=odb.scopes_for("sim_do", years=...))
+        odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=...))
+
+    The first plans blindly and lets tolerance absorb the gaps; the second
+    asks the server first and plans only what exists. There is no flag —
+    the difference is which function fills ``scopes``.
+
+    Returns an :class:`~omnisus_db.sources._base.ImportReport`: a scope
+    DATASUS never published is ``skipped``, a scope that exists but could not
+    be ingested is ``failed``, and neither aborts the run. Inspect
+    ``report.failed``, never the report's truthiness.
     """
     d = resolve(dataset)
 
-    async def run() -> list[ImportResult]:
-        results: list[ImportResult] = []
+    async def run() -> ImportReport:
         with Lake.local(target) as lake:
-            for scope in scopes:
-                results.append(await _import_scope_ftp(dataset=d, scope=scope, lake=lake))
-        return results
+            return await _run_scopes_ftp(d, scopes=scopes, lake=lake)
 
     return asyncio.run(run())
 
@@ -123,7 +134,7 @@ def import_sim(
     years: Iterable[int],
     ufs: Sequence[str] | None = None,
     target: str = DEFAULT_TARGET,
-) -> list[ImportResult]:
+) -> ImportReport:
     """Import SIM-DO (declarações de óbito). Alias for ``import_dataset("sim_do", ...)``."""
     return import_dataset(
         "sim_do", scopes=scopes_for("sim_do", years=years, ufs=ufs), target=target
@@ -135,7 +146,7 @@ def import_sinasc(
     years: Iterable[int],
     ufs: Sequence[str] | None = None,
     target: str = DEFAULT_TARGET,
-) -> list[ImportResult]:
+) -> ImportReport:
     """Import SINASC-NV (nascidos vivos). Alias for ``import_dataset("sinasc_nv", ...)``."""
     return import_dataset(
         "sinasc_nv", scopes=scopes_for("sinasc_nv", years=years, ufs=ufs), target=target
@@ -148,7 +159,7 @@ def import_sih(
     ufs: Sequence[str] | None = None,
     months: Iterable[int] = range(1, 13),
     target: str = DEFAULT_TARGET,
-) -> list[ImportResult]:
+) -> ImportReport:
     """Import SIH-RD (AIH reduzida), monthly. Alias for ``import_dataset("sih_rd", ...)``."""
     return import_dataset(
         "sih_rd",
@@ -180,11 +191,12 @@ def import_ibge_pop(
 
 def import_cnes_st(
     *,
-    years: Iterable[int],
+    years: Iterable[int] | None = None,
     months: Iterable[int] = range(1, 13),
     ufs: Sequence[str] | None = None,
+    scopes: Sequence[ScopeKey] | None = None,
     target: str = DEFAULT_TARGET,
-) -> list[ImportResult]:
+) -> ImportReport:
     """Import CNES-ST (estabelecimentos), monthly, then refresh ``aux_cnes``.
 
     This stays a named function rather than a bare alias because the view
@@ -192,15 +204,20 @@ def import_cnes_st(
     registry row (spec I2). ``import_dataset("cnes_st", ...)`` loads the
     table but does not refresh the view; call
     ``Lake.ensure_aux_cnes_view()`` afterwards if you use that path.
+
+    Pass ``scopes`` to supply a scope list built any way you like — including
+    by :func:`available` — or ``years``/``ufs``/``months`` to have
+    :func:`scopes_for` build the product. Exactly one of the two.
     """
-    results = import_dataset(
-        "cnes_st",
-        scopes=scopes_for("cnes_st", years=years, ufs=ufs, months=months),
-        target=target,
-    )
+    if (scopes is None) == (years is None):
+        raise ValueError("provide exactly one of `scopes` or `years`")
+    if scopes is None:
+        assert years is not None, "the check above guarantees this"
+        scopes = scopes_for("cnes_st", years=years, ufs=ufs, months=months)
+    report = import_dataset("cnes_st", scopes=scopes, target=target)
     with Lake.local(target) as lake:
         lake.ensure_aux_cnes_view()
-    return results
+    return report
 
 
 def import_cnes_master(
@@ -243,9 +260,11 @@ __all__ = [
     "FtpEntry",
     "FtpPathNotFound",
     "FtpUnavailable",
+    "ImportReport",
     "ImportResult",
     "Lake",
     "ScopeKey",
+    "ScopeOutcome",
     "__version__",
     "available",
     "browse",

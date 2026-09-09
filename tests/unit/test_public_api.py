@@ -63,14 +63,15 @@ def test_import_dataset_reaches_the_sia_family(monkeypatch, tmp_path: Path, dbc_
     _fake_fetch_from(monkeypatch, dbc_fixture("sia_atd_rr_2024_01_mini").read_bytes())
     target = f"ducklake:{tmp_path}/api.ducklake"
 
-    results = odb.import_dataset(
+    report = odb.import_dataset(
         "sia_atd",
         scopes=odb.scopes_for("sia_atd", years=[2024], ufs=["RR"], months=[1]),
         target=target,
     )
 
-    assert len(results) == 1
-    assert results[0].rows > 0
+    assert len(report.outcomes) == 1
+    assert report.ok[0].result is not None
+    assert report.rows > 0
     with Lake.local(target) as lake:
         assert "sia_atd" in lake.tables()
 
@@ -82,20 +83,21 @@ def test_import_dataset_accepts_alias_and_hand_built_scopes(
     _fake_fetch_from(monkeypatch, dbc_fixture("sim_rr_2023_mini").read_bytes())
     target = f"ducklake:{tmp_path}/alias.ducklake"
 
-    results = odb.import_dataset("sim", scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
+    report = odb.import_dataset("sim", scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
 
-    assert results[0].rows > 0
+    assert report.rows > 0
     with Lake.local(target) as lake:
         assert "sim_do" in lake.tables()
 
 
-def test_import_sim_alias_still_returns_a_list(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+def test_import_sim_alias_returns_a_report(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     """Back-compat for this plan: aliases keep list[ImportResult] until the
     tolerance plan introduces ImportReport (spec §5.1 compatibility note)."""
     _fake_fetch_from(monkeypatch, dbc_fixture("sim_rr_2023_mini").read_bytes())
-    results = odb.import_sim(years=[2023], ufs=["RR"], target=f"ducklake:{tmp_path}/s.ducklake")
-    assert isinstance(results, list)
-    assert results[0].rows > 0
+    report = odb.import_sim(years=[2023], ufs=["RR"], target=f"ducklake:{tmp_path}/s.ducklake")
+    assert isinstance(report, odb.ImportReport)
+    assert not report.failed
+    assert report.rows > 0
 
 
 def test_default_target_is_exported_from_lake() -> None:
@@ -126,6 +128,25 @@ def test_fixture_map_covers_every_registry_row() -> None:
     assert set(_FIXTURE_FOR) == set(REGISTRY)
 
 
+def test_the_fixture_builder_can_rebuild_every_fixture_this_map_names() -> None:
+    """conftest tells a developer with a missing fixture to run
+    scripts/build_fixtures.py. That was a dead end for 6 of the 11 datasets,
+    because the script carried its own hand-copied path map covering 5. Assert
+    the two agree, so the instruction stays true."""
+    import importlib.util
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "build_fixtures.py"
+    spec = importlib.util.spec_from_file_location("build_fixtures", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    built = {
+        dataset: (fname.removesuffix(".dbc"), scope) for dataset, scope, fname in module.TARGETS
+    }
+    assert built == _FIXTURE_FOR
+
+
 @pytest.mark.parametrize("dataset_name", sorted(REGISTRY))
 def test_import_dataset_reaches_every_registry_row(
     dataset_name: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, dbc_fixture
@@ -136,9 +157,10 @@ def test_import_dataset_reaches_every_registry_row(
     _fake_fetch_from(monkeypatch, dbc_fixture(fixture_name).read_bytes())
     target = f"ducklake:{tmp_path}/{dataset_name}.ducklake"
 
-    results = odb.import_dataset(dataset_name, scopes=[scope], target=target)
+    report = odb.import_dataset(dataset_name, scopes=[scope], target=target)
 
-    assert results[0].rows > 0
+    assert not report.failed, report.failed
+    assert report.rows > 0
     with Lake.local(target) as lake:
         assert dataset_name in lake.tables()
 

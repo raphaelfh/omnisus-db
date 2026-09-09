@@ -8,7 +8,8 @@ import typer
 from rich.console import Console
 
 from omnisus_db.lake import DEFAULT_TARGET, Lake
-from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY, resolve
+from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY, Dataset, resolve
 
 app = typer.Typer(
     name="omnisus-db",
@@ -24,6 +25,13 @@ their dataset name. Dispatch (in ``import_cmd``) looks up the importer for
 that dataset name in a second, importer-keyed mapping built inside the
 command body — a mapping entry with no importer raises ``KeyError`` loudly
 rather than silently importing the wrong dataset."""
+
+
+_PLANNERS: frozenset[str] = frozenset({"product", "inventory"})
+"""How ``import`` chooses scopes. ``product`` is every (uf, year[, month]) and
+leans on tolerance to absorb the gaps; ``inventory`` asks the server what it
+publishes and imports only that. The library has no such flag — planning there
+is composition (spec §5.1); this is CLI sugar over the same two functions."""
 
 
 def dataset_choices() -> list[str]:
@@ -68,9 +76,23 @@ def import_cmd(
     years_range: str | None = typer.Option(None, "--years", help="e.g. 2020-2024"),
     ufs: str | None = typer.Option(None, "--ufs", help="Comma list: SP,RJ,MG"),
     months: str | None = typer.Option(None, "--months", help="Comma list, monthly only"),
+    plan: str = typer.Option(
+        "product",
+        "--plan",
+        help=(
+            "How to choose scopes: 'product' (every uf x year, tolerating gaps) "
+            "or 'inventory' (ask the server first, import only what exists)."
+        ),
+    ),
     target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
 ) -> None:
-    """Import a dataset into the lake."""
+    """Import a dataset into the lake.
+
+    Exits non-zero if and only if a scope *failed*. A scope DATASUS never
+    published is skipped, which is a normal outcome of asking for a range and
+    exits zero — that is what lets an orchestrator distinguish "nothing to do"
+    from "something broke".
+    """
     import omnisus_db as odb
 
     non_ftp_importers: dict[str, Callable[..., list[odb.ImportResult]]] = {
@@ -86,6 +108,9 @@ def import_cmd(
     else:
         raise typer.BadParameter("provide --year/-y or --years RANGE")
 
+    if plan not in _PLANNERS:
+        raise typer.BadParameter(f"--plan must be one of: {', '.join(sorted(_PLANNERS))}")
+
     uf_list = [u.strip().upper() for u in ufs.split(",")] if ufs else None
     month_list = [int(x) for x in months.split(",")] if months else None
 
@@ -93,30 +118,68 @@ def import_cmd(
         name = _NON_FTP[dataset]
         importer = non_ftp_importers[name]
         results = importer(years=yrs, target=target)
-    else:
-        try:
-            d = resolve(dataset)
-        except ValueError as exc:
-            raise typer.BadParameter(
-                f"{exc}. Choose from: {', '.join(dataset_choices())}"
-            ) from exc
-        if d.name == "cnes_st":
-            # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
-            results = odb.import_cnes_st(
-                years=yrs, ufs=uf_list, months=month_list or range(1, 13), target=target
-            )
-        else:
-            results = odb.import_dataset(
-                d,
-                scopes=odb.scopes_for(d, years=yrs, ufs=uf_list, months=month_list),
-                target=target,
-            )
+        total_rows = sum(r.rows for r in results)
+        console.print(
+            f"[green]:heavy_check_mark:[/green] imported [bold]{total_rows:,}[/bold] rows "
+            f"({len(results)} scope(s))"
+        )
+        return
 
-    total_rows = sum(r.rows for r in results)
+    try:
+        d = resolve(dataset)
+    except ValueError as exc:
+        raise typer.BadParameter(f"{exc}. Choose from: {', '.join(dataset_choices())}") from exc
+
+    scopes = _plan_scopes(d, plan=plan, years=yrs, ufs=uf_list, months=month_list)
+
+    if d.name == "cnes_st":
+        # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
+        # It takes the planned scopes, so --plan reaches this branch too.
+        report = odb.import_cnes_st(scopes=scopes, target=target)
+    else:
+        report = odb.import_dataset(d, scopes=scopes, target=target)
+
     console.print(
-        f"[green]:heavy_check_mark:[/green] imported [bold]{total_rows:,}[/bold] rows "
-        f"({len(results)} scope(s))"
+        f"[green]:heavy_check_mark:[/green] imported [bold]{report.rows:,}[/bold] rows "
+        f"({len(report.ok)} ok, {len(report.skipped)} skipped, {len(report.failed)} failed)"
     )
+    if report.failed:
+        for outcome in report.failed[:10]:
+            console.print(f"  [red]x[/red] {outcome.scope}: {outcome.reason}")
+        if len(report.failed) > 10:
+            console.print(f"  [dim]... and {len(report.failed) - 10} more[/dim]")
+        raise typer.Exit(code=1)
+
+
+def _plan_scopes(
+    d: Dataset,
+    *,
+    plan: str,
+    years: list[int],
+    ufs: list[str] | None,
+    months: list[int] | None,
+) -> list[ScopeKey]:
+    """Fill the scope list with the chosen planner, then apply the user's filters.
+
+    ``--plan inventory`` forces ``refresh=True``: the 24h listing cache exists
+    for interactive browsing, and a 23-hour-old listing would silently omit a
+    month DATASUS published this morning. The run is about to use the network
+    anyway, so the listing costs one extra LIST and removes that whole class of
+    silent omission.
+    """
+    import omnisus_db as odb
+
+    if plan == "product":
+        return odb.scopes_for(d, years=years, ufs=ufs, months=months)
+
+    scopes = odb.available(d, years=years, refresh=True)
+    if ufs is not None:
+        wanted_ufs = set(ufs)
+        scopes = [s for s in scopes if s.uf in wanted_ufs]
+    if months is not None:
+        wanted_months = set(months)
+        scopes = [s for s in scopes if s.mes in wanted_months]
+    return scopes
 
 
 @app.command()

@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from omnisus_db.sources._base import ScopeKey
+
 YM = tuple[int, int]
 """``(year, month)``, e.g. ``(2008, 1)``."""
 
@@ -112,3 +114,21 @@ def resolve(dataset: str | Dataset) -> Dataset:
 def get_config(dataset: str) -> Dataset:
     """Registry lookup by key. Kept for callers that predate :func:`resolve`."""
     return resolve(dataset)
+
+
+def in_coverage(dataset: str | Dataset, scope: ScopeKey) -> bool:
+    """Whether ``scope`` falls inside the dataset's declared coverage window.
+
+    The cheapest possible filter: a scope outside coverage cannot exist
+    upstream, so rejecting it here saves a full FTP connect, login, CWD and
+    PASV setup before the 550 that would have said the same thing.
+
+    Yearly datasets carry no month, so their scopes are compared at month 1.
+    A ``last`` of ``None`` means the dataset is ongoing and has no end bound.
+    """
+    d = resolve(dataset)
+    first, last = d.coverage
+    ym = (scope.ano, scope.mes if scope.mes is not None else 1)
+    if ym < first:
+        return False
+    return not (last is not None and ym > last)

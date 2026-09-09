@@ -194,3 +194,146 @@ def test_cli_default_target_is_the_lake_default() -> None:
     from omnisus_db.lake import DEFAULT_TARGET
 
     assert CLI_DEFAULT_TARGET is DEFAULT_TARGET
+
+
+# --- import: planning and exit status (spec §5.1) --------------------------
+
+
+def _serve_fixture_except(monkeypatch, fixture_bytes: bytes, missing: set[str]) -> None:
+    """Patch the synchronous FTP seam, never ftplib itself."""
+    import ftplib
+
+    def _blocking(_remote_dir: str, filename: str, _timeout: float) -> bytes:
+        if filename in missing:
+            raise ftplib.error_perm("550 The system cannot find the file specified.")
+        return fixture_bytes
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", _blocking)
+
+
+def test_a_skipped_scope_exits_zero(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+    """Asking for a range DATASUS only partly published is normal, not an error.
+    An orchestrator must be able to tell 'nothing to do' from 'something broke'."""
+    _serve_fixture_except(
+        monkeypatch, dbc_fixture("sim_rr_2023_mini").read_bytes(), {"DORR2022.dbc"}
+    )
+    result = runner.invoke(
+        app,
+        [
+            "import",
+            "sim",
+            "--years",
+            "2022-2023",
+            "--ufs",
+            "RR",
+            "--target",
+            f"ducklake:{tmp_path}/s.ducklake",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "1 skipped" in result.output
+
+
+def test_a_failed_scope_exits_one(monkeypatch, tmp_path: Path) -> None:
+    """A 530 exhausting its retries is a real failure and must be visible to
+    the caller's exit status, not buried in a summary line."""
+    import ftplib
+
+    def _throttled(*_a: object) -> bytes:
+        raise ftplib.error_perm("530 maximum number of allowed clients")
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", _throttled)
+    result = runner.invoke(
+        app,
+        [
+            "import",
+            "sim",
+            "--year",
+            "2023",
+            "--ufs",
+            "RR",
+            "--target",
+            f"ducklake:{tmp_path}/f.ducklake",
+        ],
+    )
+    assert result.exit_code == 1, result.output
+    assert "1 failed" in result.output
+
+
+def test_plan_inventory_imports_only_what_the_server_lists(
+    monkeypatch, tmp_path: Path, dbc_fixture
+) -> None:
+    """The goal: build the lake from what is actually published. The server
+    lists 2023 only, so 2022 is never even attempted."""
+    monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr(
+        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
+        lambda _p, _t: ["01-31-20  02:48PM                76107 DORR2023.dbc"],
+    )
+    fetched: list[str] = []
+
+    def _blocking(_remote_dir: str, filename: str, _timeout: float) -> bytes:
+        fetched.append(filename)
+        return dbc_fixture("sim_rr_2023_mini").read_bytes()
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", _blocking)
+
+    result = runner.invoke(
+        app,
+        [
+            "import",
+            "sim",
+            "--years",
+            "2022-2023",
+            "--ufs",
+            "RR",
+            "--plan",
+            "inventory",
+            "--target",
+            f"ducklake:{tmp_path}/p.ducklake",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert fetched == ["DORR2023.dbc"], "2022 was not listed, so it must not be fetched"
+
+
+def test_plan_inventory_bypasses_a_stale_listing_cache(
+    monkeypatch, tmp_path: Path, dbc_fixture
+) -> None:
+    """--plan implies refresh=True. A 23-hour-old cache would silently omit a
+    month published this morning, and the run is about to use the network anyway."""
+    monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
+    listings = 0
+
+    def _list(_p: str, _t: float) -> list[str]:
+        nonlocal listings
+        listings += 1
+        return ["01-31-20  02:48PM                76107 DORR2023.dbc"]
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", _list)
+    monkeypatch.setattr(
+        "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
+        lambda *_a: dbc_fixture("sim_rr_2023_mini").read_bytes(),
+    )
+    argv = [
+        "import",
+        "sim",
+        "--year",
+        "2023",
+        "--ufs",
+        "RR",
+        "--plan",
+        "inventory",
+        "--target",
+        f"ducklake:{tmp_path}/r.ducklake",
+    ]
+
+    assert runner.invoke(app, argv).exit_code == 0
+    assert runner.invoke(app, argv).exit_code == 0
+    assert listings == 2, "the second run must re-list, not trust the 24h cache"
+
+
+def test_an_unknown_plan_is_rejected() -> None:
+    result = runner.invoke(app, ["import", "sim", "--year", "2023", "--plan", "bogus"])
+    assert result.exit_code != 0
+    assert "inventory" in result.output and "product" in result.output

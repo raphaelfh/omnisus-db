@@ -10,12 +10,29 @@ import io
 import structlog
 
 from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp._ftp import (
+    FTP_HOST,
+    TRANSIENT_FTP_ERRORS,
+    is_missing,
+)
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
 logger = structlog.get_logger(__name__)
 
-FTP_HOST = "ftp.datasus.gov.br"
+
+class FtpFileNotFound(Exception):  # noqa: N818
+    """DATASUS does not publish this file (550). Terminal — never retried.
+
+    Distinct from :class:`FtpUnavailable`: a scope that does not exist is a
+    normal outcome of asking for a range and becomes a ``skipped``
+    :class:`~omnisus_db.sources._base.ScopeOutcome`, while a scope that exists
+    but could not be fetched is ``failed`` and worth retrying.
+    """
+
+
+class FtpUnavailable(Exception):  # noqa: N818
+    """The file could not be fetched within the retry budget."""
 
 
 def ftp_path_for(dataset: str | Dataset, scope: ScopeKey) -> tuple[str, str]:
@@ -46,27 +63,37 @@ async def fetch_dbc_bytes(
     max_retries: int = 3,
     backoff_seconds: float = 1.0,
 ) -> bytes:
-    """Fetch DBC bytes for one scope from DATASUS FTP, with exponential retry."""
+    """Fetch DBC bytes for one scope from DATASUS FTP, with exponential retry.
+
+    Raises:
+        FtpFileNotFound: DATASUS does not publish this scope (550). Terminal.
+        FtpUnavailable: transient failures exhausted ``max_retries``.
+
+    Only a 550 is terminal. Every other ``ftplib.error_perm`` is retried,
+    because ``error_perm`` is *any* 5xx and DATASUS answers ``530 maximum
+    number of allowed clients`` when its anonymous-connection pool is full —
+    which is a throttle, not a missing file. Treating the whole class as
+    permanent made a busy server indistinguishable from an absent dataset.
+    """
     d = resolve(dataset)
     remote_dir, filename = ftp_path_for(d, scope)
-    last_exc: Exception | None = None
+    last_exc: BaseException | None = None
     for attempt in range(max_retries):
         try:
             data = await asyncio.to_thread(_blocking_fetch, remote_dir, filename, timeout_seconds)
-            logger.info(
-                "datasus_ftp.fetched",
-                dataset=d.name,
-                scope=str(scope),
-                bytes=len(data),
-                attempt=attempt,
-            )
-            return data
-        except (*ftplib.all_errors, OSError, TimeoutError) as exc:
+        except TRANSIENT_FTP_ERRORS as exc:
+            if is_missing(exc):
+                raise FtpFileNotFound(f"{remote_dir}/{filename}: {exc}") from exc
             last_exc = exc
-            # Permanent error (550 file not found) — don't retry
-            if isinstance(exc, ftplib.error_perm):
-                raise
             if attempt + 1 < max_retries:
                 await asyncio.sleep(backoff_seconds * (2**attempt))
-    assert last_exc is not None
-    raise last_exc
+            continue
+        logger.info(
+            "datasus_ftp.fetched",
+            dataset=d.name,
+            scope=str(scope),
+            bytes=len(data),
+            attempt=attempt,
+        )
+        return data
+    raise FtpUnavailable(f"{remote_dir}/{filename}: {max_retries} attempts failed") from last_exc

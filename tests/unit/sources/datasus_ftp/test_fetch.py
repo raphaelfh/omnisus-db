@@ -9,6 +9,8 @@ import pytest
 
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.fetch import (
+    FtpFileNotFound,
+    FtpUnavailable,
     fetch_dbc_bytes,
     ftp_path_for,
 )
@@ -78,8 +80,9 @@ async def test_fetch_dbc_bytes_retries_on_transient_error() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_dbc_bytes_does_not_retry_on_perm_error() -> None:
-    """ftplib.error_perm (e.g., 550 file not found) should not be retried."""
+async def test_a_550_is_terminal_and_typed() -> None:
+    """550 means DATASUS does not publish this scope. Never retried, and it
+    arrives as FtpFileNotFound so the caller can skip rather than string-match."""
     call_count = 0
 
     def fake_blocking_fetch(*_args: object) -> bytes:
@@ -92,7 +95,7 @@ async def test_fetch_dbc_bytes_does_not_retry_on_perm_error() -> None:
             "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
             side_effect=fake_blocking_fetch,
         ),
-        pytest.raises(ftplib.error_perm),
+        pytest.raises(FtpFileNotFound),
     ):
         await fetch_dbc_bytes(
             dataset="sim_do",
@@ -104,7 +107,62 @@ async def test_fetch_dbc_bytes_does_not_retry_on_perm_error() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_dbc_bytes_raises_after_max_retries() -> None:
+async def test_a_530_throttle_is_retried_not_mistaken_for_a_missing_file() -> None:
+    """The defect this contract replaces.
+
+    ``ftplib.error_perm`` is *any* 5xx, and DATASUS answers 530 when its
+    anonymous-connection pool is full. Treating the whole class as permanent
+    made a busy server indistinguishable from an absent dataset — so a wide
+    import would report scopes as missing that exist and were merely throttled.
+    """
+    call_count = 0
+
+    def fake_blocking_fetch(*_args: object) -> bytes:
+        nonlocal call_count
+        call_count += 1
+        if call_count < 3:
+            raise ftplib.error_perm("530 maximum number of allowed clients")
+        return b"OK"
+
+    with patch(
+        "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
+        side_effect=fake_blocking_fetch,
+    ):
+        data = await fetch_dbc_bytes(
+            dataset="sim_do",
+            scope=ScopeKey(uf="SP", ano=2024),
+            max_retries=3,
+            backoff_seconds=0,
+        )
+    assert data == b"OK"
+    assert call_count == 3, "530 must be retried to the full budget, not treated as terminal"
+
+
+@pytest.mark.asyncio
+async def test_a_530_that_never_clears_is_unavailable_not_not_found() -> None:
+    """Exhausting the budget on a throttle is 'failed', never 'skipped'."""
+
+    def fake_blocking_fetch(*_args: object) -> bytes:
+        raise ftplib.error_perm("530 maximum number of allowed clients")
+
+    with (
+        patch(
+            "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
+            side_effect=fake_blocking_fetch,
+        ),
+        pytest.raises(FtpUnavailable) as exc_info,
+    ):
+        await fetch_dbc_bytes(
+            dataset="sim_do",
+            scope=ScopeKey(uf="SP", ano=2024),
+            max_retries=2,
+            backoff_seconds=0,
+        )
+    assert not isinstance(exc_info.value, FtpFileNotFound)
+
+
+@pytest.mark.asyncio
+async def test_exhausted_retries_raise_unavailable_preserving_the_cause() -> None:
     def fake_blocking_fetch(*_args: object) -> bytes:
         raise OSError("perma-fail")
 
@@ -113,7 +171,7 @@ async def test_fetch_dbc_bytes_raises_after_max_retries() -> None:
             "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
             side_effect=fake_blocking_fetch,
         ),
-        pytest.raises(OSError, match="perma-fail"),
+        pytest.raises(FtpUnavailable) as exc_info,
     ):
         await fetch_dbc_bytes(
             dataset="sim_do",
@@ -121,3 +179,6 @@ async def test_fetch_dbc_bytes_raises_after_max_retries() -> None:
             max_retries=2,
             backoff_seconds=0,
         )
+    # The original error is not swallowed — it is the __cause__.
+    assert isinstance(exc_info.value.__cause__, OSError)
+    assert "perma-fail" in str(exc_info.value.__cause__)

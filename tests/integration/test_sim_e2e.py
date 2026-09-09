@@ -22,8 +22,9 @@ def test_import_sim_e2e_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) -
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
 
     target = f"ducklake:{tmp_path}/test.ducklake"
-    results = odb.import_sim(years=[2023], ufs=["RR"], target=target)
-    assert results[0].rows > 0
+    report = odb.import_sim(years=[2023], ufs=["RR"], target=target)
+    assert not report.failed, report.failed
+    assert report.rows > 0
 
     lake = Lake.local(target)
     n = (
