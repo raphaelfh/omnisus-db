@@ -91,7 +91,12 @@ def test_coverage_matches_the_earliest_published_file(
     )
 
 
-_ONGOING_GRACE_MONTHS = 24
+# A monthly dataset silent for 18 months is dead. A yearly one 18 months
+# behind is just yearly: DATASUS publishes SIM and SINASC definitive data
+# years in arrears (SINASC's newest file was 2022 when this was written, 45
+# months old, and the row is still perfectly truthful). One grace period
+# cannot serve both, and the row already declares which it is.
+_ONGOING_GRACE_MONTHS = {"monthly": 18, "yearly": 48}
 
 
 @pytest.mark.parametrize("d", ROWS)
@@ -125,7 +130,9 @@ def test_coverage_end_is_not_a_stale_claim(d: Dataset, listings: dict[str, Listi
 
     today = date.today()
     months_stale = (today.year - latest[0]) * 12 + (today.month - latest[1])
-    assert months_stale <= _ONGOING_GRACE_MONTHS, (
+    grace = _ONGOING_GRACE_MONTHS[d.cadence]
+    assert months_stale <= grace, (
         f"{d.name}: registry claims coverage is open-ended, but the server's "
-        f"newest file is {latest}, {months_stale} months old"
+        f"newest file is {latest}, {months_stale} months old "
+        f"(grace for a {d.cadence} dataset is {grace})"
     )
