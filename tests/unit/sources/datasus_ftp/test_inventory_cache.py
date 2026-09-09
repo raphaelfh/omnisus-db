@@ -1,5 +1,5 @@
 """Inventory cache (spec §4.4). Never authoritative: unreadable means miss,
-never an error (I8). Staleness lives in the file, not a sidecar."""
+never an error (I8). Staleness lives in the file's metadata, not a sidecar."""
 
 from __future__ import annotations
 
@@ -51,7 +51,8 @@ def test_cache_dir_falls_back_to_xdg(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
 def test_cache_path_is_a_readable_slug_not_a_hash() -> None:
     p = cache_path(PATH)
-    assert p.name == "dissemin_publicos_SIM_CID10_DORES.parquet"
+    assert p.name.startswith("dissemin_publicos_SIM_CID10_DORES-")
+    assert p.name.endswith(".parquet")
     assert p.parent == cache_dir()
 
 
@@ -137,7 +138,31 @@ def test_empty_listing_roundtrips_as_empty_not_as_a_miss() -> None:
 
 
 def test_empty_listing_still_expires_with_the_ttl() -> None:
-    """A zero-row frame has no fetched_at value; staleness must fall back to
-    the file mtime, or an empty cached directory would never expire."""
+    """An empty directory has no rows, so its freshness cannot come from the
+    frame — it comes from the file's metadata. Both halves are asserted on
+    purpose: an implementation that always missed would satisfy the expiry
+    half alone, which is exactly how the previous version of this test passed
+    while proving nothing."""
     write_cache(Listing(entries=(), skipped=0, path=PATH))
+    assert read_cached(PATH, ttl_hours=24) is not None
     assert read_cached(PATH, ttl_hours=0) is None
+
+
+def test_skipped_survives_even_when_there_are_no_entries() -> None:
+    """``skipped`` is a property of the listing, not of its rows. A zero-row
+    frame cannot carry it in a column, and a listing that reports 0 lines
+    skipped when 5 were dropped is a declaration that lies (spec I5)."""
+    write_cache(Listing(entries=(), skipped=5, path=PATH))
+    got = read_cached(PATH)
+    assert got is not None
+    assert got.skipped == 5
+
+
+def test_paths_that_slugify_alike_do_not_collide() -> None:
+    """``/a/b`` and ``/a_b`` both slugify to ``a_b``. Serving one directory's
+    listing for another is worse than a miss, so the name carries a digest."""
+    assert cache_path("/a/b") != cache_path("/a_b")
+
+
+def test_a_trailing_slash_maps_to_the_same_cache_file() -> None:
+    assert cache_path("/a/b") == cache_path("/a/b/")

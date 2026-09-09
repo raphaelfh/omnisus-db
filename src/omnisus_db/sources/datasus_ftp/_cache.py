@@ -1,8 +1,11 @@
 """Persistence for the FTP inventory (spec §4.4).
 
-One Parquet per listed directory, named from the slugified remote path so
-``ls`` is debuggable. Staleness lives in a ``fetched_at`` column inside the
-file — there is no sidecar metadata to desynchronise.
+One Parquet per listed directory, named from the slugified remote path plus a
+short digest so ``ls`` is debuggable and distinct paths cannot collide.
+Staleness and the skipped count are properties of the listing, not of its
+rows, so they live in the file's Parquet key-value metadata — a zero-row frame
+carries them just as well as a full one, and there is no sidecar to
+desynchronise.
 
 The cache is never authoritative (spec I8): anything unreadable is a miss,
 never an error. It knows nothing about FTP.
@@ -10,6 +13,7 @@ never an error. It knows nothing about FTP.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from datetime import UTC, datetime, timedelta
@@ -23,6 +27,10 @@ from omnisus_db.sources.datasus_ftp.inventory import FtpEntry, Listing
 logger = structlog.get_logger(__name__)
 
 _SLUG_UNSAFE = re.compile(r"[^A-Za-z0-9_.-]+")
+
+_KEY_FETCHED_AT = "omnisus.fetched_at"
+_KEY_SKIPPED = "omnisus.skipped"
+_KEY_LISTING_PATH = "omnisus.listing_path"
 
 
 def cache_dir() -> Path:
@@ -39,9 +47,18 @@ def cache_dir() -> Path:
 
 
 def cache_path(remote_path: str) -> Path:
-    """Cache file for one remote directory, named from a readable slug."""
-    slug = _SLUG_UNSAFE.sub("_", remote_path.strip("/")) or "root"
-    return cache_dir() / f"{slug}.parquet"
+    """Cache file for one remote directory: a readable slug plus a digest.
+
+    The slug alone is not injective — ``/a/b`` and ``/a_b`` both slugify to
+    ``a_b``, and serving one directory's listing for another is worse than a
+    miss (I8 promises failures are misses, not wrong data). The digest is
+    taken over the same normalised path the slug is, so a trailing slash still
+    maps to one file.
+    """
+    key = remote_path.strip("/")
+    slug = _SLUG_UNSAFE.sub("_", key) or "root"
+    digest = hashlib.blake2b(key.encode("utf-8"), digest_size=4).hexdigest()
+    return cache_dir() / f"{slug}-{digest}.parquet"
 
 
 def write_cache(listing: Listing) -> Path:
@@ -66,39 +83,45 @@ def write_cache(listing: Listing) -> Path:
             "size_bytes": pl.Int64,
             "modified": pl.Datetime("us"),
         },
-    ).with_columns(
-        pl.lit(listing.path).alias("listing_path"),
-        pl.lit(listing.skipped).cast(pl.Int64).alias("skipped"),
-        pl.lit(now).cast(pl.Datetime("us")).alias("fetched_at"),
     )
     tmp = target.with_suffix(".parquet.tmp")
-    frame.write_parquet(tmp, compression="zstd")
-    os.replace(tmp, target)
+    try:
+        frame.write_parquet(
+            tmp,
+            compression="zstd",
+            metadata={
+                _KEY_FETCHED_AT: now.isoformat(),
+                _KEY_SKIPPED: str(listing.skipped),
+                _KEY_LISTING_PATH: listing.path,
+            },
+        )
+        os.replace(tmp, target)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
     return target
 
 
 def read_cached(remote_path: str, *, ttl_hours: float = 24.0) -> Listing | None:
     """Return the cached listing, or ``None`` on miss, stale or unreadable.
 
-    Never raises: a corrupt cache is a miss (spec I8).
+    Never raises: a corrupt cache is a miss (spec I8). Freshness is read from
+    the file's metadata before the frame, so a stale entry costs one metadata
+    read rather than a full decode.
     """
     target = cache_path(remote_path)
     try:
-        frame = pl.read_parquet(target)
+        meta = pl.read_parquet_metadata(target)
+        fetched_at = datetime.fromisoformat(meta[_KEY_FETCHED_AT])
+        skipped = int(meta[_KEY_SKIPPED])
     except Exception as exc:
         if target.exists():
             logger.warning("inventory.cache_unreadable", path=str(target), error=str(exc))
         return None
+    if datetime.now(UTC).replace(tzinfo=None) - fetched_at > timedelta(hours=ttl_hours):
+        return None
     try:
-        # A zero-row frame carries no fetched_at value, so an empty directory's
-        # staleness comes from the file's mtime. Without this an empty cached
-        # listing would never expire.
-        fetched_at = frame.get_column("fetched_at").max() if frame.height else None
-        if fetched_at is None:
-            fetched_at = datetime.fromtimestamp(target.stat().st_mtime)
-        if datetime.now(UTC).replace(tzinfo=None) - fetched_at > timedelta(hours=ttl_hours):
-            return None
-        skipped = int(frame.get_column("skipped").max() or 0) if frame.height else 0
+        frame = pl.read_parquet(target)
         entries = tuple(
             FtpEntry(
                 name=row["name"],
