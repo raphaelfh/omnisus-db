@@ -11,7 +11,7 @@ import structlog
 
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
-from omnisus_db.sources.datasus_ftp.inventory import scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
 logger = structlog.get_logger(__name__)
 

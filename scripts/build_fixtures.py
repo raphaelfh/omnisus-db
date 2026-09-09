@@ -16,7 +16,7 @@ import io
 from pathlib import Path
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.inventory import scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
 OUT = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "dbc"
 

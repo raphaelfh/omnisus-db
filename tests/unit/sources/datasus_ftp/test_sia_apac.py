@@ -19,7 +19,7 @@ import pytest
 
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import get_config
-from omnisus_db.sources.datasus_ftp.inventory import parse_filename, scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 from omnisus_db.transforms.dictionaries import load_dicionario
 

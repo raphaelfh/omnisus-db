@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.inventory import (
+from omnisus_db.sources.datasus_ftp.filenames import (
     parse_filename,
     scope_to_filename,
 )

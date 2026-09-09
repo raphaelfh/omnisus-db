@@ -91,7 +91,7 @@ def test_aliases_do_not_collide_with_registry_keys() -> None:
 def test_adhoc_dataset_flows_through_codec_and_ftp_path() -> None:
     """I3: a Dataset value not in REGISTRY works through the same functions."""
     from omnisus_db.sources.datasus_ftp.fetch import ftp_path_for
-    from omnisus_db.sources.datasus_ftp.inventory import scope_to_filename
+    from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
     d = _adhoc(name="sim_cid9", prefix="DO", ftp_dir="/dissemin/publicos/SIM/CID9/DORES")
     scope = ScopeKey(uf="SP", ano=1995)
@@ -100,7 +100,7 @@ def test_adhoc_dataset_flows_through_codec_and_ftp_path() -> None:
 
 
 def test_adhoc_monthly_dataset_builds_monthly_filename() -> None:
-    from omnisus_db.sources.datasus_ftp.inventory import scope_to_filename
+    from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
     d = _adhoc(name="sia_pa", prefix="PA", cadence="monthly", partition_by=("ano", "uf", "mes"))
     assert scope_to_filename(d, ScopeKey(uf="RR", ano=2024, mes=3)) == "PARR2403.dbc"

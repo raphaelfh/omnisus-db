@@ -15,7 +15,7 @@ from hypothesis import strategies as st
 from omnisus_db import ALL_UFS
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
-from omnisus_db.sources.datasus_ftp.inventory import parse_filename, scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
 
 # fmt: off
 GOLDEN: list[tuple[str, ScopeKey, str]] = [

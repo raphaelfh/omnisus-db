@@ -1,4 +1,8 @@
-"""DATASUS FTP filename conventions and inventory helpers."""
+"""DATASUS DBC filename codec: (dataset, ScopeKey) <-> filename.
+
+Split out of the old ``inventory.py`` so that name could be used for the
+actual inventory (spec §4). This module is pure — no network, no cache.
+"""
 
 from __future__ import annotations
 
