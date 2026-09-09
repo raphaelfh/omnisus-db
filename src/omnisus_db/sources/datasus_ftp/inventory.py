@@ -35,6 +35,15 @@ FTP_HOST = "ftp.datasus.gov.br"
 
 _DIR_MARKER = "<DIR>"
 
+_TRANSIENT_FTP_ERRORS: tuple[type[BaseException], ...] = (
+    *ftplib.all_errors,
+    OSError,
+    TimeoutError,
+)
+"""Named so mypy can verify the except clause (see fetch.py:64 for the same
+pattern unpacked inline, which mypy cannot check through a starred tuple
+literal)."""
+
 
 class FtpPathNotFound(Exception):  # noqa: N818
     """The remote directory does not exist, or access was denied (550).
@@ -179,13 +188,13 @@ def list_dir(
     ``/x`` must never diverge downstream, e.g. in the Task 5 cache).
     """
     path = path.rstrip("/") or "/"
-    last_exc: Exception | None = None
+    last_exc: BaseException | None = None
     for attempt in range(max_retries):
         try:
             raw = _blocking_list(path, timeout_seconds)
         except ftplib.error_perm as exc:
             raise FtpPathNotFound(f"{path}: {exc}") from exc
-        except (*ftplib.all_errors, OSError, TimeoutError) as exc:
+        except _TRANSIENT_FTP_ERRORS as exc:
             last_exc = exc
             if attempt + 1 < max_retries:
                 time.sleep(backoff_seconds * (2**attempt))

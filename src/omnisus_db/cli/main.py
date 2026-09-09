@@ -143,6 +143,7 @@ def inventory(
             console.print(table)
             console.print(f"[dim]{len(entries)} entry(ies) under {path}[/dim]")
             return
+        assert dataset is not None, "the XOR check above guarantees this"
         try:
             d = resolve(dataset)
         except ValueError as exc:
