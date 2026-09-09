@@ -64,6 +64,25 @@ def test_550_raises_path_not_found_and_is_never_retried() -> None:
     assert calls == 1, "550 is terminal — it must not be retried"
 
 
+def test_530_is_retried_to_the_full_budget_and_raises_unavailable() -> None:
+    """Only 550 means "path not found" (spec §4.3). 530 (login incorrect) is a
+    5xx from ftplib.error_perm too, but it is not the path being missing — it
+    must get the same bounded retry as any other transient failure."""
+    calls = 0
+
+    def boom(*_a: object, **_k: object) -> list[str]:
+        nonlocal calls
+        calls += 1
+        raise ftplib.error_perm("530 Login incorrect.")
+
+    with (
+        patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", side_effect=boom),
+        pytest.raises(FtpUnavailable),
+    ):
+        list_dir(PATH, max_retries=3, backoff_seconds=0)
+    assert calls == 3, "530 is not a missing path — it must get the full retry budget"
+
+
 def test_transient_error_retries_then_raises_unavailable_within_budget() -> None:
     calls = 0
 

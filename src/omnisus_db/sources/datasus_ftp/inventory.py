@@ -192,9 +192,12 @@ def list_dir(
     for attempt in range(max_retries):
         try:
             raw = _blocking_list(path, timeout_seconds)
-        except ftplib.error_perm as exc:
-            raise FtpPathNotFound(f"{path}: {exc}") from exc
         except _TRANSIENT_FTP_ERRORS as exc:
+            # ftplib.error_perm is itself a member of _TRANSIENT_FTP_ERRORS
+            # (via ftplib.all_errors), so this single clause also catches it;
+            # only a 550 ("path not found") is terminal (spec §4.3).
+            if isinstance(exc, ftplib.error_perm) and str(exc).startswith("550"):
+                raise FtpPathNotFound(f"{path}: {exc}") from exc
             last_exc = exc
             if attempt + 1 < max_retries:
                 time.sleep(backoff_seconds * (2**attempt))
