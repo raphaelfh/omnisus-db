@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pyarrow as pa
 import pytest
 
@@ -240,3 +242,31 @@ def test_sih_fields_have_labels() -> None:
     dic = load_dicionario("sih_rd")
     assert dic.field_def("dt_inter")["label"] == "Data de internação"
     assert dic.field_def("morte")["label"] == "Óbito"
+
+
+# ---------------------------------------------------------------------------
+# Path-based loading (spec §3.3 — uncurated datasets)
+# ---------------------------------------------------------------------------
+
+
+def _copy_packaged(name: str, dest: Path) -> Path:
+    from importlib.resources import files
+
+    src = (files("omnisus_db.data.dicionarios") / f"{name}.yaml").read_text(encoding="utf-8")
+    dest.write_text(src, encoding="utf-8")
+    return dest
+
+
+def test_load_dicionario_accepts_a_path(tmp_path: Path) -> None:
+    """An ad-hoc dataset supplies its own YAML (spec §3.3)."""
+    custom = _copy_packaged("sim_do", tmp_path / "custom.yaml")
+    dic = load_dicionario(custom)
+    packaged = load_dicionario("sim_do")
+    assert dic.name == packaged.name
+    assert dic.encoding == packaged.encoding
+    assert [f["name"] for f in dic.fields] == [f["name"] for f in packaged.fields]
+
+
+def test_load_dicionario_missing_path_raises(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="dicionario not found"):
+        load_dicionario(tmp_path / "nope.yaml")

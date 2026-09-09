@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import tempfile
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 import datasus_dbc
@@ -132,22 +133,25 @@ def dbc_bytes_to_lazyframe(
     dataset: str,
     ano: int | None = None,
     uf: str | None = None,
+    dictionary: Path | None = None,
 ) -> pl.LazyFrame:
     """Decode DBC bytes and return a Polars LazyFrame.
 
     Args:
         dbc_bytes: raw DBC payload from FTP.
-        dataset: dataset name (e.g. "sim_do") — used to look up encoding from
-            the Frictionless YAML.
+        dataset: dataset name (e.g. "sim_do") — used for log/error messages
+            and, when ``dictionary`` is None, to look up the packaged YAML.
         ano, uf: optionally injected as canonical partition columns.
+        dictionary: explicit Frictionless YAML path. Bypasses the packaged
+            lookup so an unregistered dataset can be parsed (spec §3.3).
 
     Raises:
-        FileNotFoundError: if the dataset has no Frictionless YAML.
+        FileNotFoundError: if no dictionary can be loaded.
         DbfIntegrityError: if the decompressed DBF is truncated or the parsed
             record count diverges from the header's declared count.
         Exception: bubbles from datasus_dbc / dbfread2 on bad input.
     """
-    dic = load_dicionario(dataset)  # raises FileNotFoundError if unknown
+    dic = load_dicionario(dictionary if dictionary is not None else dataset)
     dbf_bytes = datasus_dbc.decompress_bytes(dbc_bytes)
     _check_dbf_length(dbf_bytes, dataset=dataset)
 

@@ -27,6 +27,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
 from importlib.resources import files
+from pathlib import Path
 from typing import Any
 
 import pyarrow as pa
@@ -333,12 +334,23 @@ class Dicionario:
 
 
 @cache
-def load_dicionario(name: str) -> Dicionario:
-    """Load and cache a Dicionario by dataset name (e.g., 'sim_do')."""
-    yaml_path = files("omnisus_db.data.dicionarios") / f"{name}.yaml"
-    if not yaml_path.is_file():
-        raise FileNotFoundError(f"dicionario not found: {name}")
-    raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+def load_dicionario(name_or_path: str | Path) -> Dicionario:
+    """Load and cache a Dicionario.
+
+    ``str`` is a dataset name resolved to the packaged
+    ``dicionarios/<name>.yaml``. ``Path`` is an explicit YAML file — how an
+    ad-hoc dataset supplies its own schema (spec §3.3).
+    """
+    if isinstance(name_or_path, Path):
+        if not name_or_path.is_file():
+            raise FileNotFoundError(f"dicionario not found: {name_or_path}")
+        text = name_or_path.read_text(encoding="utf-8")
+    else:
+        yaml_path = files("omnisus_db.data.dicionarios") / f"{name_or_path}.yaml"
+        if not yaml_path.is_file():
+            raise FileNotFoundError(f"dicionario not found: {name_or_path}")
+        text = yaml_path.read_text(encoding="utf-8")
+    raw = yaml.safe_load(text)
     schema = raw.get("schema", {})
     return Dicionario(
         name=raw["name"],

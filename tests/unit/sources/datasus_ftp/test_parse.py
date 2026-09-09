@@ -49,3 +49,18 @@ def test_parse_empty_bytes_returns_empty_lazyframe() -> None:
     # decompression error).
     with pytest.raises(Exception):  # noqa: B017 — bubbles from datasus_dbc
         dbc_bytes_to_lazyframe(b"", dataset="sim_do")
+
+
+def test_parse_with_explicit_dictionary_path(dbc_fixture, tmp_path: Path) -> None:
+    """The dictionary argument bypasses the packaged lookup entirely, so the
+    dataset name need not be registered (spec §3.3)."""
+    from importlib.resources import files
+
+    custom = tmp_path / "mine.yaml"
+    custom.write_text(
+        (files("omnisus_db.data.dicionarios") / "sim_do.yaml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    raw = dbc_fixture("sim_rr_2023_mini").read_bytes()
+    lf = dbc_bytes_to_lazyframe(raw, dataset="not_in_registry", dictionary=custom)
+    assert lf.collect().height > 0
