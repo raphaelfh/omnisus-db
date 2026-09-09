@@ -3,6 +3,13 @@ name: docs
 on:
   push:
     branches: [main]
+  # Build (without deploying) on PRs, so a docs break is caught before merge
+  # rather than on main.
+  pull_request:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,10 +26,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv python install 3.13
-      - run: uv sync --extra docs
-      - run: uv run mkdocs build
-      - uses: actions/upload-pages-artifact@v3
+      - run: uv sync --frozen --extra docs
+        # --strict turns broken links and orphan pages into failures.
+      - run: uv run mkdocs build --strict
+      - if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site/
-      - uses: actions/deploy-pages@v4
+      - if: github.event_name == 'push'
+        uses: actions/deploy-pages@v4
         id: deployment

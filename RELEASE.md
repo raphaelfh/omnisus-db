@@ -1,74 +1,73 @@
 # Release procedure
 
-## v0.1.0 — manual steps still pending
-
-The local tag `v0.1.0` is created. To finalize the public release, run
-the following from `~/PycharmProjects/omnisus-db/`:
+Tag and push. Everything else is `release.yml`.
 
 ```bash
-# 1. Create the GitHub repo (one-time)
+# 1. Set the version. It has exactly one home.
+$EDITOR src/omnisus_db/_version.py
+
+# 2. Move the Unreleased section of CHANGELOG.md under the new version.
+$EDITOR CHANGELOG.md
+
+git commit -am "release: v0.2.0"
+git tag v0.2.0
+git push origin main --tags
+```
+
+`release.yml` then checks the tag against the packaged version, runs the
+wheel-only install gate on Linux, macOS and Windows, builds, and publishes to
+PyPI via Trusted Publishing (OIDC) with PEP 740 attestations. There is no
+long-lived token to configure or rotate.
+
+## One-time setup, still pending
+
+This repository has **no git remote**. Nothing in `.github/workflows/` has ever
+run, `https://raphaelfh.github.io/omnisus-db` does not exist, and the install
+URL in the README 404s.
+
+```bash
 gh repo create raphaelfh/omnisus-db --public \
     --description "Python library for ingesting Brazilian public health databases into DuckLake" \
     --source . --remote origin
-
-# 2. Push main + tag
 git push -u origin main
-git push origin v0.1.0
-
-# 3. Create the GitHub Release
-gh release create v0.1.0 \
-    --title "v0.1.0 — Initial release" \
-    --notes-file CHANGELOG.md
 ```
 
-## PyPI placeholder (per spec §11.6)
+Then, in the repository settings:
 
-GitHub-only distribution for v0.x. To reserve the `omnisus-db` PyPI
-namespace with a placeholder before the namespace is squatted:
+- **Pages** → build from GitHub Actions (for `docs.yml`).
+- **Environments** → create `pypi`, and register the Trusted Publisher on PyPI
+  (project `omnisus-db`, owner `raphaelfh`, repo `omnisus-db`, workflow
+  `release.yml`, environment `pypi`).
 
-```bash
-# 0. Confirm name is free
-curl -sI https://pypi.org/project/omnisus-db/ | head -1
-# 404 = free. 200 = abort.
+## Publishing is blocked on the wheel gap
 
-# 1. Build a v0.0.0 stub from a temporary directory
-mkdir -p /tmp/omnisus-db-stub && cd /tmp/omnisus-db-stub
-cat > pyproject.toml <<EOF
-[project]
-name = "omnisus-db"
-version = "0.0.0"
-description = "Reserved placeholder. See https://github.com/raphaelfh/omnisus-db"
-requires-python = ">=3.13"
+`datasus-dbc` publishes cp313 wheels only for manylinux
+aarch64/armv7l/ppc64le/s390x. On every mainstream platform `pip install
+omnisus-db` resolves to the sdist and needs a Rust toolchain, so most users
+cannot install it. Verified directly:
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-EOF
-mkdir omnisus_db && touch omnisus_db/__init__.py
-
-# 2. Build + publish (requires PyPI token)
-uv build
-uv publish  # uses ~/.pypirc / UV_PUBLISH_TOKEN env
-
-# 3. Verify
-pip index versions omnisus-db
+```
+$ uv pip install --only-binary=:all: dist/omnisus_db-0.1.0-py3-none-any.whl
+  Because all versions of datasus-dbc have no usable wheels and
+  omnisus-db==0.1.0 depends on datasus-dbc, we can conclude that
+  omnisus-db==0.1.0 cannot be used.
 ```
 
-## Subsequent releases
+`release.yml` runs this as a hard gate and will refuse to publish until it
+passes. `test.yml` runs the same check on every PR without blocking, so the
+day upstream ships wheels it turns green on its own.
 
-For v0.x.y patches:
+Ways out, in order of preference:
+
+1. Upstream PR to `datasus-dbc` adding cp313/cp314 for mainstream targets.
+   Their matrix already builds cp313 for the exotic arches, so this is a
+   cibuildwheel configuration change, not new work.
+2. Relax `requires-python` to `>=3.12`, where wheels exist today. One line.
+3. Document the Rust requirement and publish anyway — the worst option, and
+   the reason the gate exists.
+
+Until then, GitHub-only distribution:
 
 ```bash
-# 1. Bump version
-sed -i '' "s/version = \".*\"/version = \"0.x.y\"/" pyproject.toml
-sed -i '' 's/__version__ = ".*"/__version__ = "0.x.y"/' src/omnisus_db/_version.py
-
-# 2. Update CHANGELOG.md (add new section at top)
-
-# 3. Commit + tag + push
-git add CHANGELOG.md pyproject.toml src/omnisus_db/_version.py uv.lock
-git commit -m "chore: release v0.x.y"
-git tag -a v0.x.y -m "omnisus-db v0.x.y"
-git push origin main --tags
-gh release create v0.x.y --notes-file CHANGELOG.md
+pip install git+https://github.com/raphaelfh/omnisus-db@v0.1.0
 ```

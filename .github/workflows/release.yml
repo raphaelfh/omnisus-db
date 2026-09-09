@@ -1,0 +1,67 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  gate:
+    # Publishing is gated on the wheel-only install (spec §7.1.1 and §7.2).
+    # Releasing before this passes on all three platforms ships a package most
+    # users cannot install: datasus-dbc has no cp313 wheels for mainstream
+    # targets, so `pip install omnisus-db` needs a Rust toolchain.
+    #
+    # No continue-on-error here. This is the whole point of the gate.
+    name: wheel-only install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.13
+      - run: uv build --wheel
+      - name: Install it, binary dependencies only
+        shell: bash
+        run: |
+          uv venv -p 3.13 .gate
+          uv pip install --python .gate --only-binary=:all: dist/*.whl
+      - name: Import the installed package
+        shell: bash
+        run: uv run --python .gate --no-project python -c "import omnisus_db; print(omnisus_db.__version__)"
+
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/omnisus-db
+    permissions:
+      # PyPI Trusted Publishing (OIDC): no long-lived token to leak or rotate.
+      id-token: write
+      # PEP 740 build attestations.
+      attestations: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.13
+      - name: Check the tag matches the packaged version
+        # The version has one home (_version.py); this makes the tag agree with
+        # it rather than trusting the tagger.
+        shell: bash
+        run: |
+          packaged=$(uv run --no-project --with hatchling python -c "
+          import re, pathlib
+          src = pathlib.Path('src/omnisus_db/_version.py').read_text()
+          print(re.search(r'\"([^\"]+)\"', src).group(1))
+          ")
+          tagged="${GITHUB_REF_NAME#v}"
+          echo "packaged=$packaged tagged=$tagged"
+          test "$packaged" = "$tagged"
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true

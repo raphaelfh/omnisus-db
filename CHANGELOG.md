@@ -4,6 +4,30 @@
 
 ### Added
 
+- **Import tolerance.** A wide import no longer dies on the first file DATASUS
+  never published. `import_dataset` returns an `ImportReport` of per-scope
+  outcomes — `ok`, `skipped` (not published upstream; normal), `failed`
+  (exists but could not be ingested; retryable). Previously the first gap
+  raised and discarded every result already collected, including scopes whose
+  rows were already committed, so `import_sim(years=range(2000, 2026))` fired
+  702 blind fetches and died on scope 3 with no partial results and no resume.
+  Inspect `report.failed`; never the report's truthiness.
+- **`--plan inventory`.** `omnisus-db import <ds> --plan inventory` asks the
+  server what it publishes and imports only that, instead of the blind
+  cartesian product. Implies a cache refresh, because a 23-hour-old listing
+  would silently omit a month published this morning. In Python this needs no
+  flag — pass `available(...)` instead of `scopes_for(...)` as `scopes`.
+- `omnisus-db import` exits non-zero **if and only if** a scope failed. A
+  skipped scope exits zero, so an orchestrator can tell "nothing to do" from
+  "something broke".
+- `concurrency` (default 6) and `batch_size` (default 24) on `import_dataset`.
+- Generated `docs/datasets.md` (all 11 datasets, rendered from the registry and
+  checked for staleness in CI), an API reference page, and a guide to the
+  inventory — `available`, `browse` and `omnisus-db inventory` shipped
+  undocumented.
+- `release.yml`: PyPI Trusted Publishing (OIDC) with PEP 740 attestations,
+  gated on a wheel-only install. `dependabot.yml` for actions and uv.
+
 - **Every registered dataset is now reachable.** `import_dataset(name, scopes=...)`
   imports any DATASUS-FTP dataset — including the whole SIA/APAC family
   (`sia_bi`, `sia_am`, `sia_aq`, `sia_atd`, `sia_ad`, `sia_abo`, `sia_ps`),
@@ -31,6 +55,23 @@
 
 ### Changed
 
+- **Imports overlap fetch with parse.** Six fetches now run in flight behind a
+  bounded queue while a single consumer parses and sinks; fetch and parse were
+  fully serialized, so wall clock was `sum(fetch) + sum(parse+sink)`. Measured
+  on 12 scopes at a simulated 300 ms fetch: 5.62 s → 2.01 s (2.8×). One
+  consumer is a correctness requirement, not tuning — the lake holds one DuckDB
+  connection and Polars already saturates cores inside a parse. DATASUS FTP is
+  a shared public resource; the bound is deliberate.
+- **Scopes commit in batches of 24**, not one DuckLake snapshot each. A wide
+  SIH import left 648 snapshots and 648 small files behind. A scope is marked
+  `ok` only once its batch commits, so a rolled-back batch reports its scopes
+  failed and safe to retry. `batch_size=1` restores per-scope atomicity.
+- **Declared `partition_by` is now applied.** `Lake.ingest` accepted the
+  argument and ran `del partition_by`, so every registry row's declared
+  partitioning was a promise nothing kept. Files now land under `ano=…/uf=…/`.
+  Existing lakes need a one-time `ALTER TABLE … SET PARTITIONED BY`.
+- The staging Parquet is read once per scope instead of three times (a
+  schema-only `CREATE`, the `INSERT`, and a separate `SELECT count(*)`).
 - **Lake Parquet files are now zstd-compressed.** DuckLake rewrites ingested
   files with its own writer settings and was discarding the staging file's
   zstd, producing lake files ~3.3× larger than necessary. The connection now
@@ -54,6 +95,35 @@
   a `Source` method, so the declaration was an unmet promise (spec I5).
 
 ### Fixed
+
+- **A busy DATASUS was reported as a missing dataset.** `fetch.py` treated every
+  `ftplib.error_perm` as permanent, but `error_perm` is *any* 5xx, and DATASUS
+  answers `530 maximum number of allowed clients` when its anonymous-connection
+  pool is full. Only a 550 is terminal now, as `inventory.py` already had it.
+  The two modules had diverged because `FTP_HOST` and the transient-error tuple
+  were each stated twice; both now live in one module.
+- **`omnisus-db lake snapshots` never worked.** It asked
+  `ducklake_snapshots('lake.<table>')`, which does not bind. Snapshots are
+  catalog-wide in DuckLake, and the command now lists them (it no longer takes
+  a table argument).
+- **`ImportResult.snapshot_id` was `None` on every import ever run** — `ingest`
+  made that same failing call inside a bare `except Exception`.
+- `tests/integration/test_fetch_ftp_real.py` was marked `integration` only, so
+  CI's `-m "not e2e and not perf"` did not deselect it and **every pull request
+  opened a real FTP connection to DATASUS**. Its docstring claimed the
+  opposite.
+- README's quick start called `odb.query(...)`, which does not exist, and
+  queried an unqualified `sim_do` rather than `lake.sim_do`. The getting-started
+  guide documented `OMNISUS_DB_TARGET`, which nothing reads. `architecture.md`
+  still listed the deleted `Source` protocol. `docs/index.md` claimed "no temp
+  files for the heavy steps" while the parser writes one per scope.
+- `mkdocs` published `docs/superpowers/` — internal specs, plans and ledgers —
+  to the public site.
+- `scripts/build_fixtures.py` hand-copied an FTP path map covering 5 of the 11
+  datasets, so `conftest`'s "run scripts/build_fixtures.py" was a dead end for
+  the other 6. It derives from the registry and covers all 11.
+- The version was stated in both `pyproject.toml` and `_version.py`; it now has
+  one home, which removes the two-file `sed` dance from `RELEASE.md`.
 
 - **Registry `coverage` for three APAC subtypes.** `sia_atd`, `sia_abo` and
   `sia_ps` declared `coverage` starting `(2008, 1)`, inherited from the rest

@@ -27,7 +27,10 @@ nav:
   - Home: index.md
   - Guides:
       - Getting Started: guides/getting-started.md
+      - Knowing what exists: guides/inventory.md
       - Migration from PySUS: guides/migration-from-pysus.md
+  - Datasets: datasets.md
+  - API reference: api.md
   - Architecture: architecture.md
   - Sources:
       - SIM-DO: sources/sim_do.md
