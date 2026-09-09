@@ -21,6 +21,8 @@ reason to loosen an assertion.
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset
@@ -86,4 +88,44 @@ def test_coverage_matches_the_earliest_published_file(
     assert earliest == d.coverage[0], (
         f"{d.name}: registry says coverage starts {d.coverage[0]}, "
         f"server's earliest file is {earliest}"
+    )
+
+
+_ONGOING_GRACE_MONTHS = 24
+
+
+@pytest.mark.parametrize("d", ROWS)
+def test_coverage_end_is_not_a_stale_claim(d: Dataset, listings: dict[str, Listing]) -> None:
+    """coverage[1] is a claim too (spec I5).
+
+    A closed window must not be contradicted by newer files on the server. An
+    open window — ``None``, meaning "still published" — is the stronger claim,
+    and it goes stale silently: nothing else in this suite would notice a
+    dataset DATASUS quietly stopped publishing. The grace period is wide
+    because DATASUS publishing lag is normal and this runs weekly on a cron,
+    where a false alarm costs a notification rather than a blocked pull
+    request.
+    """
+    listing = listings[d.ftp_dir]
+    scopes = [
+        decoded[0]
+        for e in listing.files
+        if (decoded := decode(e.name)) is not None and decoded[1] == d.name
+    ]
+    assert scopes, f"{d.name}: nothing decoded"
+    latest = max((s.ano, s.mes or 12) for s in scopes)
+
+    declared_end = d.coverage[1]
+    if declared_end is not None:
+        assert latest <= declared_end, (
+            f"{d.name}: registry closes coverage at {declared_end}, "
+            f"but the server publishes {latest}"
+        )
+        return
+
+    today = date.today()
+    months_stale = (today.year - latest[0]) * 12 + (today.month - latest[1])
+    assert months_stale <= _ONGOING_GRACE_MONTHS, (
+        f"{d.name}: registry claims coverage is open-ended, but the server's "
+        f"newest file is {latest}, {months_stale} months old"
     )
