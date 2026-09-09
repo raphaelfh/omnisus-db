@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import re
 from typing import TYPE_CHECKING, Self
 
 import duckdb
@@ -10,9 +12,13 @@ from omnisus_db.lake.catalog import CatalogURI, parse_target
 from omnisus_db.lake.connection import close_connection, make_connection
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import polars as pl
 
     from omnisus_db.sources._base import ImportResult
+
+_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class Lake:
@@ -25,6 +31,9 @@ class Lake:
     def __init__(self, *, target: CatalogURI, alias: str = "lake") -> None:
         self._target = target
         self._alias = alias
+        self._ensured: set[str] = set()
+        """Tables this handle has already created and partitioned. Ensuring a
+        table costs a schema read of the staging file; once per run is enough."""
         self._con = make_connection(
             catalog_uri=target.catalog_uri,
             storage_root=target.storage_root,
@@ -64,13 +73,47 @@ class Lake:
         ).fetchall()
         return [name for (name,) in rows]
 
-    def snapshots(self, table: str) -> list[dict[str, object]]:
-        """Return snapshot history for a table."""
+    def snapshots(self) -> list[dict[str, object]]:
+        """Return the catalog's snapshot history, oldest first.
+
+        DuckLake snapshots are catalog-wide, not per-table: ``changes`` names
+        which tables each one touched. The previous signature took a table and
+        queried ``ducklake_snapshots('lake.<table>')``, which does not bind —
+        so this method always raised, and ``ingest`` made the same call inside
+        a bare ``except`` that turned it into ``snapshot_id=None`` on every
+        import ever run.
+
+        Timestamps come back as strings: DuckDB renders its own TIMESTAMPTZ
+        through ``pytz``, which is not a dependency of this package.
+        """
         rows = self._con.execute(
-            f"SELECT * FROM ducklake_snapshots('{self._alias}.{table}')"
+            f"""
+            SELECT snapshot_id, snapshot_time::VARCHAR, changes::VARCHAR
+            FROM ducklake_snapshots('{self._alias}')
+            ORDER BY snapshot_id
+            """
         ).fetchall()
-        cols = [d[0] for d in self._con.description]
-        return [dict(zip(cols, row, strict=True)) for row in rows]
+        return [
+            {"snapshot_id": int(sid), "snapshot_time": when, "changes": changes}
+            for sid, when, changes in rows
+        ]
+
+    @contextlib.contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Group writes into one DuckLake snapshot.
+
+        Verified against this DuckLake build: three INSERTs inside one
+        transaction produce one snapshot; the same three outside produce
+        three. A 648-scope import otherwise leaves 648 snapshots and 648
+        small files behind.
+        """
+        self._con.execute("BEGIN TRANSACTION")
+        try:
+            yield
+        except BaseException:
+            self._con.execute("ROLLBACK")
+            raise
+        self._con.execute("COMMIT")
 
     def optimize(self, table: str) -> None:
         """Compact small files (``ducklake_compact_files``)."""
@@ -164,6 +207,30 @@ class Lake:
         )
         return True
 
+    def _ensure_table(self, table: str, staging: str, partition_by: tuple[str, ...]) -> None:
+        """Create the table (schema only) and set its partitioning, once.
+
+        Both steps are per-table, not per-scope: creating reads the staging
+        file for its schema, and re-running the ALTER on an existing table
+        would write a schema-change snapshot for nothing. ``SET PARTITIONED
+        BY`` applies to files written after it, which is why it has to happen
+        before the first INSERT.
+        """
+        if table in self._ensured:
+            return
+        if table not in set(self.tables()):
+            self._con.execute(
+                f"CREATE TABLE {self._alias}.{table} AS "
+                f"SELECT * FROM read_parquet('{staging}') WHERE 1=0"
+            )
+            if partition_by:
+                bad = [c for c in partition_by if not _IDENTIFIER.match(c)]
+                if bad:
+                    raise ValueError(f"partition_by must be plain identifiers; got {bad}")
+                cols = ", ".join(partition_by)
+                self._con.execute(f"ALTER TABLE {self._alias}.{table} SET PARTITIONED BY ({cols})")
+        self._ensured.add(table)
+
     def ingest(
         self,
         table: str,
@@ -176,16 +243,18 @@ class Lake:
         Args:
             table: destination table name (e.g. "sim_do")
             lazyframe: pl.LazyFrame to materialize and insert
-            partition_by: hint for Parquet partitioning (currently unused;
-                DuckLake handles partitioning at the catalog level)
+            partition_by: columns to partition the table by, applied once when
+                the table is created. Previously accepted and discarded, which
+                made every registry row's declared ``partition_by`` a lie
+                (spec I5).
+
+        Call inside :meth:`transaction` to group scopes into one snapshot.
         """
         import tempfile
         import time
         from pathlib import Path
 
         from omnisus_db.sources._base import ImportResult
-
-        del partition_by  # currently unused — DuckLake handles partitioning
 
         t0 = time.monotonic()
         with tempfile.TemporaryDirectory(prefix="omnisus-staging-") as tmp:
@@ -197,29 +266,22 @@ class Lake:
             )
             bytes_written = staging.stat().st_size
 
-            # Ensure table exists (CREATE schema-only first time)
-            self._con.execute(
-                f"CREATE TABLE IF NOT EXISTS {self._alias}.{table} AS "
-                f"SELECT * FROM read_parquet('{staging}') WHERE 1=0"
-            )
-            self._con.execute(
+            self._ensure_table(table, str(staging), partition_by)
+            # INSERT reports its own row count, so the separate
+            # SELECT count(*) over the same staging file is pure waste.
+            inserted = self._con.execute(
                 f"INSERT INTO {self._alias}.{table} SELECT * FROM read_parquet('{staging}')"
-            )
-            rows = self._con.execute(f"SELECT count(*) FROM read_parquet('{staging}')").fetchone()[
-                0
-            ]
+            ).fetchone()
+            rows = 0 if inserted is None else int(inserted[0])
 
         duration = time.monotonic() - t0
 
-        snap: int | None = None
-        try:
-            snap_row = self._con.execute(
-                f"SELECT max(snapshot_id) FROM ducklake_snapshots('{self._alias}.{table}')"
-            ).fetchone()
-            if snap_row is not None and snap_row[0] is not None:
-                snap = int(snap_row[0])
-        except Exception:
-            snap = None
+        # Catalog-wide, and the id is only meaningful once the surrounding
+        # transaction commits; inside a batch this names the batch's snapshot.
+        snap_row = self._con.execute(
+            f"SELECT max(snapshot_id) FROM ducklake_snapshots('{self._alias}')"
+        ).fetchone()
+        snap = None if snap_row is None or snap_row[0] is None else int(snap_row[0])
 
         return ImportResult(
             rows=int(rows),

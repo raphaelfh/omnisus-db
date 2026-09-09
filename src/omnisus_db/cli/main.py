@@ -293,13 +293,24 @@ def lake_describe_cmd(
 
 @lake_app.command(name="snapshots")
 def lake_snapshots_cmd(
-    table: str,
     target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
 ) -> None:
-    """List snapshot history for a table."""
+    """List the lake's snapshot history.
+
+    Snapshots are catalog-wide in DuckLake, not per-table; the ``changes``
+    column names the tables each one touched. This command previously took a
+    table name and always failed, because ``ducklake_snapshots('lake.<table>')``
+    does not bind.
+    """
+    from rich.table import Table as RichTable
+
     with Lake.local(target) as lake:
-        for snap in lake.snapshots(table):
-            console.print(snap)
+        snaps = lake.snapshots()
+    rt = RichTable("Snapshot", "Time", "Changes")
+    for snap in snaps:
+        rt.add_row(str(snap["snapshot_id"]), str(snap["snapshot_time"]), str(snap["changes"]))
+    console.print(rt)
+    console.print(f"[dim]{len(snaps)} snapshot(s)[/dim]")
 
 
 @lake_app.command(name="optimize")

@@ -13,6 +13,10 @@ from omnisus_db.sources._base import (
     ScopeKey,
     ScopeOutcome,
 )
+from omnisus_db.sources.datasus_ftp._runner import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_CONCURRENCY,
+)
 from omnisus_db.sources.datasus_ftp._runner import run_scopes as _run_scopes_ftp
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 from omnisus_db.sources.datasus_ftp.inventory import (
@@ -101,6 +105,8 @@ def import_dataset(
     *,
     scopes: Sequence[ScopeKey],
     target: str = DEFAULT_TARGET,
+    concurrency: int = DEFAULT_CONCURRENCY,
+    batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> ImportReport:
     """Import the given scopes of any DATASUS-FTP dataset into the lake.
 
@@ -119,12 +125,24 @@ def import_dataset(
     DATASUS never published is ``skipped``, a scope that exists but could not
     be ingested is ``failed``, and neither aborts the run. Inspect
     ``report.failed``, never the report's truthiness.
+
+    ``concurrency`` bounds fetches in flight; parse and sink stay on a single
+    consumer because the lake holds one DuckDB connection. ``batch_size``
+    scopes share one DuckLake transaction, and therefore one snapshot.
+    DATASUS FTP is a shared public resource — raise ``concurrency`` only with
+    reason.
     """
     d = resolve(dataset)
 
     async def run() -> ImportReport:
         with Lake.local(target) as lake:
-            return await _run_scopes_ftp(d, scopes=scopes, lake=lake)
+            return await _run_scopes_ftp(
+                d,
+                scopes=scopes,
+                lake=lake,
+                concurrency=concurrency,
+                batch_size=batch_size,
+            )
 
     return asyncio.run(run())
 

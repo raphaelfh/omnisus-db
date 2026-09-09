@@ -45,8 +45,12 @@ class Dataset:
     """How DATASUS publishes files. Decides filename shape (upstream fact)."""
 
     partition_by: tuple[str, ...]
-    """How the lake table will be laid out (our storage policy). Not yet
-    applied by ``Lake.ingest`` — spec §5.2 item 4."""
+    """How the lake table is laid out (our storage policy).
+
+    Applied by ``Lake.ingest`` via ``SET PARTITIONED BY`` when the table is
+    created, so files land under ``ano=…/uf=…/``. Each scope is already one
+    ``(uf, ano[, mes])``, so partitioning costs nothing at write time and buys
+    query pruning."""
 
     coverage: tuple[YM, YM | None]
     """``(first, last)`` published; ``last=None`` means ongoing.
