@@ -46,6 +46,8 @@ nav:
       - SIH-RD: sources/sih_rd.md
       - IBGE-pop: sources/ibge_pop.md
       - CNES-ST: sources/cnes_st.md
+      - SINAN Chagas preliminar: sources/sinan_chagas_prelim.md
+      - Medicamentos e assistência farmacêutica: sources/medicamentos.md
   - Decisions:
       - 0001 Rust DBF: decisions/0001-rust-dbf.md
       - 0002 Registry as Catalog: decisions/0002-registry-as-catalog.md

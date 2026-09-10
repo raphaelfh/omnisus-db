@@ -95,6 +95,7 @@ async def import_scope(
     own ``dictionary`` flows through exactly this path.
     """
     d = resolve(dataset)
+    _require_well_formed(d, [scope])
     if d.monthly and scope.mes is None:
         raise ValueError(f"{d.name} is monthly; ScopeKey.mes is required")
 
@@ -124,19 +125,26 @@ def ingest_raw(
 ) -> ImportResult | None:
     """Validate to staging, then publish one source version atomically."""
     from omnisus_db.sources.datasus_ftp.dbf_contract import publication_parser_version
+    from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
     from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 
+    _require_well_formed(d, [scope])
     with tempfile.TemporaryDirectory(prefix="omnisus-source-") as tmp:
         staging = Path(tmp) / "scope.parquet"
         dbc_bytes_to_parquet(
             raw,
             staging,
             dataset=d.name,
-            ano=scope.ano,
+            ano=scope.ano if d.geography == "state" else None,
             uf=scope.uf,
             dictionary=d.dictionary,
             mes=scope.mes if d.monthly else None,
+            source_ano=scope.ano if d.geography == "national" else None,
         )
+        if d.name == "sinan_chagas_prelim":
+            from omnisus_db.sources.sinan.chagas import validate_staging
+
+            validate_staging(staging, scope)
         dictionary_hash = hashlib.sha256(
             d.dictionary.read_bytes()
             if d.dictionary is not None
@@ -152,6 +160,7 @@ def ingest_raw(
             run_id=run_id,
             batch_id=batch_id,
             partition_by=d.partition_by,
+            source_uri=f"ftp://ftp.datasus.gov.br{d.ftp_dir}/{scope_to_filename(d, scope)}",
         )
 
 
@@ -163,6 +172,11 @@ def _require_well_formed(d: Dataset, scopes: Sequence[ScopeKey]) -> None:
     and loudly rather than becoming 700 identical ``failed`` outcomes that
     look like a server problem.
     """
+    for scope in scopes:
+        if d.geography == "national" and (scope.uf is not None or scope.mes is not None):
+            raise ValueError("national yearly dataset requires uf=None and mes=None")
+        if d.geography == "state" and scope.uf is None:
+            raise ValueError("state dataset requires UF")
     if not d.monthly:
         return
     bad = [s for s in scopes if s.mes is None]

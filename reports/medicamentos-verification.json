@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-09-10T22:16:01.901004+00:00",
+  "target": "ducklake:/Users/raphael/PycharmProjects/omnisus-db/data/lake/verification-medication/db4dffd3-095e-4ea6-a500-2d8510ee24cf/dados.ducklake",
+  "apac_rows": 2083,
+  "distinct_primary_procedures": 92,
+  "approved_value_sum": "33006.03000000006",
+  "replay_rows": 0,
+  "publications": [
+    {
+      "publication_id": "b39aa917-1c6d-4069-b5f1-3c3e4f63e7dd",
+      "dataset": "sia_am",
+      "scope_json": "{\"ano\":2024,\"mes\":1,\"uf\":\"RR\"}",
+      "source_sha256": "dbad1970271aea1a0bff0ad8006b27e17c527950cc042d268b215a375b7c22ef",
+      "parser_version": "dbc-staging-v1:fd2a992edaa50aa92ba4046fba882597f847333f208849af970b49b95383962c",
+      "run_id": "medication-live",
+      "batch_id": "15efce2b-14d0-4f59-a42f-34e9d1277027",
+      "published_at": "2026-09-10T22:16:01.046659+00:00",
+      "rows": 2083,
+      "active": true,
+      "managed": true,
+      "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIASUS/200801_/Dados/AMRR2401.dbc"
+    }
+  ],
+  "stock_observation": {
+    "product": "bnafar_horus_stock_page",
+    "url": "https://apidadosabertos.saude.gov.br/daf/estoque-medicamentos-bnafar-horus?codigo_uf=14&limit=1&offset=0",
+    "acquired_at": "2026-09-10T22:16:01.900745+00:00",
+    "sha256": "90fd635941dc497f193ddccd5720005eab83d71e77d8ccf124e78ef84021656b",
+    "bytes": 711,
+    "page": 0,
+    "limit": 1,
+    "rows": 1,
+    "complete": false,
+    "publication_supported": false,
+    "specification": "https://apidadosabertos.saude.gov.br/static/swagger.json"
+  },
+  "limitations": [
+    "APAC rows are not individual dispensing events or doses",
+    "Stock page is partial; basic dispensing extraction not confirmed"
+  ]
+}

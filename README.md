@@ -49,6 +49,16 @@ odb.available("sim_do")                      # scopes you can import
 odb.browse("/dissemin/publicos/SINAN")       # any FTP path, decoded or not
 ```
 
+National preliminary Chagas notifications are available as `sinan_chagas_prelim`.
+Use `available()` and `policy="skip_same"` for repeatable imports; filter record
+geography after acquisition. The [Marimo walkthrough](notebooks/sinan_chagas.py)
+covers discovery, a saved plan, publication, recovery and aggregate analysis.
+
+The [medication walkthrough](notebooks/medicamentos.py) uses SIA-AM/APAC and a
+separate bounded BNAFAR/Hórus stock query. Stock observations are partial and
+are not dispensing events or managed lake publications. See the
+[source contract](docs/sources/medicamentos.md) for access and coverage limits.
+
 See [docs](https://raphaelfh.github.io/omnisus-db) for details.
 
 ## Notebooks: learning path

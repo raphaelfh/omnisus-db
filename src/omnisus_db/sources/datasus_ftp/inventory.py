@@ -307,6 +307,6 @@ def available(
         if wanted is not None and scope.ano not in wanted:
             continue
         scopes.append(scope)
-    scopes.sort(key=lambda s: (s.ano, s.uf, s.mes or 0))
+    scopes.sort(key=lambda s: (s.ano, s.uf or "", s.mes or 0))
     logger.info("inventory.available", dataset=d.name, scopes=len(scopes))
     return scopes

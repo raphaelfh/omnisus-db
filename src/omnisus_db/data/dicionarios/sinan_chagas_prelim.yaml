@@ -1,0 +1,232 @@
+name: sinan_chagas_prelim
+title: SINAN — Doença de Chagas aguda, notificações preliminares nacionais
+profile: tabular-data-resource
+encoding: latin-1
+x-version: 1.0.0
+x-source-format: dbc
+x-partitions:
+- _source_ano
+x-evidence:
+  physical_schema: CHAGBR23.dbc, 108 fields; observed 2026-09-10
+  semantic_status: Physical inventory; individual semantic fields not audited. No
+    inferred category mappings.
+  dictionary_url: https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf
+  source_url: ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR23.dbc
+schema:
+  fields:
+  - name: tp_not
+    type: string
+  - name: id_agravo
+    type: string
+  - name: dt_notific
+    type: date
+  - name: sem_not
+    type: string
+  - name: nu_ano
+    type: string
+  - name: sg_uf_not
+    type: string
+  - name: id_municip
+    type: string
+  - name: id_regiona
+    type: string
+  - name: id_unidade
+    type: string
+  - name: dt_sin_pri
+    type: date
+  - name: sem_pri
+    type: string
+  - name: ano_nasc
+    type: string
+  - name: nu_idade_n
+    type: integer
+  - name: cs_sexo
+    type: string
+  - name: cs_gestant
+    type: string
+  - name: cs_raca
+    type: string
+  - name: cs_escol_n
+    type: string
+  - name: sg_uf
+    type: string
+  - name: id_mn_resi
+    type: string
+  - name: id_rg_resi
+    type: string
+  - name: id_pais
+    type: string
+  - name: nduplic_n
+    type: string
+  - name: dt_invest
+    type: date
+  - name: id_ocupa_n
+    type: string
+  - name: ant_uf_1
+    type: string
+  - name: mun_1
+    type: string
+  - name: ant_uf_2
+    type: string
+  - name: mun_2
+    type: string
+  - name: ant_uf_3
+    type: string
+  - name: mun_3
+    type: string
+  - name: presenca
+    type: string
+  - name: parasito
+    type: date
+  - name: historia
+    type: string
+  - name: controle
+    type: string
+  - name: manipula
+    type: string
+  - name: maechaga
+    type: string
+  - name: oral
+    type: string
+  - name: assintoma
+    type: string
+  - name: edema
+    type: string
+  - name: meningoe
+    type: string
+  - name: poliadeno
+    type: string
+  - name: febre
+    type: string
+  - name: hepatome
+    type: string
+  - name: sinais_icc
+    type: string
+  - name: arritmias
+    type: string
+  - name: astenia
+    type: string
+  - name: esplenom
+    type: string
+  - name: chagoma
+    type: string
+  - name: outro_sin
+    type: string
+  - name: outro_esp
+    type: string
+  - name: dt_col_dir
+    type: date
+  - name: exame
+    type: string
+  - name: micro_hema
+    type: string
+  - name: outro
+    type: string
+  - name: dt_col_ind
+    type: date
+  - name: xenodiag
+    type: string
+  - name: hemocult
+    type: string
+  - name: dt_col_s1
+    type: date
+  - name: dt_col_s2
+    type: date
+  - name: eli_igm_s1
+    type: string
+  - name: eli_igg_s1
+    type: string
+  - name: eli_igm_s2
+    type: string
+  - name: eli_igg_s2
+    type: string
+  - name: hem_igm_s1
+    type: string
+  - name: hem_igg_s1
+    type: string
+  - name: hem_igm_s2
+    type: string
+  - name: hem_igg_s2
+    type: string
+  - name: imu_igm_s1
+    type: string
+  - name: tit_igm_s1
+    type: string
+  - name: imu_igm_s2
+    type: string
+  - name: tit_igm_s2
+    type: string
+  - name: imu_igg_s1
+    type: string
+  - name: tit_igg_s1
+    type: string
+  - name: imu_igg_s2
+    type: string
+  - name: tit_igg_s2
+    type: string
+  - name: resul_his
+    type: date
+  - name: res_hist
+    type: string
+  - name: especifico
+    type: string
+  - name: sintomatic
+    type: string
+  - name: droga
+    type: string
+  - name: tempo
+    type: integer
+  - name: con_triat
+    type: string
+  - name: biosseg
+    type: string
+  - name: fiscaliza
+    type: string
+  - name: med_outro
+    type: string
+  - name: outro_des
+    type: string
+  - name: classi_fin
+    type: string
+  - name: criterio
+    type: string
+  - name: evolucao
+    type: string
+  - name: dt_obito
+    type: date
+  - name: con_provav
+    type: string
+  - name: con_outra
+    type: string
+  - name: con_local
+    type: string
+  - name: tpautocto
+    type: string
+  - name: coufinf
+    type: string
+  - name: copaisinf
+    type: string
+  - name: comuninf
+    type: string
+  - name: doenca_tra
+    type: string
+  - name: dt_encerra
+    type: date
+  - name: dt_digita
+    type: date
+  - name: dt_transus
+    type: date
+  - name: dt_transdm
+    type: date
+  - name: dt_transsm
+    type: date
+  - name: dt_transrm
+    type: string
+  - name: dt_transrs
+    type: date
+  - name: dt_transse
+    type: date
+  - name: nu_lote_v
+    type: string
+  - name: nu_lote_h
+    type: string

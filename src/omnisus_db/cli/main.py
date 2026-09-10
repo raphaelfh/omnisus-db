@@ -214,6 +214,8 @@ def _plan_scopes(
     """
     import omnisus_db as odb
 
+    if d.geography == "national" and (ufs is not None or months is not None):
+        raise ValueError("national yearly datasets do not accept UF/month filters")
     if plan == "product":
         return odb.scopes_for(d, years=years, ufs=ufs, months=months)
 
@@ -274,7 +276,7 @@ def inventory(
         scopes = odb.available(d, refresh=refresh)
         table = RichTable("UF", "Ano", "Mês")
         for s in scopes:
-            table.add_row(s.uf, str(s.ano), "" if s.mes is None else f"{s.mes:02d}")
+            table.add_row(s.uf or "Nacional", str(s.ano), "" if s.mes is None else f"{s.mes:02d}")
         console.print(table)
         console.print(f"[dim]{len(scopes)} scope(s) available for {d.name}[/dim]")
     except FtpPathNotFound as exc:

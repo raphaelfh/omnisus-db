@@ -26,6 +26,7 @@ omnisus-db import <name> --plan inventory --years 2020-2024
 | `sia_ps` | — | `PS` | monthly | `ano`, `uf`, `mes` | 2012-11 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
 | `sih_rd` | `sih` | `RD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIHSUS/200801_/Dados` |
 | `sim_do` | `sim` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` |
+| `sinan_chagas_prelim` | — | `CHAG` | yearly | `_source_ano` | 2023-01 → ongoing | `/dissemin/publicos/SINAN/DADOS/PRELIM` |
 | `sinasc_nv` | `sinasc` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` |
 
 Coverage is the registry's declared `(first, last)` window; **ongoing** means

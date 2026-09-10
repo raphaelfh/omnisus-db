@@ -1,0 +1,9 @@
+{
+  "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR23.dbc",
+  "acquired_at": "2026-09-10",
+  "sha256": "a0ab9f568b52c565819466eba2cf312e40549cec707f28e5001de1532f79a10f",
+  "bytes": 411945,
+  "scope": "national preliminary 2023",
+  "records": 6253,
+  "note": "Complete public DATASUS artifact; not a truncated or synthetic sample."
+}

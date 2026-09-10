@@ -21,6 +21,7 @@ ELEVEN = {
     "sia_abo",
     "sia_ps",
     "cnes_st",
+    "sinan_chagas_prelim",
 }
 
 
@@ -36,7 +37,7 @@ def _adhoc(**over: Any) -> Dataset:
     return Dataset(**{**base, **over})
 
 
-def test_registry_has_exactly_the_eleven_ftp_datasets() -> None:
+def test_registry_has_exactly_the_supported_ftp_datasets() -> None:
     assert set(REGISTRY) == ELEVEN
 
 

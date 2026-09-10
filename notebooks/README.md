@@ -2,6 +2,17 @@
 
 ## Trilha organizada de estudo
 
+### Integração completa por produto
+
+- [SINAN Chagas aguda](sinan_chagas.py): descoberta de arquivos nacionais,
+  inspeção do contrato, plano salvo, publicação explícita, recuperação e
+  análise agregada. Preserva a modalidade preliminar e exporta proveniência.
+  Nenhum download ocorre ao abrir o notebook.
+- [Medicamentos](medicamentos.py): SIA-AM/APAC pelo importador existente,
+  interpretação de registros e valores aprovados e consulta HTTP separada de
+  estoque BNAFAR/Hórus. Estoque e APAC não são apresentados como eventos de
+  dispensação da assistência básica. Plano, resultados e proveniência são salvos.
+
 | Ordem | Notebook | Finalidade | Dados |
 | --- | --- | --- | --- |
 | 1 | [Panorama DATASUS](panorama_datasus.py) | Conhecer as **18 categorias** do portal, suas tabelas e colunas | Amostras reais de todas as categorias |

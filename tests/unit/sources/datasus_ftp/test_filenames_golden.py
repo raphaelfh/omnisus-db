@@ -19,6 +19,7 @@ from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_fi
 
 # fmt: off
 GOLDEN: list[tuple[str, ScopeKey, str]] = [
+    ("sinan_chagas_prelim", ScopeKey(uf=None, ano=2023), "CHAGBR23.dbc"),
     ("sim_do",    ScopeKey(uf="SP", ano=2024),         "DOSP2024.dbc"),
     ("sim_do",    ScopeKey(uf="RR", ano=1996),         "DORR1996.dbc"),
     ("sinasc_nv", ScopeKey(uf="MG", ano=2022),         "DNMG2022.dbc"),
@@ -69,7 +70,7 @@ def test_parse_rejects_unknown_prefix() -> None:
 # --- round-trip property over the whole space ------------------------------
 # ano in [1980, 2079] is the range the two-digit-year pivot can round-trip.
 
-_YEARLY = sorted(n for n, d in REGISTRY.items() if not d.monthly)
+_YEARLY = sorted(n for n, d in REGISTRY.items() if not d.monthly and d.geography == "state")
 _MONTHLY = sorted(n for n, d in REGISTRY.items() if d.monthly)
 
 

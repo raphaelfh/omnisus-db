@@ -79,6 +79,14 @@ def scopes_for(
     :func:`import_dataset`.
     """
     d = resolve(dataset)
+    if d.geography == "national":
+        if ufs is not None:
+            raise ValueError(
+                "national datasets do not accept UF filters; filter records after import"
+            )
+        if months is not None:
+            raise ValueError("national yearly datasets do not accept month filters")
+        return [ScopeKey(uf=None, ano=year) for year in years]
     uf_list = tuple(ufs) if ufs is not None else ALL_UFS
     month_list = tuple(months) if months is not None else tuple(range(1, 13))
     scopes: list[ScopeKey] = []
@@ -94,7 +102,7 @@ def scopes_for(
 def browse(path: str, *, depth: int = 1, refresh: bool = False) -> list[FtpEntry]:
     """List any DATASUS FTP path — the open-world counterpart to :func:`available`.
 
-    Reaches subsystems this package does not model (SINAN, CIHA, PCE).
+    Reaches unmodeled resources (other SINAN agravos, CIHA, PCE).
     ``depth=1`` lists ``path`` only; recursion is bounded (spec §4.1).
 
     Deliberately eager — a CLI table needs the whole result before it can be

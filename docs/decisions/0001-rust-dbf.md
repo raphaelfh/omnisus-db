@@ -11,7 +11,7 @@ numbers and proposed v0.2.0 work are historical, not current performance
 guarantees or a release commitment. A separate optional extension is now implemented
 in `native/omnisus-db-dbf`; Python remains available. See
 [Architecture](../architecture.md) for the implemented pipeline and the
-[validation report](../../reports/rust-dbf-validation.md) for measured results.
+[validation report](https://github.com/raphaelfh/omnisus-db/blob/main/reports/rust-dbf-validation.md) for measured results.
 
 ## September 2026 implementation
 

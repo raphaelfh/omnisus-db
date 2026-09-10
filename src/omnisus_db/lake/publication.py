@@ -30,8 +30,15 @@ def _ensure_manifest(lake: "Lake") -> str:
         publication_id VARCHAR, dataset VARCHAR, scope_json VARCHAR,
         source_sha256 VARCHAR, parser_version VARCHAR, run_id VARCHAR,
         batch_id VARCHAR, published_at VARCHAR, rows BIGINT,
-        active BOOLEAN, managed BOOLEAN
+        active BOOLEAN, managed BOOLEAN, source_uri VARCHAR
     )""")
+    # Use live schema here: Lake's column cache is for data-table ingestion,
+    # and an ALTER within a multi-scope transaction must be visible immediately.
+    columns = {
+        row[0] for row in lake.connect().execute(f"DESCRIBE SELECT * FROM {manifest}").fetchall()
+    }
+    if "source_uri" not in columns:
+        lake.connect().execute(f"ALTER TABLE {manifest} ADD COLUMN source_uri VARCHAR")
     return manifest
 
 
@@ -63,14 +70,16 @@ def publish_scope(
     run_id: str | None = None,
     batch_id: str | None = None,
     partition_by: tuple[str, ...] = (),
+    source_uri: str | None = None,
 ) -> "ImportResult | None":
     validate_policy(policy)
     if not re.fullmatch("[0-9a-f]{64}", source_sha256) or not parser_version:
         raise ValueError("publication requires source SHA-256 and parser version")
     if (
-        not re.fullmatch("[A-Z]{2}", scope.uf)
+        (scope.uf is not None and not re.fullmatch("[A-Z]{2}", scope.uf))
         or not 1900 <= scope.ano <= 2200
         or (scope.mes is not None and not 1 <= scope.mes <= 12)
+        or (scope.uf is None and scope.mes is not None)
     ):
         raise ValueError("invalid source scope")
     if table.startswith("_omnisus_"):
@@ -90,9 +99,10 @@ def publish_scope(
                 run_id=run_id,
                 batch_id=batch_id,
                 partition_by=partition_by,
+                source_uri=source_uri,
             )
     con = lake.connect()
-    fields = {"ano": scope.ano, "uf": scope.uf}
+    fields = {"_source_ano": scope.ano} if scope.uf is None else {"ano": scope.ano, "uf": scope.uf}
     if scope.mes is not None:
         fields["mes"] = scope.mes
     columns = dict(lake._staging_columns(str(staging)))
@@ -111,6 +121,10 @@ def publish_scope(
     scope_json = json.dumps(fields, sort_keys=True, separators=(",", ":"))
     existing = 0
     if table in lake.tables():
+        # Never let a wider national scope replace state publications or vice versa.
+        national_table = "_source_ano" in lake._table_columns(table)
+        if national_table != (scope.uf is None):
+            raise ValueError("incompatible national/state publication scope")
         existing_row = con.execute(
             f"SELECT count(*) FROM {qualified(lake.alias, table)} WHERE {predicate}", args
         ).fetchone()
@@ -142,7 +156,9 @@ def publish_scope(
     result = lake.ingest_parquet(table, staging, partition_by=partition_by)
     publication_id = str(uuid4())
     con.execute(
-        f"INSERT INTO {manifest} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        f"INSERT INTO {manifest} (publication_id, dataset, scope_json, source_sha256, "
+        "parser_version, run_id, batch_id, published_at, rows, active, managed, source_uri) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
             publication_id,
             table,
@@ -155,6 +171,7 @@ def publish_scope(
             result.rows,
             True,
             managed,
+            source_uri,
         ],
     )
     result.run_id, result.batch_id, result.publication_id = run_id, batch_id, publication_id

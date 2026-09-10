@@ -57,6 +57,7 @@ def dbc_bytes_to_parquet(
     uf: str | None = None,
     dictionary: Path | None = None,
     mes: int | None = None,
+    source_ano: int | None = None,
 ) -> StagingResult:
     """Validate and stage records atomically; leave existing target intact on error.
 
@@ -83,10 +84,13 @@ def dbc_bytes_to_parquet(
             if len(set(lowered)) != len(lowered):
                 raise ValueError("DBF column names collide after lowercasing")
             table = table.rename_columns(lowered)
+            if "_source_ano" in lowered:
+                raise ValueError("DBF uses reserved source column _source_ano")
             for name, value, dtype in [
                 ("ano", ano, pa.uint16()),
                 ("uf", uf, pa.string()),
                 ("mes", mes, pa.uint8()),
+                ("_source_ano", source_ano, pa.uint16()),
             ]:
                 if value is not None:
                     column = pa.array([value] * len(table), type=dtype, safe=True)
@@ -118,6 +122,7 @@ def dbc_bytes_to_parquet(
                 ("ano", ano, pa.uint16()),
                 ("uf", uf, pa.string()),
                 ("mes", mes, pa.uint8()),
+                ("_source_ano", source_ano, pa.uint16()),
             ]:
                 if value is not None:
                     index = schema.get_field_index(name)

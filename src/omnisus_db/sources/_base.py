@@ -13,13 +13,14 @@ class ScopeKey:
     `mes` is None for yearly datasets, set for monthly (SIH).
     """
 
-    uf: str
+    uf: str | None
+    """None denotes a national source, never an artificial record-level UF."""
     ano: int
     mes: int | None = None
 
     def __str__(self) -> str:
         if self.mes is None:
-            return f"{self.uf}_{self.ano}"
+            return f"{self.uf or 'national'}_{self.ano}"
         return f"{self.uf}_{self.ano}_{self.mes:02d}"
 
 

@@ -138,9 +138,12 @@ async def _(REGISTRY, UTC, asyncio, base, consultar, datetime, decode, executar,
 
 
 @app.cell
-def _(inventario, mo, odb):
-    # BR aparece na listagem, mas a demonstração importa recortes estaduais.
-    _ufs = sorted(set(inventario["uf"].to_list()).intersection(odb.ALL_UFS))
+def _(dataset, inventario, mo, odb):
+    _ufs = (
+        ["Nacional"]
+        if dataset.geography == "national"
+        else sorted(set(inventario["uf"].to_list()).intersection(odb.ALL_UFS))
+    )
     mo.stop(not _ufs, mo.md("A listagem não contém arquivos estaduais para selecionar."))
     _anos = sorted(inventario["ano"].unique().to_list(), reverse=True)
     uf = mo.ui.dropdown(_ufs, value="RR" if "RR" in _ufs else _ufs[0], label="UF")
@@ -150,8 +153,11 @@ def _(inventario, mo, odb):
 
 
 @app.cell
-def _(ano, inventario, mo, pl, uf):
-    recorte = inventario.filter((pl.col("uf") == uf.value) & (pl.col("ano") == ano.value))
+def _(ano, dataset, inventario, mo, pl, uf):
+    _territorio = (
+        pl.col("uf").is_null() if dataset.geography == "national" else pl.col("uf") == uf.value
+    )
+    recorte = inventario.filter(_territorio & (pl.col("ano") == ano.value))
     mo.stop(
         recorte.is_empty(),
         mo.callout("Nenhum arquivo para esta combinação de UF e ano.", kind="warn"),
@@ -301,7 +307,13 @@ def _(dataset, mo, odb, pasta, relatorio, target):
         assert total == relatorio.rows, "A contagem persistida diverge do relatório de importação."
         amostra = _conn.sql(f"SELECT * FROM {tabela_sql} LIMIT 50").pl()
         esquema = _conn.sql(f"DESCRIBE {tabela_sql}").pl()
-        _grupos = "uf, ano, mes" if dataset.monthly else "uf, ano"
+        _grupos = (
+            "_source_ano"
+            if dataset.geography == "national"
+            else "uf, ano, mes"
+            if dataset.monthly
+            else "uf, ano"
+        )
         resumo = _conn.sql(
             f"SELECT {_grupos}, count(*) AS registros FROM {tabela_sql} "
             f"GROUP BY {_grupos} ORDER BY {_grupos}"

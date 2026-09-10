@@ -32,6 +32,11 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
         DOSP2024.dbc -> (ScopeKey('SP', 2024), 'sim_do')
         RDSP2401.dbc -> (ScopeKey('SP', 2024, 1), 'sih_rd')
     """
+    for d in REGISTRY.values():
+        if d.geography == "national":
+            match = re.fullmatch(re.escape(d.prefix) + r"BR(\d{2})\.dbc", name, re.IGNORECASE)
+            if match:
+                return ScopeKey(uf=None, ano=_yy_to_year(int(match[1]))), d.name
     # Try yearly first to extract prefix and decide based on dataset registry.
     yearly = _YEARLY_PATTERN.match(name)
     monthly = _MONTHLY_PATTERN.match(name)
@@ -69,6 +74,14 @@ def scope_to_filename(dataset: str | Dataset, scope: ScopeKey) -> str:
     so an ad-hoc dataset can name its files without being registered.
     """
     d = resolve(dataset)
+    if d.geography == "national":
+        if scope.uf is not None or scope.mes is not None:
+            raise ValueError("national yearly dataset requires uf=None and mes=None")
+        if not 1980 <= scope.ano <= 2079:
+            raise ValueError("year cannot be represented by the national filename codec")
+        return f"{d.prefix}BR{scope.ano % 100:02d}.dbc"
+    if scope.uf is None:
+        raise ValueError("state dataset requires UF")
     yy = scope.ano % 100
     if d.monthly:
         if scope.mes is None:

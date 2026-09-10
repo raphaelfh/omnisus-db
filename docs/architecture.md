@@ -8,6 +8,14 @@ repository; these working documents are not published to this site.
 
 ## Registry and importers
 
+National preliminary SINAN Chagas uses `ScopeKey(uf=None, ano=year)` and a
+reserved `_source_ano` publication column. It preserves original geography and
+dates instead of assigning an artificial UF. Its source validator verifies
+agravo/year before the shared transaction. State scopes keep their existing
+manifest identity. National and state publications cannot share a table.
+FTP publication manifests also retain the acquired source URI; older rows have
+unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas_prelim.md).
+
 - **`Dataset`** is an immutable, keyword-only DATASUS FTP registry row. It holds
   identity, FTP location, cadence, partitioning, coverage and a dictionary path.
   The registry includes SIM-DO, SINASC-NV, SIH-RD, SIA/APAC and CNES-ST. Callers

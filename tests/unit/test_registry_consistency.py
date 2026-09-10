@@ -37,7 +37,8 @@ def test_b_cli_accepts_every_row_and_alias() -> None:
 
 def test_b_python_api_accepts_every_row() -> None:
     for name in REGISTRY:
-        scopes = odb.scopes_for(name, years=[2024], ufs=["RR"], months=[1])
+        filters = {} if REGISTRY[name].geography == "national" else {"ufs": ["RR"], "months": [1]}
+        scopes = odb.scopes_for(name, years=[2024], **filters)
         assert scopes, name
 
 

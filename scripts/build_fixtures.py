@@ -29,6 +29,7 @@ OUT = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "dbc"
 FTP_TIMEOUT = 60
 
 TARGETS: list[tuple[str, ScopeKey, str]] = [
+    ("sinan_chagas_prelim", ScopeKey(uf=None, ano=2023), "sinan_chagas_br_2023.dbc"),
     ("sim_do", ScopeKey(uf="RR", ano=2023), "sim_rr_2023_mini.dbc"),
     ("sinasc_nv", ScopeKey(uf="RR", ano=2022), "sinasc_rr_2022_mini.dbc"),
     ("sih_rd", ScopeKey(uf="RR", ano=2024, mes=1), "sih_rr_2024_01_mini.dbc"),

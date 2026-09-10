@@ -64,6 +64,9 @@ class Dataset:
     dictionary: Path | None = None
     """Frictionless YAML. ``None`` -> packaged ``dicionarios/<name>.yaml``."""
 
+    geography: Literal["state", "national"] = "state"
+    """Source coverage. National SINAN filenames use PREFIX + BR + YY."""
+
     @property
     def monthly(self) -> bool:
         return self.cadence == "monthly"
@@ -80,6 +83,7 @@ _MONTHLY = ("ano", "uf", "mes")
 
 # fmt: off
 _ROWS: tuple[Dataset, ...] = (
+    Dataset(name="sinan_chagas_prelim", prefix="CHAG", ftp_dir="/dissemin/publicos/SINAN/DADOS/PRELIM", cadence="yearly", partition_by=("_source_ano",), coverage=((2023, 1), None), geography="national"),
     Dataset(name="sim_do",    prefix="DO",  ftp_dir=_SIM,     cadence="yearly",  partition_by=_YEARLY,       coverage=((1996, 1), None), aliases=("sim",)),
     Dataset(name="sinasc_nv", prefix="DN",  ftp_dir=_SINASC,  cadence="yearly",  partition_by=_YEARLY,       coverage=((1996, 1), None), aliases=("sinasc",)),
     Dataset(name="sih_rd",    prefix="RD",  ftp_dir=_SIH,     cadence="monthly", partition_by=_MONTHLY,      coverage=((2008, 1), None), aliases=("sih",)),

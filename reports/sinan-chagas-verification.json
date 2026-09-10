@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-09-10T22:10:51.865845+00:00",
+  "target": "ducklake:/Users/raphael/PycharmProjects/omnisus-db/data/lake/verification-sinan/8ba68a46-71e7-4a0e-82e3-8ccb34fd11b5/dados.ducklake",
+  "rows_by_source_year": [
+    [
+      2023,
+      6253
+    ],
+    [
+      2024,
+      6520
+    ],
+    [
+      2025,
+      7588
+    ]
+  ],
+  "replay_rows": 0,
+  "publications": [
+    {
+      "publication_id": "fcd10ad9-09db-4aa5-a5c8-7d00882c60cc",
+      "dataset": "sinan_chagas_prelim",
+      "scope_json": "{\"_source_ano\":2023}",
+      "source_sha256": "a0ab9f568b52c565819466eba2cf312e40549cec707f28e5001de1532f79a10f",
+      "parser_version": "dbc-staging-v1:63d6bcc96a55379c1145dae8c40386c17f5751d31853aee97168b2d731a08ef8",
+      "run_id": "live-initial",
+      "batch_id": "db08a2aa-a91d-4eff-be96-a5c43d80a92e",
+      "published_at": "2026-09-10T22:10:41.235360+00:00",
+      "rows": 6253,
+      "active": true,
+      "managed": true,
+      "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR23.dbc"
+    },
+    {
+      "publication_id": "046df2c5-c2a6-40b4-ae57-b1933781c3dc",
+      "dataset": "sinan_chagas_prelim",
+      "scope_json": "{\"_source_ano\":2024}",
+      "source_sha256": "dddf0f9dee02513532ac8a4f34df5574e84eb785ede2fdda5851353d6f94016b",
+      "parser_version": "dbc-staging-v1:63d6bcc96a55379c1145dae8c40386c17f5751d31853aee97168b2d731a08ef8",
+      "run_id": "live-initial",
+      "batch_id": "733e6576-f50e-4bb9-b149-9e003498bf7b",
+      "published_at": "2026-09-10T22:10:43.264218+00:00",
+      "rows": 6520,
+      "active": true,
+      "managed": true,
+      "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR24.dbc"
+    },
+    {
+      "publication_id": "a4af5669-b009-43bd-bd84-b470eda1442d",
+      "dataset": "sinan_chagas_prelim",
+      "scope_json": "{\"_source_ano\":2025}",
+      "source_sha256": "1598133979559e3f98ce4e278b3eb16d41e83a80ffc26795b1d9362009faee1a",
+      "parser_version": "dbc-staging-v1:63d6bcc96a55379c1145dae8c40386c17f5751d31853aee97168b2d731a08ef8",
+      "run_id": "live-initial",
+      "batch_id": "0809620e-3bf7-4199-aeeb-7566cbf7cb54",
+      "published_at": "2026-09-10T22:10:45.119886+00:00",
+      "rows": 7588,
+      "active": true,
+      "managed": true,
+      "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR25.dbc"
+    }
+  ],
+  "notes": [
+    "Complete files, not a sample",
+    "Preliminary notifications; not incidence or confirmed case counts"
+  ]
+}
