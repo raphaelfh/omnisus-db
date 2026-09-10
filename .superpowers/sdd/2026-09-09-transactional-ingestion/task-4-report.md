@@ -96,3 +96,30 @@ The first combined Ruff run found `SIM117` and `ASYNC110` in the new tests. I co
 ## Concerns
 
 None.
+
+## Round 1 review fix
+
+Added a deterministic regression in which the second producer queue insertion fails only after the first scope has been written inside an incomplete batch. The test confirms that the known rollback reports the written scope as a determined failure, leaves only the remaining input unresolved, rolls back the newly created table and its rows, preserves lake usability, and leaves no tasks alive. Existing unknown-COMMIT tests remain the contrasting unresolved-state coverage. No production change was needed.
+
+Initial covering run exposed an incorrect test assumption rather than a product defect:
+
+```text
+$ uv run --locked --extra dev pytest -m 'not e2e and not perf' tests/unit/sources/datasus_ftp/test_runner_failures.py tests/unit/sources/datasus_ftp/test_runner_concurrency.py -q
+..F............                                                          [100%]
+FAILED test_producer_failure_marks_rolled_back_write_as_determined
+CatalogException: Table with name sim_do does not exist!
+1 failed, 14 passed in 6.70s
+```
+
+The fresh-catalog rollback removes the table itself, so the storage assertion was corrected to verify that `lake.sim_do` is absent from `information_schema.tables`.
+
+Final covering commands and output:
+
+```text
+$ uv run --locked --extra dev pytest -m 'not e2e and not perf' tests/unit/sources/datasus_ftp/test_runner_failures.py tests/unit/sources/datasus_ftp/test_runner_concurrency.py -q
+...............                                                          [100%]
+15 passed in 6.81s
+
+$ uv run --locked --extra dev ruff check tests/unit/sources/datasus_ftp/test_runner_failures.py
+All checks passed!
+```

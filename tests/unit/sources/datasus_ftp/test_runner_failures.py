@@ -68,6 +68,66 @@ async def test_abnormal_producer_cancels_and_awaits_sibling(tmp_path, monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_producer_failure_marks_rolled_back_write_as_determined(
+    tmp_path, monkeypatch, dbc_fixture
+):
+    from omnisus_db import ImportAbortedError
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    raw = dbc_fixture("sim_rr_2023_mini").read_bytes()
+    first_written = asyncio.Event()
+
+    async def fetch(**kwargs):
+        return raw
+
+    real_ingest = _runner.ingest_raw
+
+    def observe_first_write(dataset, scope, payload, lake):
+        result = real_ingest(dataset, scope, payload, lake)
+        if scope.ano == 2021:
+            first_written.set()
+        return result
+
+    real_queue = asyncio.Queue
+
+    class FailSecondPutQueue(real_queue):
+        async def put(self, item):
+            if item is not None and item[0] == 1:
+                await first_written.wait()
+                raise RuntimeError("queue rejected second item")
+            await super().put(item)
+
+    monkeypatch.setattr(_runner, "fetch_dbc_bytes", fetch)
+    monkeypatch.setattr(_runner, "ingest_raw", observe_first_write)
+    monkeypatch.setattr(_runner.asyncio, "Queue", FailSecondPutQueue)
+    scopes = [ScopeKey(uf="RR", ano=year) for year in (2021, 2022)]
+    baseline = asyncio.all_tasks()
+    with Lake.local(f"ducklake:{tmp_path}/known-rollback.ducklake") as lake:
+        with pytest.raises(ImportAbortedError) as caught:
+            await asyncio.wait_for(
+                _runner.run_scopes(
+                    "sim_do", scopes=scopes, lake=lake, concurrency=1, batch_size=2
+                ),
+                timeout=2,
+            )
+        assert [(outcome.scope, outcome.status) for outcome in caught.value.report.outcomes] == [
+            (scopes[0], "failed")
+        ]
+        assert caught.value.unresolved == ((1, scopes[1]),)
+        assert (
+            lake.connect()
+            .execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'lake' AND table_name = 'sim_do'"
+            )
+            .fetchall()
+            == []
+        )
+        assert lake.is_usable
+    assert not (asyncio.all_tasks() - baseline)
+
+
+@pytest.mark.asyncio
 async def test_cancel_with_full_queue_preserves_previous_commit(
     tmp_path, monkeypatch, dbc_fixture
 ):
