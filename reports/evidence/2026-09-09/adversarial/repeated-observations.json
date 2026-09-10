@@ -1,0 +1,136 @@
+{
+  "failed_scope": {
+    "requested": 1,
+    "outcomes": 0,
+    "failed": 0,
+    "cli_exit_code": 0,
+    "cli_output": "✔ imported 0 rows (0 ok, 0 skipped, 0 failed)"
+  },
+  "repeat_and_snapshot": {
+    "first_rows": 3311,
+    "second_rows": 3311,
+    "stored_rows": 6622,
+    "reported_snapshot_first": 0,
+    "reported_snapshot_second": 1,
+    "committed_snapshots": [
+      {
+        "snapshot_id": 0,
+        "snapshot_time": "2026-09-09 21:47:21.085938-03",
+        "changes": "{schemas_created=[main]}"
+      },
+      {
+        "snapshot_id": 1,
+        "snapshot_time": "2026-09-09 21:47:21.223862-03",
+        "changes": "{tables_created=[main.sim_do], tables_altered=[1], tables_inserted_into=[1]}"
+      },
+      {
+        "snapshot_id": 2,
+        "snapshot_time": "2026-09-09 21:47:21.399818-03",
+        "changes": "{tables_inserted_into=[1]}"
+      }
+    ]
+  },
+  "rollback_schema": {
+    "cached_columns": [
+      "a",
+      "newcol"
+    ],
+    "actual_columns": [
+      "a"
+    ],
+    "retry": "BinderException: Binder Error: Table \"t\" does not have a column with name \"newcol\"\n\nDid you mean: \"a\""
+  },
+  "type_drift": {
+    "result": "ConversionException: Conversion Error: Type UINT16 with value 300 can't be cast because the value is out of range for the destination type UINT8 when casting from source column a",
+    "fractional_input": 1.75,
+    "stored_after_int_then_float": [
+      [
+        1
+      ],
+      [
+        2
+      ]
+    ]
+  },
+  "upsert_failure": {
+    "rows_before": 1,
+    "rows_after_insert_failure": 0
+  },
+  "latest_null": {
+    "latest_source_type": null,
+    "view": [
+      [
+        "1234567",
+        null,
+        "05",
+        "999999",
+        202402
+      ]
+    ]
+  },
+  "maintenance": {
+    "versions": [
+      [
+        "core_functions",
+        "v1.5.2"
+      ],
+      [
+        "ducklake",
+        "415a9ebd"
+      ],
+      [
+        "icu",
+        "v1.5.2"
+      ],
+      [
+        "json",
+        "v1.5.2"
+      ],
+      [
+        "parquet",
+        "v1.5.2"
+      ],
+      [
+        "sqlite_scanner",
+        "a087a58"
+      ]
+    ],
+    "optimize": "CatalogException: Catalog Error: Table Function with name ducklake_compact_files does not exist!\nDid you mean \"ducklake_options\"?",
+    "vacuum": "InvalidInputException: Invalid Input Error: Failed to cast value: Unimplemented type for cast (INTERVAL -> TIMESTAMP WITH TIME ZONE)",
+    "optimize_cli_exit": 0,
+    "optimize_cli_output": "optimize note: Catalog Error: Table Function with name ducklake_compact_files \ndoes not exist!\nDid you mean \"ducklake_options\"?"
+  },
+  "path_and_uri": {
+    "readme": "ValueError: target must start with 'ducklake:' (got: '/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/omnisus-audit-ax135y5k/lake')",
+    "apostrophe": "ParserException: Parser Error: syntax error at or near \"Avila\"",
+    "parsed_catalog": "postgresql://user:dummy@host/db",
+    "parsed_storage": "s3://example/lake",
+    "cloud_with_options": "ValueError: postgres target requires ?storage=<path or s3 uri>"
+  },
+  "dictionary": {
+    "dtobito": {
+      "declared": "date",
+      "actual": "String"
+    },
+    "idade": {
+      "declared": "string",
+      "actual": "String"
+    },
+    "sexo": {
+      "declared": "integer",
+      "actual": "String"
+    }
+  },
+  "ibge_contract": {
+    "requested_year": 2022,
+    "input_series": 2,
+    "returned_rows": [
+      {
+        "codigo_ibge": "3550308",
+        "ano": 2023,
+        "populacao": 10
+      }
+    ],
+    "empty_payload_rows": 0
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-09",
+  "commit": "e681aceb869004dc192c4aaa588a51adc6d54ac7",
+  "python": "3.13.12",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "versions": {
+    "omnisus-db": "0.1.0",
+    "duckdb": "1.5.2",
+    "polars": "1.40.1",
+    "pyarrow": "24.0.0",
+    "datasus-dbc": "0.1.3",
+    "dbfread2": "0.1.0",
+    "frictionless": "5.19.0",
+    "pandera": "0.31.1"
+  },
+  "tests": {
+    "selected": 386,
+    "passed": 386,
+    "deselected": 47,
+    "seconds": 37.7,
+    "coverage_percent": 91.27906976744185,
+    "selection": "not e2e and not perf"
+  },
+  "checks": {
+    "ruff_check": "passed",
+    "ruff_format": "94 files already formatted",
+    "mypy": "35 source files passed",
+    "generated_docs": "passed",
+    "frictionless": "15 resources VALID"
+  },
+  "release": {
+    "requires_python": ">=3.12",
+    "locked_requires_python": ">=3.12",
+    "gate_python": "3.12",
+    "gate_version_meets_package_requirement": true
+  },
+  "limitations": [
+    "Existing local environment, no clean install",
+    "No live DATASUS FTP import",
+    "No Postgres/object-store integration",
+    "No load/RSS benchmark",
+    "No release/deployment executed"
+  ]
+}

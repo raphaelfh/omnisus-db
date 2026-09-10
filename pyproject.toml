@@ -32,6 +32,7 @@ dependencies = [
     "httpx>=0.28.1",
     "tomli-w>=1.2.0",
     "pyyaml>=6.0.3",
+    "marimo>=0.23.16",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +57,9 @@ docs = [
     "mkdocs>=1.6.1,<2.0",
     "mkdocs-material>=9.7.7",
     "mkdocstrings[python]>=1.0.6",
+]
+notebooks = [
+    "marimo>=0.23.16,<0.24",
 ]
 
 [project.scripts]
@@ -92,6 +96,11 @@ ignore = ["E501"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["typer.Argument", "typer.Option"]
+
+[tool.ruff.lint.per-file-ignores]
+# marimo displays final expressions and injects imported classes as cell arguments.
+"notebooks/api_cenarios.py" = ["B018", "N803"]
+"notebooks/api_dados_reais.py" = ["B018", "N803"]
 
 [tool.ruff.format]
 quote-style = "double"

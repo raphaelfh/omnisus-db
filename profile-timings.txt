@@ -1,0 +1,6 @@
+decompress (Rust):     17.4 ms/iter
+dbf parse (Python):    222.8 ms/iter -- 13091 records
+polars dataframe:      27.2 ms/iter
+
+records: 13091
+DBC bytes: 641046, DBF bytes: 2934370
