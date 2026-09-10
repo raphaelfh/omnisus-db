@@ -88,10 +88,9 @@ def import_cmd(
 ) -> None:
     """Import a dataset into the lake.
 
-    Exits non-zero if and only if a scope *failed*. A scope DATASUS never
-    published is skipped, which is a normal outcome of asking for a range and
-    exits zero — that is what lets an orchestrator distinguish "nothing to do"
-    from "something broke".
+    For FTP imports, exits 1 when a completed report contains failed scopes
+    or when ImportAbortedError interrupts the run. Skipped scopes alone do not
+    fail the run. Invalid arguments and other exceptions can also exit non-zero.
     """
     import omnisus_db as odb
 

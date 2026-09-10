@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12/3.13, DuckDB 1.5.5, DuckLake observado `d8a1881e`, Polars 1.44.2, PyArrow 25.0.1, pytest 9.1.1, pytest-asyncio 1.4.0, Ruff 0.16.6 e mypy 2.3.1.
 
-**Spec:** [transactional-ingestion-design.md](/Users/raphael/PycharmProjects/omnisus-db/docs/superpowers/specs/2026-09-09-transactional-ingestion-design.md).
+**Spec:** [transactional-ingestion-design.md](../specs/2026-09-09-transactional-ingestion-design.md).
 
 ## Global Constraints
 
@@ -33,7 +33,7 @@ Concluída em 2026-09-10, com código funcional em `30ce324` e revisão integral
 
 ## Estado de partida e limites
 
-A atualização de dependências foi executada antes deste plano: 386 testes passaram em Python 3.12 e novamente em 3.13, com cobertura de 91,28%. O wheel instalou em Python 3.12 no macOS arm64 com `--only-binary=:all:`. Esses resultados não cobrem os reparos abaixo: **todas as tarefas funcionais deste plano ainda estão pendentes**.
+A atualização de dependências foi executada antes deste plano: 386 testes passaram em Python 3.12 e novamente em 3.13, com cobertura de 91,28%. O wheel instalou em Python 3.12 no macOS arm64 com `--only-binary=:all:`. Esses resultados não cobrem os reparos abaixo: **todas as tarefas funcionais deste plano estavam pendentes naquele momento**.
 
 Trabalhar no diretório raiz `/Users/raphael/PycharmProjects/omnisus-db` ou no checkout escolhido para execução. Os comandos abaixo usam caminhos relativos a essa raiz. Antes de começar, ler a spec e verificar `git status --short`; preservar `profile-timings.txt`, relatórios históricos e alterações de dependências existentes. Não executar `git add .`.
 
@@ -1247,6 +1247,6 @@ O nome 0.1.0 é a versão atual em `src/omnisus_db/_version.py`; se outra entreg
 | 11–13: CNES atômico e duplicidades | Task 5 |
 | 14: compatibilidade e checks | Task 6 e gate de integração |
 
-Interfaces entre tarefas usam os mesmos nomes da spec. Os códigos apresentados eram propostas durante o planejamento; a execução foi concluída e revisada, com ajustes registrados no relatório de implementação. A atualização de dependências antecedeu este plano. O código efetivamente validado e as evidências finais prevalecem sobre os exemplos originais.
+Interfaces entre tarefas usam os mesmos nomes da spec. Os snippets preservam o desenho original e não devem ser reaplicados como patches: a revisão final acrescentou guarda de nesting no runner, propagação da primeira interrupção durante cleanup e limpeza explícita de produtores irmãos. Os códigos apresentados eram propostas durante o planejamento; a execução foi concluída e revisada, com ajustes registrados no relatório de implementação. A atualização de dependências antecedeu este plano. O código efetivamente validado e as evidências finais prevalecem sobre os exemplos originais.
 
 Próximos planos independentes: D2 para produto populacional IBGE; D3 para manutenção e URIs; D4 para tipos e visão CNES; D5 para reprocessamento/proveniência e eventual exclusividade entre processos; D6 para memória e desempenho. Não incorporar essas frentes durante a execução desta entrega sem rever seu escopo.

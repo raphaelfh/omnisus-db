@@ -27,7 +27,7 @@ A precondição de um escritor não equivale a um bloqueio já implementado. Um 
 
 `Lake` possui a fronteira transacional e o ciclo de vida do cache. O runner possui a correspondência entre posições de entrada e outcomes, incluindo rollback de lote. O importador CNES prepara respostas antes de iniciar a transação de atualização. Nenhum desses componentes deve inferir sucesso a partir da ausência de linhas ou de uma exceção capturada.
 
-Criar `src/omnisus_db/lake/_transactions.py` apenas para os tipos transacionais: recibo e exceção de estado desconhecido. Manter o controle de BEGIN/COMMIT/ROLLBACK em `Lake.transaction`, sem criar um segundo gerenciador de conexão. As novas exceções de importação ficam em `sources/_base.py`, com os resultados que carregam.
+Criar `src/omnisus_db/lake/_transactions.py` apenas para os tipos transacionais: recibo e exceções de estado. Manter o controle de BEGIN/COMMIT/ROLLBACK em `Lake.transaction`, sem criar um segundo gerenciador de conexão. As novas exceções de importação ficam em `sources/_base.py`, com os resultados que carregam.
 
 ## Interfaces
 
@@ -53,21 +53,21 @@ Registrar resultados de ingestão em uma lista privada do lote. Dentro da transa
 
 Se a consulta de snapshot falhar depois de COMMIT concluído, conservar `committed=True` e snapshots `None`, registrar aviso e retornar os dados como confirmados. Isso distingue falha de metadado de falha de persistência. Não consultar `max(snapshot_id)` antes do commit e não anunciar isolamento por conexão.
 
-Se o corpo falhar, executar ROLLBACK e limpar caches em `finally`. Quando rollback funcionar, preservar a exceção original e permitir reutilização do handle. Quando falhar, invalidar o handle e lançar `TransactionStateError` encadeado à falha original, com nota sobre a falha de rollback. Para `CancelledError`, `KeyboardInterrupt` e `SystemExit`, preservar a interrupção original e invalidar o handle se necessário.
+Se o corpo falhar, executar ROLLBACK e limpar caches em `finally`. Quando rollback funcionar, preservar a exceção original e permitir reutilização do handle. Quando falhar, invalidar o handle e lançar `TransactionStateError` encadeado à falha original, com nota sobre a falha de rollback. Para `CancelledError`, `KeyboardInterrupt` e `SystemExit`, preservar a primeira interrupção e invalidar o handle se necessário. Se a falha original for ordinária e a primeira interrupção surgir durante o rollback, propagar essa interrupção com a falha original encadeada; se a falha original já for uma interrupção, ela tem precedência.
 
-Se COMMIT falhar, tentar rollback somente como limpeza, invalidar o handle e lançar `CommitOutcomeUnknown` independentemente do resultado da limpeza. A aplicação deve fechar e reconciliar antes de reprocessar. `close()` precisa ser idempotente e utilizável mesmo após invalidação.
+Se COMMIT falhar, tentar rollback somente como limpeza, invalidar o handle e lançar `CommitOutcomeUnknown` independentemente do resultado ordinário da limpeza. Se houver interrupção de controle, preservar a primeira interrupção, inclusive quando ela surgir durante a limpeza de uma falha ordinária de COMMIT, mantendo a falha original encadeada. A aplicação deve fechar e reconciliar antes de reprocessar. `close()` precisa ser idempotente e utilizável mesmo após invalidação.
 
 Para ingestão direta sem transação gerenciada, `Lake.ingest` abre uma transação própria e devolve o resultado depois de encerrá-la. Para ingestão em lote, participa da transação existente e registra o resultado pendente. CREATE, ALTER e INSERT passam a compartilhar a mesma unidade de confirmação.
 
 ## Runner e contabilidade
 
-Manter `outcomes` indexado pela posição da entrada. Registrar o escopo corrente no lote antes de chamar `ingest_raw`. Uma exceção de parsing/escrita produz `failed` para esse escopo; resultados provisoriamente bem-sucedidos do lote também viram `failed` por rollback. Falhas de download e ausências já classificadas mantêm suas causas.
+Rejeitar chamada do runner dentro de transação gerenciada existente antes de iniciar produtores, preservando o handle e a transação do chamador. Manter `outcomes` indexado pela posição da entrada. Registrar o escopo corrente no lote antes de chamar `ingest_raw`. Uma exceção de parsing/escrita produz `failed` para esse escopo; resultados provisoriamente bem-sucedidos do lote também viram `failed` por rollback. Falhas de download e ausências já classificadas mantêm suas causas.
 
 Somente o ramo de saída normal da transação publica `ok`. Os resultados pendentes terão o snapshot final preenchido pelo `Lake`. Em erro transacional fatal ou encerramento inesperado do produtor, preservar outcomes determinados e lançar `ImportAbortedError` com as posições restantes.
 
 A exceção de falha ordinária deve ser capturada para continuar lotes futuros. Se o handle foi invalidado ou o erro pertence às classes fatais, não continuar. Um lote ainda vazio que não conseguiu iniciar não pode causar um loop sem consumir itens.
 
-Mover a sentinela de fim do produtor para o caminho de conclusão normal. Ao encerrar o runner, cancelar e aguardar o produtor, sem tentar inserir sentinela em fila cheia durante cancelamento. A espera pelo próximo item deve também observar término anormal do produtor, para não aguardar indefinidamente uma fila que não receberá mais itens.
+Mover a sentinela de fim do produtor para o caminho de conclusão normal. Ao encerrar o runner, cancelar e aguardar o produtor e todos os seus produtores filhos, sem tentar inserir sentinela em fila cheia durante cancelamento. A espera pelo próximo item deve também observar término anormal do produtor, para não aguardar indefinidamente uma fila que não receberá mais itens.
 
 Cancelamento externo reverte o lote corrente, aguarda a limpeza e propaga `CancelledError`. Os lotes previamente confirmados permanecem persistidos. Este ciclo não promete relatório durável após morte de processo.
 
@@ -108,7 +108,7 @@ IBGE (D2), manutenção/URIs (D3), tipos/visão CNES (D4), reprocessamento e eve
 
 ## Referências
 
-- [Pesquisa técnica](/Users/raphael/PycharmProjects/omnisus-db/reports/2026-09-09-pesquisa-e-diretrizes-de-correcao.md).
-- [Base atualizada e validação](/Users/raphael/PycharmProjects/omnisus-db/reports/2026-09-09-atualizacao-dependencias.md).
-- [Revisão adversarial](/Users/raphael/PycharmProjects/omnisus-db/reports/2026-09-09-revisao-adversarial.md).
+- [Pesquisa técnica](../../../reports/2026-09-09-pesquisa-e-diretrizes-de-correcao.md).
+- [Base atualizada e validação](../../../reports/2026-09-09-atualizacao-dependencias.md).
+- [Revisão adversarial](../../../reports/2026-09-09-revisao-adversarial.md).
 - [DuckLake: transações](https://ducklake.select/docs/stable/duckdb/advanced_features/transactions) e [snapshots](https://ducklake.select/docs/stable/duckdb/usage/snapshots). A precondição de um escritor evita depender de isolamento de recibo entre conexões, que o teste da extensão histórica não garante.

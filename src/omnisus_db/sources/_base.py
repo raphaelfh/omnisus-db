@@ -59,8 +59,9 @@ class ScopeOutcome:
 class ImportReport:
     """Per-scope outcomes of one import run.
 
-    A wide import reports what happened instead of dying on scope 3, so
-    partial progress is visible and resumable.
+    Normal FTP completion reports each requested input position. An
+    ImportAbortedError carries a partial report of determined outcomes and
+    separately identifies unresolved positions; inspect before retrying.
 
     Inspect :attr:`failed` — never the report's truthiness. An empty run and a
     run where everything failed are different facts, and no falsy sentinel

@@ -28,7 +28,15 @@ omnisus-db import <name> --plan inventory --years 2020-2024
 | `sim_do` | `sim` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` |
 | `sinasc_nv` | `sinasc` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` |
 
-Coverage is `(first, last)` as published upstream; **ongoing** means no end
-bound. These bounds are checked against the live server every week by the
-Tier 3 probe (`tests/integration/test_registry_probe.py`), so a row that
-drifts from reality fails CI rather than misleading a caller.
+Coverage is the registry's declared `(first, last)` window; **ongoing** means
+no end bound, not that every scope inside it is present. A weekly Tier 3
+workflow (`tests/integration/test_registry_probe.py`) is configured to check
+directories, prefixes, earliest files and publication recency against the live
+server. Check that workflow's actual result for current upstream validation;
+it is separate from the offline pull-request suite. Use `available()` or
+`inventory --refresh` to inspect listed scopes before a load.
+
+This table covers DATASUS-FTP datasets. The separate
+[IBGE population importer](sources/ibge_pop.md) and
+[CNES Master name refresh](sources/cnes_st.md#establishment-names) have different
+interfaces and limitations.

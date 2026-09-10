@@ -1,23 +1,45 @@
 # Migration from PySUS
 
-If you currently use [PySUS](https://github.com/AlertaDengue/PySUS), here's
-how to translate common patterns to omnisus-db.
+The examples below use the current repository version; install it as described
+in [Getting Started](getting-started.md). Older tags can expose different APIs.
 
-## Download SIM
+## Import SIM
 
-| PySUS | omnisus-db |
-|-------|------------|
-| `from pysus import SIM; SIM().download(['SP'], [2024])` | `odb.import_sim(years=[2024], ufs=['SP'])` |
+```python
+import omnisus_db as odb
 
-## Read into DataFrame
+report = odb.import_sim(years=[2023], ufs=["SP"])
+print(report.rows, report.failed)
+```
 
-| PySUS | omnisus-db |
-|-------|------------|
-| `df = parquet.to_dataframe()` | `odb.Lake.local('./omnisus.ducklake').connect().sql("SELECT * FROM lake.sim_do WHERE ano=2024 AND uf='SP'").pl()` |
+The FTP import functions return `ImportReport`, rather than a downloaded file
+handle or a list of results. Access successful `ImportResult` values through
+`outcome.result` in `report.ok`. Use `available()` and `import_dataset()` when
+the list of published scopes should drive the import.
 
-## Why switch
+## Read into a DataFrame
 
-- Single canonical Parquet dataset (vs. one file per scope on disk)
-- Time-travel + ACID via DuckLake snapshots
-- Cloud-native (S3/GCS) without code changes
-- Pre-computed Frictionless schemas + auxiliary tables (UF, municipios, CID-10)
+```python
+with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
+    df = lake.connect().sql(
+        "SELECT * FROM lake.sim_do WHERE ano=2023 AND uf='SP'"
+    ).pl()
+```
+
+The target includes the `ducklake:` prefix, and the context closes the connection
+after the query is materialized.
+
+## Operational differences
+
+- Data is appended to tables managed by a DuckLake catalog; repeated imports of
+  the same scope are not deduplicated.
+- One writer per lake is an operational requirement. Downloads may be concurrent,
+  while parsing and writing use one consumer and one connection.
+- Managed transactions group schema and data changes and provide committed
+  snapshots. `ImportAbortedError` carries determined results and unresolved input
+  positions; inspect the catalog before retrying an unknown commit.
+- YAML dictionaries and auxiliary tables support normalization and joins; their
+  presence does not imply every incoming record has been validated by Frictionless.
+
+See [import results and transactions](inventory.md) for failure handling and
+[cloud targets](getting-started.md#cloud-target) for target configuration limits.

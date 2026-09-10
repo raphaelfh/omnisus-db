@@ -1,5 +1,13 @@
 # omnisus-db — Structural Design Spec
 
+> Historical design/plan, reviewed on 2026-09-10. This records the original
+> proposal, not current execution instructions. The registry and inventory now
+> exist in code; Python requires >=3.12, and FTP imports return ImportReport.
+> Transaction behavior is governed by the transactional-ingestion design and
+> the public API/transaction guide. Historical checkbox state does not certify
+> what has run. Live-network tests must carry e2e as well as integration: the
+> normal CI selection does not exclude integration by itself.
+
 **Date:** 2026-09-09
 **Status:** Proposed — revised after adversarial review round 2 (same day)
 **Supersedes:** nothing. Complements the v0.1.0 design spec in the parent

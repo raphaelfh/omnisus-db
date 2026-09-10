@@ -4,6 +4,10 @@
 **Status:** Decided
 **Spec ref:** `docs/superpowers/specs/2026-09-09-repo-structure-design.md` §3
 
+This ADR records the registry design decision. Examples of additional era rows
+describe how to extend the catalog; they do not imply that those rows ship in
+the current registry. See [Datasets](../datasets.md) for the implemented rows.
+
 ## Context
 
 Dataset facts were spread across `datasets.py`, `inventory.py` and `fetch.py`,
@@ -35,8 +39,9 @@ We considered an `eras: tuple[Era, ...]` field and rejected it: one row implies
 one dictionary, but CID9 and CID10 have different columns. The row would claim
 a schema it does not have.
 
-Instead, each era is its own row with its own dictionary (`sim_do`,
-`sim_do_cid9`). A cross-era union is a deliberate act by the user, which is
+Instead, each supported era gets its own row with its own dictionary (for
+example, the existing `sim_do` and a possible future `sim_do_cid9`, which is not
+currently registered). A cross-era union is a deliberate act by the user, which is
 correct: it surfaces a real schema break instead of hiding it.
 
 ## Consequences

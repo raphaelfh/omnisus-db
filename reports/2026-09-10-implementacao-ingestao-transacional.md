@@ -57,12 +57,12 @@ Os testes novos de regressão foram observados em RED antes das correções; con
 
 ## Artefatos de auditoria
 
-- [Metadados, versões e hashes](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/reports/evidence/2026-09-10/transactional-ingestion/verification.json)
-- [Registro das decisões e revisões](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/reports/evidence/2026-09-10/transactional-ingestion/progress.md)
-- [Resultado da revisão integral](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/reports/evidence/2026-09-10/transactional-ingestion/final-review-result.md)
-- [Relatório da correção final com RED/GREEN](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/reports/evidence/2026-09-10/transactional-ingestion/final-fix-report.md)
-- [Plano executado](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/docs/superpowers/plans/2026-09-09-transactional-ingestion.md)
-- [Especificação](/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion/docs/superpowers/specs/2026-09-09-transactional-ingestion-design.md)
+- [Metadados, versões e hashes](evidence/2026-09-10/transactional-ingestion/verification.json)
+- [Registro das decisões e revisões](evidence/2026-09-10/transactional-ingestion/progress.md)
+- [Resultado da revisão integral](evidence/2026-09-10/transactional-ingestion/final-review-result.md)
+- [Relatório da correção final com RED/GREEN](evidence/2026-09-10/transactional-ingestion/final-fix-report.md)
+- [Plano executado](../docs/superpowers/plans/2026-09-09-transactional-ingestion.md)
+- [Especificação](../docs/superpowers/specs/2026-09-09-transactional-ingestion-design.md)
 
 ## Decisões registradas durante a execução
 

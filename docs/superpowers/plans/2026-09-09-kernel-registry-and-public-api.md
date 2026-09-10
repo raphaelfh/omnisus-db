@@ -1,5 +1,13 @@
 # Kernel Registry & Public API Implementation Plan
 
+> Historical design/plan, reviewed on 2026-09-10. This records the original
+> proposal, not current execution instructions. The registry and inventory now
+> exist in code; Python requires >=3.12, and FTP imports return ImportReport.
+> Transaction behavior is governed by the transactional-ingestion design and
+> the public API/transaction guide. Historical checkbox state does not certify
+> what has run. Live-network tests must carry e2e as well as integration: the
+> normal CI selection does not exclude integration by itself.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every registered dataset reachable through one registry-derived Python API and CLI, with the registry as a catalog (not a gate), guarded by Tier 1 + Tier 2 tests — plus the one-line zstd fix that ships first.

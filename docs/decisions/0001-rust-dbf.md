@@ -6,6 +6,12 @@
 (`omnisus/docs/superpowers/specs/2026-05-02-omnisus-db-design.md`
 in the parent `omnisus` repository)
 
+This ADR records the May 2026 measurements and roadmap decision. Its benchmark
+numbers and proposed v0.2.0 work are historical, not current performance
+guarantees or a release commitment. The current parser still uses `dbfread2`;
+the optional Rust DBF package shown below is a proposal, not an installed
+dependency. See [Architecture](../architecture.md) for the implemented pipeline.
+
 ## Context
 
 Per spec §7.5, Phase 3 includes a profile-then-Rust gate: if DBF parse

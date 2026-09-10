@@ -32,8 +32,9 @@ _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 class Lake:
     """Handle on a DuckLake.
 
-    Use :meth:`local` for SQLite-backed dev/researcher use, :meth:`cloud`
-    for Postgres-backed multi-writer deployments.
+    Use :meth:`local` with a ``ducklake:`` target or :meth:`cloud` for a
+    Postgres-backed catalog. Managed ingestion requires one writer per lake,
+    including when the catalog is hosted in Postgres.
     """
 
     def __init__(self, *, target: CatalogURI, alias: str = "lake") -> None:
@@ -200,12 +201,20 @@ class Lake:
             self._ensured.clear()
 
     def optimize(self, table: str) -> None:
-        """Compact small files (``ducklake_compact_files``)."""
+        """Legacy compaction wrapper calling ``ducklake_compact_files``.
+
+        Maintenance compatibility with the pinned extension remains outside
+        the validated ingestion contract; see the separate maintenance work.
+        """
         self.connect()
         self._con.execute(f"CALL ducklake_compact_files('{self._alias}', '{table}')")
 
     def vacuum(self, *, older_than: str = "30 days") -> None:
-        """Remove snapshots older than the given interval."""
+        """Legacy wrapper for ``ducklake_cleanup_old_files``.
+
+        This call does not expire snapshots. Its interval argument and extension
+        compatibility require the separate maintenance repair before relying on it.
+        """
         self.connect()
         self._con.execute(
             f"CALL ducklake_cleanup_old_files('{self._alias}', "

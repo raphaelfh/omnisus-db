@@ -14,7 +14,7 @@ registry, so you get back exactly the scopes this package can import.
 ```python
 import omnisus_db as odb
 
-odb.available("sim_do")                      # every scope on the server
+odb.available("sim_do")                      # matching scopes in the cached/fresh listing
 odb.available("sim_do", years=range(2020, 2025))
 ```
 
@@ -59,7 +59,9 @@ odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=range(1996, 20
 The alternative is to plan blindly and let tolerance absorb the gaps:
 
 ```python
-odb.import_dataset("sim_do", scopes=odb.scopes_for("sim_do", years=..., ufs=...))
+odb.import_dataset(
+    "sim_do", scopes=odb.scopes_for("sim_do", years=range(2020, 2025), ufs=["RR"])
+)
 ```
 
 Both work. Inventory planning costs one directory listing and avoids opening a
@@ -79,20 +81,23 @@ anyway. Pass `--refresh` to force it for browsing too.
 
 ## Reading the report
 
-An import returns an `ImportReport`, never a bare list:
+A normally completed DATASUS-FTP import returns an `ImportReport`.
+`import_ibge_pop` instead returns `list[ImportResult]`, and `import_cnes_master`
+returns an integer count:
 
 ```python
 report = odb.import_dataset("sim_do", scopes=odb.available("sim_do"))
 
 report.rows          # rows ingested
 report.ok            # scopes imported
-report.skipped       # not published upstream — normal
-report.failed        # exist but could not be ingested — worth retrying
+report.skipped       # outside declared coverage or missing upstream
+report.failed        # download, parsing or write failures; inspect each reason
 ```
 
 Inspect `report.failed`; never the report's truthiness. `omnisus-db import`
-exits non-zero if and only if something failed, so a skipped scope does not fail
-an orchestrated run.
+exits 1 for a completed FTP report with failures or for `ImportAbortedError`.
+Skipped scopes alone do not fail the run. Invalid arguments and other exceptions
+can also produce a non-zero exit status.
 
 ## Transactions and interrupted imports
 
@@ -104,7 +109,8 @@ A completed import returns one outcome for every requested input position.
 Repeated input scopes remain repeated append operations. `ok` means committed;
 `failed` means an unsuccessful scope; `skipped` means a documented absence.
 
-If commit acknowledgement or rollback fails, the import raises
+If transaction initialization, commit acknowledgement or rollback fails, or a
+producer stops unexpectedly, the FTP runner raises
 `ImportAbortedError`. Its `report` contains determined outcomes and its
 `unresolved` contains `(input_index, scope)` pairs that need inspection or were
 not processed. Do not retry the whole import automatically: an unacknowledged
@@ -126,6 +132,11 @@ For lower-level writes, use `Lake.transaction()`. An `ImportResult` created
 inside that context has `snapshot_id=None` until commit. Direct `Lake.ingest`
 commits before returning. If snapshot metadata cannot be read after a successful
 commit, the write remains successful and its snapshot stays `None`.
+
+Managed transactions cannot be nested. The FTP runner also rejects an existing
+managed transaction before starting producers. Cancellation rolls back the active
+batch and preserves prior commits; control-flow interruptions propagate, including
+when they first occur during cleanup.
 
 Do not combine managed transactions with raw SQL `BEGIN` or `COMMIT` on
 `Lake.connect()`. After a transaction-state failure, close the handle and inspect
