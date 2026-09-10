@@ -74,3 +74,20 @@ Python 3.13.12
 uv run --locked --extra dev pytest tests/unit/lake/test_ingest_performance.py tests/unit/lake/test_transactions.py -m 'not e2e and not perf' -q
 26 passed in 1.61s
 ```
+
+## Round 2 fix
+
+Inspected the loaded DuckLake metadata, which represents the committed
+four-row fixture as `{tables_created=[main.t], inlined_insert=[1]}`. The
+existing performance test now asserts both `tables_created=[main.t]` and the
+presence of `inlined_insert=`, and verifies all persisted rows by value.
+
+Focused verification:
+
+```text
+uv run --locked --extra dev pytest tests/unit/lake/test_ingest_performance.py -m 'not e2e and not perf' -q
+11 passed in 0.94s
+
+uv run --locked --extra dev pytest tests/unit/lake/test_ingest_performance.py tests/unit/lake/test_transactions.py -m 'not e2e and not perf' -q
+26 passed in 1.52s
+```

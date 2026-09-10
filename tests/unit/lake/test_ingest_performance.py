@@ -145,10 +145,16 @@ def test_ingest_reports_a_real_snapshot_id(tmp_path: Path) -> None:
         before = lake.snapshots()
         result = lake.ingest("t", _frame())
         after = lake.snapshots()
+        rows = (
+            lake.connect().execute("SELECT ano, uf, v FROM lake.t ORDER BY ano, uf, v").fetchall()
+        )
     assert result.snapshot_id is not None
     assert result.snapshot_id >= 0
     assert len(after) == len(before) + 1
     assert result.snapshot_id == after[-1]["snapshot_id"]
+    assert "tables_created=[main.t]" in after[-1]["changes"]
+    assert "inlined_insert=" in after[-1]["changes"]
+    assert rows == [(2020, "RJ", 0), (2020, "RJ", 2), (2021, "SP", 1), (2021, "SP", 3)]
 
 
 def test_snapshots_lists_history_instead_of_raising(tmp_path: Path) -> None:
