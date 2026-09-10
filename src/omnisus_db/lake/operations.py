@@ -359,7 +359,9 @@ class Lake:
         *,
         partition_by: tuple[str, ...] = (),
     ) -> ImportResult:
-        """Sink a Polars LazyFrame into the lake (CREATE OR INSERT).
+        """Append data in a managed transaction. Direct calls commit before returning.
+        Inside Lake.transaction(), snapshot_id remains None until that context commits.
+        Raw SQL BEGIN/COMMIT is outside this managed-transaction contract.
 
         Args:
             table: destination table name (e.g. "sim_do")
@@ -369,13 +371,17 @@ class Lake:
                 made every registry row's declared ``partition_by`` a lie
                 (spec I5).
 
-        Call inside :meth:`transaction` to group scopes into one snapshot.
         """
         import tempfile
         import time
         from pathlib import Path
 
         from omnisus_db.sources._base import ImportResult
+
+        self.connect()
+        if not self.in_transaction:
+            with self.transaction():
+                return self.ingest(table, lazyframe, partition_by=partition_by)
 
         t0 = time.monotonic()
         with tempfile.TemporaryDirectory(prefix="omnisus-staging-") as tmp:
@@ -401,19 +407,14 @@ class Lake:
 
         duration = time.monotonic() - t0
 
-        # Catalog-wide, and the id is only meaningful once the surrounding
-        # transaction commits; inside a batch this names the batch's snapshot.
-        snap_row = self._con.execute(
-            f"SELECT max(snapshot_id) FROM ducklake_snapshots('{self._alias}')"
-        ).fetchone()
-        snap = None if snap_row is None or snap_row[0] is None else int(snap_row[0])
-
-        return ImportResult(
+        result = ImportResult(
             rows=int(rows),
             bytes_written=int(bytes_written),
             duration_seconds=duration,
-            snapshot_id=snap,
+            snapshot_id=None,
         )
+        self._pending_results.append(result)
+        return result
 
     def close(self) -> None:
         if self._closed:

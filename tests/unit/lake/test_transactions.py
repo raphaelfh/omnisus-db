@@ -11,6 +11,48 @@ class CleanupInterrupted(BaseException):
     pass
 
 
+def test_ingest_results_receive_the_committed_batch_snapshot(tmp_path):
+    with Lake.local(f"ducklake:{tmp_path}/snap.ducklake") as lake:
+        direct = lake.ingest("sample", pl.DataFrame({"i": [1]}).lazy())
+        assert direct.snapshot_id == lake.snapshots()[-1]["snapshot_id"]
+        with lake.transaction() as receipt:
+            first = lake.ingest("sample", pl.DataFrame({"i": [2]}).lazy())
+            second = lake.ingest("sample", pl.DataFrame({"i": [3]}).lazy())
+            assert first.snapshot_id is None
+            assert second.snapshot_id is None
+        actual = lake.snapshots()[-1]["snapshot_id"]
+        assert first.snapshot_id == second.snapshot_id == receipt.snapshot_id == actual
+        assert actual > direct.snapshot_id
+
+
+def test_rolled_back_result_never_gets_a_snapshot(tmp_path):
+    with Lake.local(f"ducklake:{tmp_path}/pending.ducklake") as lake:
+        with pytest.raises(ValueError), lake.transaction():
+            result = lake.ingest("sample", pl.DataFrame({"i": [1]}).lazy())
+            raise ValueError("reject")
+        assert result.snapshot_id is None
+        assert "sample" not in lake.tables()
+
+
+def test_snapshot_read_failure_does_not_reclassify_a_committed_write(tmp_path, monkeypatch):
+    with Lake.local(f"ducklake:{tmp_path}/metadata.ducklake") as lake:
+        read = lake._read_snapshot
+        calls = 0
+
+        def fail_second_read():
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise RuntimeError("snapshot query failed")
+            return read()
+
+        monkeypatch.setattr(lake, "_read_snapshot", fail_second_read)
+        result = lake.ingest("sample", pl.DataFrame({"i": [1]}).lazy())
+        assert result.snapshot_id is None
+        assert lake.connect().execute("SELECT * FROM lake.sample").fetchall() == [(1,)]
+        assert lake.is_usable
+
+
 def test_schema_cache_recovers_after_rollback(tmp_path):
     with Lake.local(f"ducklake:{tmp_path}/cache.ducklake") as lake:
         lake.ingest("sample", pl.DataFrame({"i": [1]}).lazy())
