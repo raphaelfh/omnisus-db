@@ -1,0 +1,103 @@
+FFF.                                                                     [100%]
+=================================== FAILURES ===================================
+_______________ test_cancelled_fetch_closes_ftp_and_joins_worker _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10779c8a0>
+
+    @pytest.mark.asyncio
+    async def test_cancelled_fetch_closes_ftp_and_joins_worker(monkeypatch):
+        import threading
+        started=threading.Event()
+        closed=threading.Event()
+        finished=threading.Event()
+        class FTP:
+            def __init__(self,*a,**kw): pass
+            def connect(self,*a,**kw): pass
+            def login(self): pass
+            def cwd(self,*a): pass
+            def close(self): closed.set()
+            def retrbinary(self,command,callback):
+                callback(b'x'*1024)
+                started.set()
+                closed.wait(2)
+                finished.set()
+        monkeypatch.setattr(fetch.ftplib,'FTP',FTP)
+        task=asyncio.create_task(fetch.fetch_dbc_bytes(dataset='sim_do',scope=ScopeKey(uf='RR',ano=2023),max_bytes=2048))
+        while not started.is_set():
+            await asyncio.sleep(.001)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        try:
+>           assert closed.is_set() and finished.is_set()
+E           assert (False)
+E            +  where False = is_set()
+E            +    where is_set = <threading.Event at 0x1079920d0: unset>.is_set
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:140: AssertionError
+______________ test_failed_download_retry_does_not_retain_buffers ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1079c8ef0>
+
+    @pytest.mark.asyncio
+    async def test_failed_download_retry_does_not_retain_buffers(monkeypatch):
+        import io
+        import weakref
+        live=weakref.WeakSet()
+        resident=[]
+        class Buffer(io.BytesIO):
+            def __init__(self):
+                super().__init__()
+                live.add(self)
+        class FTP:
+            def __init__(self,*a,**kw): pass
+            def connect(self,*a,**kw): pass
+            def login(self): pass
+            def cwd(self,*a): pass
+            def close(self): pass
+            def retrbinary(self,command,callback):
+                callback(b'x'*1024)
+                resident.append(sum(b.tell() for b in live if not b.closed))
+                raise ConnectionResetError('controlled failure')
+        monkeypatch.setattr(fetch.ftplib,'FTP',FTP)
+        monkeypatch.setattr(fetch.io,'BytesIO',Buffer)
+        with pytest.raises(fetch.FtpUnavailable):
+            await fetch.fetch_dbc_bytes(dataset='sim_do',scope=ScopeKey(uf='RR',ano=2023),max_bytes=1024,max_retries=3,backoff_seconds=0)
+>       assert resident == [1024,1024,1024]
+E       assert [1024, 2048, 2048] == [1024, 1024, 1024]
+E
+E         At index 1 diff: 2048 != 1024
+E         Use -v to get more diff
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:169: AssertionError
+___________ test_skip_depends_on_commit_that_published_source[False] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1079fcf30>
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-261/test_skip_depends_on_commit_th0')
+dbc_fixture = <function dbc_fixture.<locals>._resolve at 0x107a2c180>
+already_committed = False
+
+    @pytest.mark.parametrize('already_committed',[False,True])
+    def test_skip_depends_on_commit_that_published_source(monkeypatch,tmp_path,dbc_fixture,already_committed):
+        raw=dbc_fixture('sim_rr_2023_mini').read_bytes()
+        async def fake(*,scope,**kw): return raw if scope.ano==2023 else b'invalid'
+        monkeypatch.setattr('omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes',fake)
+        target=f'ducklake:{tmp_path}/dependency.ducklake'
+        if already_committed:
+            import_dataset('sim_do',scopes=[ScopeKey(uf='RR',ano=2023)],target=target)
+        report=import_dataset('sim_do',scopes=[ScopeKey(uf='RR',ano=2023),ScopeKey(uf='RR',ano=2023),ScopeKey(uf='RR',ano=2024)],target=target,policy='skip_same',batch_size=3,concurrency=1)
+>       assert [o.status for o in report.outcomes] == (['skipped','skipped','failed'] if already_committed else ['failed','failed','failed'])
+E       AssertionError: assert ['failed', 's...ed', 'failed'] == ['failed', 'failed', 'failed']
+E
+E         At index 1 diff: 'skipped' != 'failed'
+E         Use -v to get more diff
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:182: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2026-09-10 12:39:16 [warning  ] run_scopes.batch_failed        dataset=sim_do error='file does not contain dbc header or is empty'
+2026-09-10 12:39:16 [info     ] run_scopes.done                dataset=sim_do failed=2 ok=0 rows=0 skipped=1
+=========================== short test summary info ============================
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_cancelled_fetch_closes_ftp_and_joins_worker
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_failed_download_retry_does_not_retain_buffers
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_skip_depends_on_commit_that_published_source[False]
+3 failed, 1 passed, 5 deselected in 1.33s

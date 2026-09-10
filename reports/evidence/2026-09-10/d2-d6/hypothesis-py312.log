@@ -1,0 +1,5 @@
+Using Python 3.12.13 environment at: /tmp/omnisus-d2-d6-py312
+Resolved 2 packages in 204ms
+Installed 2 packages in 9ms
+ + hypothesis==6.168.0
+ + sortedcontainers==2.4.0

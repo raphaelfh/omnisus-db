@@ -27,9 +27,20 @@ the integer count does not identify which codes failed, and their old rows remai
 `only_missing=True` filters codes discovered from the lake when `codes=None`;
 explicit codes request those records even when already present.
 
-CNES-ST ingestion is append-only. `aux_cnes` currently uses per-field `arg_max`
-aggregation; it does not promise that every returned field comes from the same
-latest record. Temporal-view changes are a separate planned delivery.
+CNES-ST ingestion appends by default and accepts the explicit replay policies
+described in [reprocessing](../guides/reprocessing-and-maintenance.md). Replacement
+always matches UF, year and month, even though UF is not a physical partition.
+
+`aux_cnes` selects all CNES-ST attributes from the complete row at the latest
+`ano`/`mes` for each CNES code. NULLs in that row stay NULL; an older value is not
+carried forward. Identical latest rows collapse in the view; conflicting latest
+rows cause an error until the source scope is reconciled. The underlying table
+retains its history. The separately collected master name is current enrichment
+and does not establish a historical name for the selected competence.
+
+The wrapper refreshes the view after the FTP load in a separate operation.
+A conflicting tie can therefore fail view refresh after source batches committed;
+inspect the data and publication manifest before retrying.
 
 Fields and decoding metadata are in
 `src/omnisus_db/data/dicionarios/cnes_st.yaml`. See

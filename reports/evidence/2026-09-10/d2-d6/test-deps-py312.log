@@ -1,0 +1,10 @@
+Using Python 3.12.13 environment at: /tmp/omnisus-d2-d6-py312
+Resolved 16 packages in 6ms
+Installed 7 packages in 7ms
+ + iniconfig==2.3.0
+ + pluggy==1.6.0
+ + py-cpuinfo2==10.1.1
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + pytest-benchmark==5.3.0
+ + respx==0.23.1

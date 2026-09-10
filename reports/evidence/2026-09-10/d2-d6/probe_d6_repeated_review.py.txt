@@ -1,0 +1,29 @@
+import asyncio, io, threading, weakref
+from omnisus_db.sources.datasus_ftp import fetch
+from omnisus_db.sources._base import ScopeKey
+started=threading.Event(); release=threading.Event(); ended=threading.Event(); closed=threading.Event(); live=weakref.WeakSet()
+class Buffer(io.BytesIO):
+    def __init__(self): super().__init__();live.add(self)
+class FTP:
+    def __init__(self,*a,**kw): pass
+    def connect(self,*a): pass
+    def login(self): pass
+    def cwd(self,*a): pass
+    def close(self): closed.set()
+    def retrbinary(self,cmd,callback):
+        callback(b'x'*1024);started.set();release.wait(2);ended.set()
+async def main():
+    fetch.ftplib.FTP=FTP;fetch.io.BytesIO=Buffer
+    task=asyncio.create_task(fetch.fetch_dbc_bytes(dataset='sim_do',scope=ScopeKey(uf='RR',ano=2023),max_bytes=1024))
+    while not started.is_set(): await asyncio.sleep(.001)
+    for _ in range(3):
+        task.cancel();await asyncio.sleep(.01)
+        assert not task.done(), 'orphaned worker on repeated cancel'
+    assert not ended.is_set()
+    assert sum(b.tell() for b in live if not b.closed)==1024
+    release.set()
+    try: await task
+    except asyncio.CancelledError: pass
+    assert ended.is_set() and closed.is_set() and all(b.closed for b in live)
+    print('three_cancellations_joined_worker=True closed_all_buffers=True loop_ticks_progressed=True')
+asyncio.run(main())

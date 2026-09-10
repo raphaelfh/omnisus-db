@@ -21,21 +21,36 @@ repository; these working documents are not published to this site.
 ```text
 bounded concurrent FTP fetches -> one parse/write consumer
   -> datasus_dbc.decompress_bytes -> complete DBF bytes
-  -> dbfread2 records -> Polars batches -> concatenated DataFrame
-  -> LazyFrame -> temporary zstd Parquet
-  -> managed transaction: create/widen table + INSERT BY NAME -> COMMIT
+  -> dbfread2 records -> bounded Arrow batches -> temporary IPC spool
+  -> reconcile batch schemas -> temporary Parquet (Snappy)
+  -> managed transaction: schema + scope policy + data + manifest -> COMMIT
 ```
 
 The parser checks DBF payload length and parsed record counts against the DBF
-header. It builds frames in batches of 100,000 records, but retains all frames
-for a scope before concatenating them. This is not a constant-memory pipeline:
-DBC and DBF payloads and parsed scope data must fit in memory. Fetch concurrency
-and the bounded queue limit how many fetched payloads await the consumer.
+header before publishing staging. Batches contain at most 100,000 records and
+are spooled to disk; the runner does not concatenate every batch into a scope
+DataFrame. A second pass writes the reconciled schema to Parquet. The legacy
+LazyFrame parser remains available but materializes its result for compatibility.
+This is not a constant-memory pipeline: decompression still creates the complete
+DBF. Compressed downloads reserve a configurable byte allowance before receipt
+and retain it through queueing and consumption. Cancellation shuts down FTP
+sockets and waits for the worker before releasing its reservation. A DNS/connect
+stage without an available socket can still require its timeout to finish.
 
-New columns widen the lake table; columns absent from an incoming scope become
-NULL through `INSERT BY NAME`. `Lake.ingest` appends rows, so importing an already
-committed scope again can duplicate data. It does not replace a partition or
-provide deduplication.
+New columns widen the lake table; absent columns become NULL through
+`INSERT BY NAME`. Existing types must match or allow a lossless widening within
+the same signed-integer, unsigned-integer or floating-point family. Incompatible
+families and decimal changes fail before insertion. The staging parser also
+rejects incompatible values before Arrow inference can erase information.
+Previously coerced values require an explicit source rebuild to recover.
+
+`Lake.ingest` remains append. FTP imports use `Lake.publish_scope`, with `append`
+as the default and explicit `skip_same`, `error_if_exists` and `replace` policies.
+Scope, source hash, parser/dictionary version, run and batch IDs commit with the
+data in `_omnisus_publications`. Replacement validates a nonempty complete scope
+and its schema before deleting exactly its UF/year/month, regardless of physical
+partitioning. Legacy rows without a trustworthy manifest require inventory or
+rebuild before managed replay. See [reprocessing](guides/reprocessing-and-maintenance.md).
 
 ## Transaction boundaries and recovery
 
@@ -61,19 +76,50 @@ A transaction state failure stops the runner with `ImportAbortedError`.
 catalog before retrying unresolved writes: a raised COMMIT does not prove that
 nothing was committed.
 
-Use one writer per lake for this managed ingestion workflow. Managed transactions
+Supply a `run_id` before an import and reopen the lake to query
+`Lake.publications(run_id=...)` after an unknown commit. A skip that depends on
+an uncommitted publication shares its commit outcome. Determined failures from
+completed runs are recorded separately after rollback and can be read with
+`Lake.attempts`; they do not claim a failed transaction wrote data.
+
+Local handles acquire a cooperative process lock on the canonical catalog path
+before opening DuckDB. A second handle fails immediately; close releases the
+lock, including after construction errors. The lock covers maintenance too, but
+external SQL clients and noncooperating writers do not participate. The lock file
+is retained to avoid splitting ownership across different inodes. Network
+filesystems and cloud writers need external exclusivity.
+
+Managed transactions
 cannot nest, and the FTP runner rejects an already active transaction. Raw SQL
 `BEGIN`/`COMMIT` through `Lake.connect()` is outside this contract. SQLite and
 Postgres catalog targets are accepted; the presence of a Postgres target does
 not establish concurrent-writer recovery guarantees for these importers.
 
-IBGE population commits each year through `Lake.ingest` and returns a list of
-`ImportResult`; it does not use the FTP report/recovery loop. CNES master data is
+IBGE population validates an explicit product and edition against its metadata,
+periods and territorial universe. Canonical data and provenance commit together,
+and each returned `ImportResult` carries the publication ID. It does not use the
+FTP report/recovery loop. Historical estimates without edition-specific universes
+are rejected. See the [IBGE source contract](sources/ibge_pop.md).
+
+CNES master data is
 fetched and validated before its table upsert and `aux_cnes` refresh commit in
 one transaction, and the importer returns a row count. The CNES-ST wrapper
 refreshes its view after the FTP import, in a separate operation. Auxiliary
 bootstrap tables are replaced individually unless the caller supplies an outer
 managed transaction.
+
+`aux_cnes` selects a whole row from the latest CNES-ST competence, preserves its
+NULLs and rejects conflicting ties. Identical ties collapse in the view. The
+master's current name is enrichment collected separately, not a historical name.
+
+## Maintenance
+
+`Lake.optimize` calls DuckLake's adjacent-file merge. Snapshot expiration and
+physical old-file cleanup are separate operations with timezone-aware cutoffs
+and simulation by default. The deprecated `vacuum` method retains cleanup
+semantics and does not expire snapshots. PostgreSQL target parsing extracts only
+`storage` and forwards other connection parameters unchanged; SQL identifiers
+and literals are quoted centrally.
 
 ## Runtime and layout
 

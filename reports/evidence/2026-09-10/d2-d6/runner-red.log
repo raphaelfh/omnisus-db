@@ -1,0 +1,80 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_________________ test_download_size_is_checked_during_receipt _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c1bc8a0>
+
+    def test_download_size_is_checked_during_receipt(monkeypatch):
+        class FTP:
+            def __init__(self,*a,**kw): pass
+            def login(self): pass
+            def cwd(self,*a): pass
+            def close(self): pass
+            def retrbinary(self,command,callback):
+                callback(b'1234')
+                callback(b'5678')
+        monkeypatch.setattr(fetch.ftplib,'FTP',FTP)
+        with pytest.raises(ValueError,match='limit|bytes'):
+>           asyncio.run(fetch.fetch_dbc_bytes(dataset='sim_do',scope=ScopeKey(uf='RR',ano=2023),max_bytes=5))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_dbc_bytes() got an unexpected keyword argument 'max_bytes'
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:22: TypeError
+____________ test_payload_limit_reports_failed_without_publication _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3d0180>
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-245/test_payload_limit_reports_fai0')
+dbc_fixture = <function dbc_fixture.<locals>._resolve at 0x10d3cf420>
+
+    def test_payload_limit_reports_failed_without_publication(monkeypatch,tmp_path,dbc_fixture):
+        raw=dbc_fixture('sim_rr_2023_mini').read_bytes()
+        async def fake(**kw): return raw
+        monkeypatch.setattr('omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes',fake)
+        target=f'ducklake:{tmp_path}/limit.ducklake'
+>       report=import_dataset('sim_do',scopes=[ScopeKey(uf='RR',ano=2023)],target=target,max_payload_bytes=1,max_inflight_bytes=2)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: import_dataset() got an unexpected keyword argument 'max_payload_bytes'
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:30: TypeError
+_____________________ test_managed_runner_skip_and_replace _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d31ae70>
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-245/test_managed_runner_skip_and_r0')
+dbc_fixture = <function dbc_fixture.<locals>._resolve at 0x10d3ce7a0>
+
+    def test_managed_runner_skip_and_replace(monkeypatch,tmp_path,dbc_fixture):
+        raw=dbc_fixture('sim_rr_2023_mini').read_bytes()
+        async def fake(**kw): return raw
+        monkeypatch.setattr('omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes',fake)
+        target=f'ducklake:{tmp_path}/replay.ducklake'
+        kw=dict(scopes=[ScopeKey(uf='RR',ano=2023)],target=target)
+        first=import_dataset('sim_do',**kw)
+>       second=import_dataset('sim_do',policy='skip_same',**kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: import_dataset() got an unexpected keyword argument 'policy'
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:43: TypeError
+----------------------------- Captured stdout call -----------------------------
+2026-09-10 12:26:42 [info     ] datasus_ftp.parsed             batches=1 dataset=sim_do rows=3311
+2026-09-10 12:26:42 [info     ] run_scopes.done                dataset=sim_do failed=0 ok=1 rows=3311 skipped=0
+________________ test_one_reserved_payload_slot_makes_progress _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d36e9c0>
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-245/test_one_reserved_payload_slot0')
+dbc_fixture = <function dbc_fixture.<locals>._resolve at 0x10d3cfc40>
+
+    def test_one_reserved_payload_slot_makes_progress(monkeypatch,tmp_path,dbc_fixture):
+        raw=dbc_fixture('sim_rr_2023_mini').read_bytes()
+        async def fake(**kw): return raw
+        monkeypatch.setattr('omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes',fake)
+>       report=import_dataset('sim_do',scopes=[ScopeKey(uf='RR',ano=y) for y in (2021,2022,2023)],target=f'ducklake:{tmp_path}/one.ducklake',concurrency=3,max_payload_bytes=len(raw),max_inflight_bytes=len(raw),batch_size=2)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: import_dataset() got an unexpected keyword argument 'max_payload_bytes'
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:55: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_download_size_is_checked_during_receipt
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_payload_limit_reports_failed_without_publication
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_managed_runner_skip_and_replace
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_one_reserved_payload_slot_makes_progress
+4 failed in 0.46s

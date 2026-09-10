@@ -1,0 +1,24 @@
+{
+  "verified_at_utc": "2026-09-10T16:15:22.128904+00:00",
+  "target_branch": "main",
+  "previous_main": "68d0601",
+  "feature_head": "88968bc",
+  "merge_conflicts": false,
+  "production_source_matches_reviewed_tree": true,
+  "python": "3.13.12",
+  "pytest": {
+    "passed": 520,
+    "deselected": 47,
+    "coverage_percent": 92.12,
+    "selection": "not e2e and not perf"
+  },
+  "checks": {
+    "ruff": "PASS",
+    "ruff_format": "PASS",
+    "mypy": "PASS",
+    "generated_catalog": "PASS",
+    "mkdocs_strict": "PASS",
+    "diff_check": "PASS"
+  },
+  "remote_push": false
+}

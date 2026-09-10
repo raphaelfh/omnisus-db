@@ -1,0 +1,35 @@
+[
+  {
+    "product": "census",
+    "year": 2010,
+    "rows": 5565,
+    "population_sum": 190755799,
+    "url": "https://servicodados.ibge.gov.br/api/v3/agregados/202/periodos/2010/variaveis/93?localidades=N6&classificacao=2%5B0%5D%7C1%5B0%5D",
+    "sha256": "72ea86afa90a2ea1c5ae730162765d99e308bbe36318b90af5edd05d3a676a39",
+    "revision": "01/02/2019",
+    "collected_at": "2026-09-10T15:25:17.763667+00:00",
+    "universe_url": "https://servicodados.ibge.gov.br/api/v3/agregados/202/localidades/N6"
+  },
+  {
+    "product": "census",
+    "year": 2022,
+    "rows": 5570,
+    "population_sum": 203080756,
+    "url": "https://servicodados.ibge.gov.br/api/v3/agregados/4714/periodos/2022/variaveis/93?localidades=N6",
+    "sha256": "a655584dff46e1c72651a6f752d4315a93817c2a611d12e4f9dd72c8a6e7dcde",
+    "revision": "07/05/2026",
+    "collected_at": "2026-09-10T15:25:18.081513+00:00",
+    "universe_url": "https://servicodados.ibge.gov.br/api/v3/agregados/4714/localidades/N6"
+  },
+  {
+    "product": "estimate",
+    "year": 2026,
+    "rows": 5571,
+    "population_sum": 214211951,
+    "url": "https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2026/variaveis/9324?localidades=N6",
+    "sha256": "36b8bd4c9ec1c74f0b1e76cbb108fec91571c351b9423e508bf0f4350e6d27b0",
+    "revision": "28/08/2026",
+    "collected_at": "2026-09-10T15:25:18.935666+00:00",
+    "universe_url": "https://servicodados.ibge.gov.br/api/v3/agregados/6579/localidades/N6"
+  }
+]

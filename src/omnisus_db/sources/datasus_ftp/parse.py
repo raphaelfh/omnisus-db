@@ -1,9 +1,8 @@
 """DBC bytes → Polars LazyFrame pipeline.
 
-Pipeline (in-memory, no disk writes for DBC; small temp DBF for dbfread2):
-    DBC bytes -> datasus_dbc.decompress_bytes() -> DBF bytes
-    DBF bytes -> dbfread2.DBF (streaming) -> batches of records
-    batches -> polars.DataFrame -> concat -> LazyFrame
+The compatibility LazyFrame materializes validated Parquet before its temporary
+file is removed. Bulk ingestion uses staging.dbc_bytes_to_parquet directly.
+DBC decompression still materializes the entire DBF payload.
 """
 
 from __future__ import annotations
@@ -14,12 +13,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-import datasus_dbc
+import datasus_dbc as datasus_dbc  # Retain the public decompression monkeypatch seam.
 import polars as pl
 import structlog
 from dbfread2 import DBF
-
-from omnisus_db.transforms.dictionaries import load_dicionario
 
 logger = structlog.get_logger(__name__)
 
@@ -151,45 +148,13 @@ def dbc_bytes_to_lazyframe(
             record count diverges from the header's declared count.
         Exception: bubbles from datasus_dbc / dbfread2 on bad input.
     """
-    dic = load_dicionario(dictionary if dictionary is not None else dataset)
-    dbf_bytes = datasus_dbc.decompress_bytes(dbc_bytes)
-    _check_dbf_length(dbf_bytes, dataset=dataset)
+    from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 
-    parsed = 0
-    batches: list[pl.DataFrame] = []
-    buffer: list[dict[str, Any]] = []
-    for rec in _stream_records(dbf_bytes, encoding=dic.encoding):
-        parsed += 1
-        buffer.append(rec)
-        if len(buffer) >= BATCH_ROWS:
-            batches.append(pl.DataFrame(buffer, infer_schema_length=None))
-            buffer.clear()
-    if buffer:
-        batches.append(pl.DataFrame(buffer, infer_schema_length=None))
-
-    _check_record_count(dbf_bytes, parsed, dataset=dataset)
-
-    if not batches:
-        # Empty DBF — return an empty LazyFrame using the dictionary schema names
-        df = pl.DataFrame(
-            {f["name"]: [] for f in dic.fields},
-            schema={f["name"]: pl.Utf8 for f in dic.fields},
+    # Materialize before cleanup so the compatibility LazyFrame owns its data.
+    # Bulk ingestion uses dbc_bytes_to_parquet directly instead.
+    with tempfile.TemporaryDirectory(prefix="dbc-lazyframe-") as directory:
+        path = Path(directory) / "data.parquet"
+        dbc_bytes_to_parquet(
+            dbc_bytes, path, dataset=dataset, ano=ano, uf=uf, dictionary=dictionary
         )
-    else:
-        df = pl.concat(batches, how="diagonal_relaxed")
-
-    # Lowercase column names (DATASUS uses uppercase; canonical is lowercase)
-    df = df.rename({c: c.lower() for c in df.columns})
-
-    if ano is not None:
-        df = df.with_columns(pl.lit(ano).cast(pl.UInt16).alias("ano"))
-    if uf is not None:
-        df = df.with_columns(pl.lit(uf).cast(pl.Utf8).alias("uf"))
-
-    logger.info(
-        "datasus_ftp.parsed",
-        dataset=dataset,
-        rows=df.height,
-        batches=len(batches),
-    )
-    return df.lazy()
+        return pl.read_parquet(path).lazy()

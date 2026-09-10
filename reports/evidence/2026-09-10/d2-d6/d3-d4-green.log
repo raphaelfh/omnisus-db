@@ -1,0 +1,9 @@
+.................................................                        [100%]
+=============================== warnings summary ===============================
+tests/unit/lake/test_transactions.py::test_commit_failure_invalidates_handle[before]
+tests/unit/lake/test_transactions.py::test_commit_failure_invalidates_handle[after]
+  /Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/d2-d6/tests/unit/lake/test_transactions.py:93: DeprecationWarning: vacuum is deprecated; use cleanup_files with an explicit cutoff
+    operation()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+49 passed, 2 warnings in 4.51s

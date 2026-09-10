@@ -515,8 +515,9 @@ def _(mo):
 
     **CNES: nomes de até três estabelecimentos já importados.**
     `import_cnes_st` atualiza `aux_cnes`; `import_dataset("cnes_st", ...)` exige
-    `lake.ensure_aux_cnes_view()` depois. A visão usa `arg_max` por campo e não
-    garante que todos os campos representem a mesma competência.
+    `lake.ensure_aux_cnes_view()` depois. A visão seleciona a linha completa da
+    última competência, preserva seus NULLs e rejeita empates conflitantes.
+    O nome do master é enriquecimento atual, sem garantia histórica.
 
     ```python
     with odb.Lake.local(live_target) as lake:
@@ -530,24 +531,26 @@ def _(mo):
     # written é int. Falhas HTTP individuais podem ser omitidas: confira os códigos.
     ```
 
-    **IBGE: diagnóstico, com limitação conhecida de origem.** O importador atual
-    usa agregado 793/variável 93; a adequação da série ao ano pedido está pendente
-    da entrega D2. Não trate a saída como denominador validado de uma taxa.
+    **IBGE: produto e edição explícitos.** O censo municipal de 2022 usa
+    agregado 4714/variável 93, com validação de metadados, cobertura e proveniência.
+    Estimativas históricas sem universo territorial da edição são recusadas.
+    Confira a referência populacional e territorial antes de calcular uma taxa.
     O retorno é `list[ImportResult]`, diferente do relatório FTP.
 
     ```python
     ibge_results = await asyncio.to_thread(
-        odb.import_ibge_pop, years=[2022], target=live_target
+        odb.import_ibge_pop, years=[2022], product="census", target=live_target
     )
     for result in ibge_results:
-        print(result.rows, result.snapshot_id)
+        print(result.rows, result.snapshot_id, result.publication_id)
     ```
 
     **Outros ambientes:** `Lake.cloud(catalog=..., storage=...)` recebe catálogo
     PostgreSQL e armazenamento remoto. Credenciais são configuradas no ambiente.
-    Continua valendo um escritor; parâmetros extras da query PostgreSQL são
-    descartados pelo parser atual. Cloud, `optimize` e `vacuum` não estão
-    certificados por esta demonstração local.
+    O parser preserva os parâmetros PostgreSQL além de extrair `storage`.
+    Catálogos locais usam lock cooperativo; cloud exige coordenação externa.
+    Esta demonstração não valida cloud. Compactação, expiração de snapshots e
+    limpeza física têm operações próprias, descritas no guia de manutenção.
 
     Referências: `docs/api.md`, `docs/guides/inventory.md`,
     `docs/sources/cnes_st.md`, `docs/sources/ibge_pop.md`.

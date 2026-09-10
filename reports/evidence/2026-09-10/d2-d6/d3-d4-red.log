@@ -1,0 +1,398 @@
+FFFFFFFFFFFFFFF                                                          [100%]
+=================================== FAILURES ===================================
+_____________________ test_catalog_preserves_escaped_query _____________________
+
+    def test_catalog_preserves_escaped_query():
+        parsed = parse_target('ducklake:postgresql://u:p%26q@h/db?sslmode=require&options=-c%20x%3Dy&storage=s3%3A%2F%2Fb%2Fa%3Fx%3D1')
+>       assert parsed.catalog_uri == 'postgresql://u:p%26q@h/db?sslmode=require&options=-c%20x%3Dy'
+E       AssertionError: assert 'postgresql://u:p%26q@h/db' == 'postgresql:/...ns=-c%20x%3Dy'
+E
+E         - postgresql://u:p%26q@h/db?sslmode=require&options=-c%20x%3Dy
+E         + postgresql://u:p%26q@h/db
+
+tests/unit/lake/test_maintenance.py:14: AssertionError
+________________ test_cloud_keeps_catalog_and_storage_separate _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1086c7bb0>
+
+    def test_cloud_keeps_catalog_and_storage_separate(monkeypatch):
+        from omnisus_db.lake.catalog import CatalogURI
+        monkeypatch.setattr(Lake, '__init__', lambda self, *, target: setattr(self, 'target', target))
+>       lake = Lake.cloud(catalog='postgresql://h/db?sslmode=require', storage='s3://b/a?x=1&y=2')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/lake/test_maintenance.py:21:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src/omnisus_db/lake/operations.py:70: in cloud
+    return cls(target=parse_target(target_str))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+target = 'ducklake:postgresql://h/db?sslmode=require?storage=s3://b/a?x=1&y=2'
+
+    def parse_target(target: str) -> CatalogURI:
+        """Parse an ``omnisus-db`` target string.
+
+        Forms accepted:
+            ``ducklake:./omnisus.ducklake``
+                -> sqlite catalog at ``./omnisus-catalog.sqlite``
+                -> storage at ``./omnisus.ducklake/``
+            ``ducklake:postgresql://user:pwd@host/db?storage=s3://bucket/lake``
+                -> postgres catalog
+                -> storage at ``s3://bucket/lake``
+        """
+        if not target.startswith("ducklake:"):
+            raise ValueError(f"target must start with 'ducklake:' (got: {target!r})")
+        body = target[len("ducklake:") :]
+
+        if body.startswith(("postgresql://", "postgres://")):
+            split = urlsplit(body)
+            params = parse_qs(split.query)
+            storage = params.get("storage", [None])[0]
+            if not storage:
+>               raise ValueError("postgres target requires ?storage=<path or s3 uri>")
+E               ValueError: postgres target requires ?storage=<path or s3 uri>
+
+src/omnisus_db/lake/catalog.py:38: ValueError
+_________________ test_quoted_paths_and_identifiers_roundtrip __________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_quoted_paths_and_identifi0')
+
+    def test_quoted_paths_and_identifiers_roundtrip(tmp_path):
+>       with Lake.local(f"ducklake:{tmp_path}/D'Avila/lake.ducklake") as lake:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/lake/test_maintenance.py:26:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src/omnisus_db/lake/operations.py:62: in local
+    return cls(target=parse_target(target))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/omnisus_db/lake/operations.py:53: in __init__
+    self._con = make_connection(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+catalog_uri = "sqlite:/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_quoted_paths_and_identifi0/D'Avila/lake-catalog.sqlite"
+storage_root = "/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_quoted_paths_and_identifi0/D'Avila/lake.ducklake"
+alias = 'lake'
+
+    def make_connection(
+        *,
+        catalog_uri: str,
+        storage_root: str,
+        alias: str = "lake",
+    ) -> duckdb.DuckDBPyConnection:
+        """Open a DuckDB connection with ducklake attached.
+
+        Args:
+            catalog_uri: ``sqlite:/path/to/catalog.sqlite`` or ``postgresql://...``.
+            storage_root: filesystem path or s3:// URI for Parquet storage.
+            alias: schema alias for the attached ducklake (default ``lake``).
+
+        Returns:
+            Connected ``DuckDBPyConnection`` with ducklake loaded and attached.
+        """
+        scheme = catalog_uri.split(":", 1)[0].lower()
+        if scheme not in SUPPORTED_CATALOG_SCHEMES:
+            raise ValueError(f"unsupported catalog scheme: {scheme!r}")
+
+        if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
+            Path(storage_root).mkdir(parents=True, exist_ok=True)
+
+        con = duckdb.connect(":memory:")
+        con.execute("INSTALL ducklake; LOAD ducklake;")
+>       con.execute(f"ATTACH 'ducklake:{catalog_uri}' AS {alias} (DATA_PATH '{storage_root}')")
+E       _duckdb.ParserException: Parser Error: syntax error at or near "Avila"
+E
+E       LINE 1: ...-of-raphael/pytest-232/test_quoted_paths_and_identifi0/D'Avila/lake-catalog.sqlite' AS lake (DATA_PATH '/private...
+E                                                                           ^
+
+src/omnisus_db/lake/connection.py:38: ParserException
+____________ test_compaction_and_dry_runs_preserve_rows_and_history ____________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_compaction_and_dry_runs_p0')
+
+    def test_compaction_and_dry_runs_preserve_rows_and_history(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/m.ducklake') as lake:
+            for offset in (0, 5000):
+                lake.ingest('t', pl.DataFrame({'x': range(offset, offset+5000)}).lazy())
+            before = lake.snapshots()
+            old_snapshot = before[-1]['snapshot_id']
+>           rows = lake.optimize('t')
+                   ^^^^^^^^^^^^^^^^^^
+
+tests/unit/lake/test_maintenance.py:38:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <omnisus_db.lake.operations.Lake object at 0x109278910>, table = 't'
+
+    def optimize(self, table: str) -> None:
+        """Legacy compaction wrapper calling ``ducklake_compact_files``.
+
+        Maintenance compatibility with the pinned extension remains outside
+        the validated ingestion contract; see the separate maintenance work.
+        """
+        self.connect()
+>       self._con.execute(f"CALL ducklake_compact_files('{self._alias}', '{table}')")
+E       _duckdb.CatalogException: Catalog Error: Table Function with name ducklake_compact_files does not exist!
+E       Did you mean "ducklake_options"?
+
+src/omnisus_db/lake/operations.py:210: CatalogException
+__________________________ test_naive_cutoff_rejected __________________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_naive_cutoff_rejected0')
+
+    def test_naive_cutoff_rejected(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/m.ducklake') as lake:
+            with pytest.raises(ValueError, match='timezone'):
+>               lake.cleanup_files(older_than=datetime(2020,1,1))
+                ^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'Lake' object has no attribute 'cleanup_files'
+
+tests/unit/lake/test_maintenance.py:54: AttributeError
+_____________________ test_optimize_failure_cli_is_nonzero _____________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_optimize_failure_cli_is_n0')
+
+    def test_optimize_failure_cli_is_nonzero(tmp_path):
+        result = CliRunner().invoke(app, ['lake','optimize','missing','--target',f'ducklake:{tmp_path}/m.ducklake'])
+>       assert result.exit_code != 0
+E       assert 0 != 0
+E        +  where 0 = <Result okay>.exit_code
+
+tests/unit/lake/test_maintenance.py:59: AssertionError
+_____________________ test_vacuum_legacy_cleanup_signature _____________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_vacuum_legacy_cleanup_sig0')
+
+    def test_vacuum_legacy_cleanup_signature(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/m.ducklake') as lake:
+            with pytest.warns(DeprecationWarning):
+>               assert isinstance(lake.vacuum(older_than='30 days'), list)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/lake/test_maintenance.py:65:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <omnisus_db.lake.operations.Lake object at 0x10922cd60>
+older_than = '30 days'
+
+    def vacuum(self, *, older_than: str = "30 days") -> None:
+        """Legacy wrapper for ``ducklake_cleanup_old_files``.
+
+        This call does not expire snapshots. Its interval argument and extension
+        compatibility require the separate maintenance repair before relying on it.
+        """
+        self.connect()
+>       self._con.execute(
+            f"CALL ducklake_cleanup_old_files('{self._alias}', "
+            f"older_than => INTERVAL '{older_than}')"
+        )
+E       _duckdb.InvalidInputException: Invalid Input Error: Failed to cast value: Unimplemented type for cast (INTERVAL -> TIMESTAMP WITH TIME ZONE)
+
+src/omnisus_db/lake/operations.py:219: InvalidInputException
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_vacuum_legacy_cleanup_sig0')
+
+    def test_vacuum_legacy_cleanup_signature(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/m.ducklake') as lake:
+>           with pytest.warns(DeprecationWarning):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT WARN. No warnings of type (<class 'DeprecationWarning'>,) were emitted.
+E            Emitted warnings: [].
+
+tests/unit/lake/test_maintenance.py:64: Failed
+__________ test_incompatible_family_rejected_without_mutation[1-1.5] ___________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_incompatible_family_rejec0')
+first = 1, second = 1.5
+
+    @pytest.mark.parametrize('first,second', [(1, 1.5), (1.5, 1), (2**53+1, 1.5), ('001', 1)])
+    def test_incompatible_family_rejected_without_mutation(tmp_path, first, second):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':[first]}).lazy())
+            before=lake.snapshots()
+>           with pytest.raises(ValueError, match='type|schema'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/unit/lake/test_schema_safety.py:14: Failed
+__________ test_incompatible_family_rejected_without_mutation[1.5-1] ___________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_incompatible_family_rejec1')
+first = 1.5, second = 1
+
+    @pytest.mark.parametrize('first,second', [(1, 1.5), (1.5, 1), (2**53+1, 1.5), ('001', 1)])
+    def test_incompatible_family_rejected_without_mutation(tmp_path, first, second):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':[first]}).lazy())
+            before=lake.snapshots()
+>           with pytest.raises(ValueError, match='type|schema'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/unit/lake/test_schema_safety.py:14: Failed
+___ test_incompatible_family_rejected_without_mutation[9007199254740993-1.5] ___
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_incompatible_family_rejec2')
+first = 9007199254740993, second = 1.5
+
+    @pytest.mark.parametrize('first,second', [(1, 1.5), (1.5, 1), (2**53+1, 1.5), ('001', 1)])
+    def test_incompatible_family_rejected_without_mutation(tmp_path, first, second):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':[first]}).lazy())
+            before=lake.snapshots()
+>           with pytest.raises(ValueError, match='type|schema'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/unit/lake/test_schema_safety.py:14: Failed
+__________ test_incompatible_family_rejected_without_mutation[001-1] ___________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_incompatible_family_rejec3')
+first = '001', second = 1
+
+    @pytest.mark.parametrize('first,second', [(1, 1.5), (1.5, 1), (2**53+1, 1.5), ('001', 1)])
+    def test_incompatible_family_rejected_without_mutation(tmp_path, first, second):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':[first]}).lazy())
+            before=lake.snapshots()
+>           with pytest.raises(ValueError, match='type|schema'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/unit/lake/test_schema_safety.py:14: Failed
+___________________ test_integer_promotion_preserves_values ____________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_integer_promotion_preserv0')
+
+    def test_integer_promotion_preserves_values(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':pl.Series([12],dtype=pl.Int32)}).lazy())
+>           lake.ingest('t', pl.DataFrame({'v':pl.Series([2**53+1],dtype=pl.Int64)}).lazy())
+
+tests/unit/lake/test_schema_safety.py:23:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src/omnisus_db/lake/operations.py:399: in ingest
+    return self.ingest(table, lazyframe, partition_by=partition_by)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <omnisus_db.lake.operations.Lake object at 0x10922e8b0>, table = 't'
+lazyframe = <LazyFrame at 0x10924D7D0>, partition_by = ()
+
+    def ingest(
+        self,
+        table: str,
+        lazyframe: pl.LazyFrame,
+        *,
+        partition_by: tuple[str, ...] = (),
+    ) -> ImportResult:
+        """Append data in a managed transaction. Direct calls commit before returning.
+        Inside Lake.transaction(), snapshot_id remains None until that context commits.
+        Raw SQL BEGIN/COMMIT is outside this managed-transaction contract.
+
+        Args:
+            table: destination table name (e.g. "sim_do")
+            lazyframe: pl.LazyFrame to materialize and insert
+            partition_by: columns to partition the table by, applied once when
+                the table is created. Previously accepted and discarded, which
+                made every registry row's declared ``partition_by`` a lie
+                (spec I5).
+
+        """
+        import tempfile
+        import time
+        from pathlib import Path
+
+        from omnisus_db.sources._base import ImportResult
+
+        self.connect()
+        if not self.in_transaction:
+            with self.transaction():
+                return self.ingest(table, lazyframe, partition_by=partition_by)
+
+        t0 = time.monotonic()
+        with tempfile.TemporaryDirectory(prefix="omnisus-staging-") as tmp:
+            staging = Path(tmp) / f"{table}.parquet"
+            lazyframe.sink_parquet(
+                staging,
+                row_group_size=1_000_000,
+                compression="zstd",
+            )
+            bytes_written = staging.stat().st_size
+
+            self._ensure_table(table, str(staging), partition_by)
+            # BY NAME, not positional: eras differ in both column count and
+            # order, and a column this era lacks must land as NULL rather than
+            # shifting every value one place to the left.
+            # INSERT reports its own row count, so the separate
+            # SELECT count(*) over the same staging file is pure waste.
+>           inserted = self._con.execute(
+                f"INSERT INTO {self._alias}.{table} BY NAME "
+                f"SELECT * FROM read_parquet('{staging}')"
+            ).fetchone()
+E           _duckdb.ConversionException: Conversion Error: Type INT64 with value 9007199254740993 can't be cast because the value is out of range for the destination type INT32 when casting from source column v
+
+src/omnisus_db/lake/operations.py:417: ConversionException
+______________________ test_decimal_scale_change_rejected ______________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_decimal_scale_change_reje0')
+
+    def test_decimal_scale_change_rejected(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            lake.ingest('t', pl.DataFrame({'v':pl.Series([Decimal('1.2')],dtype=pl.Decimal(10,1))}).lazy())
+>           with pytest.raises(ValueError, match='type|schema'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/unit/lake/test_schema_safety.py:30: Failed
+_____________________ test_cnes_latest_row_preserves_null ______________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_cnes_latest_row_preserves0')
+
+    def test_cnes_latest_row_preserves_null(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            con=lake.connect()
+            con.execute('CREATE TABLE lake.cnes_st(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)')
+            con.execute("INSERT INTO lake.cnes_st VALUES ('1234567','05','355030',2024,1),('1234567',NULL,'330455',2024,2)")
+            lake.ensure_aux_cnes_view()
+>           assert con.execute('SELECT tp_unid,codufmun,yyyymm_max FROM lake.aux_cnes').fetchall() == [(None, '330455', 202402)]
+E           AssertionError: assert [('05', '330455', 202402)] == [(None, '330455', 202402)]
+E
+E             At index 0 diff: ('05', '330455', 202402) != (None, '330455', 202402)
+E             Use -v to get more diff
+
+tests/unit/lake/test_schema_safety.py:41: AssertionError
+__________________ test_cnes_conflicting_latest_rows_rejected __________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-232/test_cnes_conflicting_latest_r0')
+
+    def test_cnes_conflicting_latest_rows_rejected(tmp_path):
+        with Lake.local(f'ducklake:{tmp_path}/s.ducklake') as lake:
+            con=lake.connect()
+            con.execute('CREATE TABLE lake.cnes_st(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)')
+            con.execute("INSERT INTO lake.cnes_st VALUES ('1234567','05','355030',2024,1),('1234567','07','355030',2024,1)")
+>           with pytest.raises(Exception, match='conflict|ambig'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/lake/test_schema_safety.py:49: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/lake/test_maintenance.py::test_catalog_preserves_escaped_query
+FAILED tests/unit/lake/test_maintenance.py::test_cloud_keeps_catalog_and_storage_separate
+FAILED tests/unit/lake/test_maintenance.py::test_quoted_paths_and_identifiers_roundtrip
+FAILED tests/unit/lake/test_maintenance.py::test_compaction_and_dry_runs_preserve_rows_and_history
+FAILED tests/unit/lake/test_maintenance.py::test_naive_cutoff_rejected - Attr...
+FAILED tests/unit/lake/test_maintenance.py::test_optimize_failure_cli_is_nonzero
+FAILED tests/unit/lake/test_maintenance.py::test_vacuum_legacy_cleanup_signature
+FAILED tests/unit/lake/test_schema_safety.py::test_incompatible_family_rejected_without_mutation[1-1.5]
+FAILED tests/unit/lake/test_schema_safety.py::test_incompatible_family_rejected_without_mutation[1.5-1]
+FAILED tests/unit/lake/test_schema_safety.py::test_incompatible_family_rejected_without_mutation[9007199254740993-1.5]
+FAILED tests/unit/lake/test_schema_safety.py::test_incompatible_family_rejected_without_mutation[001-1]
+FAILED tests/unit/lake/test_schema_safety.py::test_integer_promotion_preserves_values
+FAILED tests/unit/lake/test_schema_safety.py::test_decimal_scale_change_rejected
+FAILED tests/unit/lake/test_schema_safety.py::test_cnes_latest_row_preserves_null
+FAILED tests/unit/lake/test_schema_safety.py::test_cnes_conflicting_latest_rows_rejected
+15 failed in 1.71s

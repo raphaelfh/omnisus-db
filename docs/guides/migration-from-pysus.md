@@ -32,8 +32,10 @@ after the query is materialized.
 ## Operational differences
 
 - Data is appended to tables managed by a DuckLake catalog; repeated imports of
-  the same scope are not deduplicated.
-- One writer per lake is an operational requirement. Downloads may be concurrent,
+  the same scope are not deduplicated by default. Managed source publications
+  support explicit replay policies; legacy scopes require inventory or rebuild.
+- Local handles acquire a cooperative writer lock. External SQL and cloud
+  writers require external coordination. Downloads may be concurrent,
   while parsing and writing use one consumer and one connection.
 - Managed transactions group schema and data changes and provide committed
   snapshots. `ImportAbortedError` carries determined results and unresolved input

@@ -1,0 +1,30 @@
+import asyncio, socket, threading, time
+from omnisus_db.sources.datasus_ftp import fetch
+from omnisus_db.sources._base import ScopeKey
+started=threading.Event()
+left,right=socket.socketpair()
+class FTP(fetch.ftplib.FTP):
+    def connect(self,*a,**kw):
+        self.sock=left
+        self.sock.settimeout(1)
+        self.file=self.sock.makefile('r',encoding=self.encoding)
+        started.set()
+        return self.getresp()
+    def login(self): pass
+    def cwd(self,*a): pass
+    def retrbinary(self,*a): pass
+async def main():
+    fetch.ftplib.FTP=FTP
+    task=asyncio.create_task(fetch.fetch_dbc_bytes(dataset='sim_do',scope=ScopeKey(uf='RR',ano=2023)))
+    while not started.is_set(): await asyncio.sleep(.001)
+    def unblock():
+        right.sendall(b'220 controlled\r\n')
+    timer=threading.Timer(.3,unblock); timer.start()
+    start=time.monotonic()
+    asyncio.get_running_loop().call_later(.03,lambda: print('event_loop_30ms_callback_actual_ms',round((time.monotonic()-start)*1000)))
+    task.cancel()
+    try: await task
+    except asyncio.CancelledError: pass
+    print('cancellation_ms',round((time.monotonic()-start)*1000))
+    timer.join();right.close();left.close()
+asyncio.run(main())

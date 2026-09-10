@@ -1,0 +1,52 @@
+{
+  "verified_at_utc": "2026-09-10T16:07:36.748013+00:00",
+  "branch": "codex/d2-d6",
+  "implementation_commit": "1458499",
+  "integrated_main_commit": "c795b39119eff12f8c067786d1944fd5b0c0bfb4",
+  "source_python_tree_sha256": "04f2fc1eb4a5c4a5698ce4ccf0e34e261085d9a9654aa0e149fca04e2b1f2495",
+  "runtime": {
+    "duckdb": "1.5.5",
+    "polars": "1.44.2",
+    "pyarrow": "25.0.1",
+    "datasus-dbc": "0.1.3",
+    "dbfread2": "0.1.0"
+  },
+  "ducklake_extension": "d8a1881e",
+  "tests": {
+    "python_3_13_12": {
+      "passed": 520,
+      "deselected": 47,
+      "coverage_percent": 92.12,
+      "log": "pytest-merged.log"
+    },
+    "python_3_12_13": {
+      "passed": 520,
+      "deselected": 47,
+      "log": "pytest-py312-final.log"
+    },
+    "selection": "not e2e and not perf"
+  },
+  "checks": {
+    "ruff": "PASS",
+    "ruff_format": "PASS",
+    "mypy_src": "PASS",
+    "generated_catalog": "PASS",
+    "frictionless": "PASS",
+    "mkdocs_strict": "PASS",
+    "marimo_check_strict_api_cenarios": "PASS",
+    "build_wheel_sdist": "PASS",
+    "binary_install_py312": "PASS",
+    "installed_wheel_real_ducklake_transaction": "PASS"
+  },
+  "build_sha256": {
+    ".gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+    "omnisus_db-0.1.0-py3-none-any.whl": "c1cdca628dfaaa9de19093fc487bfec5aca34fe60af5601c3adfe12ad9c34b76",
+    "omnisus_db-0.1.0.tar.gz": "bbea1a1d16f866792e03c35b5daa0318351982225fa38a23af070f4fbcd6d3b5"
+  },
+  "limitations": [
+    "No Linux/Windows execution or cloud concurrency certification in this session.",
+    "Historical IBGE estimates need independently vetted edition-specific territorial universes.",
+    "DBC decompression still materializes complete DBF; compressed payload budgets do not bound RSS.",
+    "Amplified resource benchmark bypasses DBC decompression and is not nationally representative."
+  ]
+}

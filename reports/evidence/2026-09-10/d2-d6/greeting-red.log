@@ -1,0 +1,50 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_cancellation_during_ftp_greeting_keeps_event_loop_responsive _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a1c88a0>
+
+    @pytest.mark.asyncio
+    async def test_cancellation_during_ftp_greeting_keeps_event_loop_responsive(monkeypatch):
+        import contextlib
+        import socket
+        import threading
+
+        started = threading.Event()
+        client, server = socket.socketpair()
+
+        class FTP(fetch.ftplib.FTP):
+            def connect(self, *args, **kwargs):
+                self.sock = client
+                self.sock.settimeout(2)
+                self.file = self.sock.makefile("r", encoding=self.encoding)
+                started.set()
+                return self.getresp()
+
+        def release_greeting():
+            with contextlib.suppress(OSError):
+                server.sendall(b"220 controlled greeting\r\n")
+
+        monkeypatch.setattr(fetch.ftplib, "FTP", FTP)
+        task = asyncio.create_task(
+            fetch.fetch_dbc_bytes(dataset="sim_do", scope=ScopeKey(uf="RR", ano=2023))
+        )
+        assert await asyncio.to_thread(started.wait, 2)
+        # The fallback prevents a broken implementation from hanging the suite.
+        fallback = threading.Timer(0.5, release_greeting)
+        fallback.start()
+        loop = asyncio.get_running_loop()
+        tick = loop.create_future()
+        beginning = loop.time()
+        loop.call_later(0.02, lambda: tick.set_result(loop.time() - beginning))
+        try:
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+>           assert await tick < 0.25
+E           assert 0.5065777499985415 < 0.25
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:199: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_cancellation_during_ftp_greeting_keeps_event_loop_responsive
+1 failed, 9 deselected in 0.65s

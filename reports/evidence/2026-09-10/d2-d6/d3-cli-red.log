@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_explicit_maintenance_dry_run_and_cli_failures ______________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-243/test_explicit_maintenance_dry_0')
+
+    def test_explicit_maintenance_dry_run_and_cli_failures(tmp_path):
+        target=f'ducklake:{tmp_path}/maintenance.ducklake'
+        runner.invoke(app,['init','--target',target])
+        for operation in ('expire-snapshots','cleanup-files'):
+            result=runner.invoke(app,['lake',operation,'--before','2000-01-01T00:00:00+00:00','--target',target])
+>           assert result.exit_code == 0, result.output
+E           AssertionError: Usage: omnisus-db lake [OPTIONS] COMMAND [ARGS]...
+E             Try 'omnisus-db lake --help' for help.
+E             ╭─ Error ──────────────────────────────────────────────────────────────────────╮
+E             │ No such command 'expire-snapshots'. Did you mean 'snapshots'?                │
+E             ╰──────────────────────────────────────────────────────────────────────────────╯
+E
+E           assert 2 == 0
+E            +  where 2 = <Result SystemExit(2)>.exit_code
+
+tests/unit/cli/test_main.py:407: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/cli/test_main.py::test_explicit_maintenance_dry_run_and_cli_failures
+1 failed in 0.45s
