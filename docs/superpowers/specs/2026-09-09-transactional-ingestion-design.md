@@ -2,7 +2,7 @@
 
 ## Decisões e objetivo
 
-O usuário escolheu evolução incremental da biblioteca, com um escritor por lake inicialmente, e autorizou seguir automaticamente para writing-plans após atualizar as dependências. Esta especificação detalha a primeira entrega funcional, D1, a partir da pesquisa e revisão adversarial. A implementação dos reparos ainda não foi executada.
+O usuário escolheu evolução incremental da biblioteca, com um escritor por lake inicialmente, e autorizou seguir automaticamente para writing-plans após atualizar as dependências. Esta especificação detalha a primeira entrega funcional, D1, a partir da pesquisa e revisão adversarial. A implementação foi concluída em 2026-09-10, com código funcional validado em `30ce324`; consultar `reports/2026-09-10-implementacao-ingestao-transacional.md` para a matriz final e as decisões de execução.
 
 O objetivo é corrigir A01, A04, A06 e A08: contabilizar escopos que falham, recuperar o cache após rollback, tornar refresh CNES atômico e associar resultados ao commit concluído. O resultado deve continuar utilizável pela API Python e pela CLI existentes.
 

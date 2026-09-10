@@ -1,0 +1,13 @@
+
+- Python mínimo: `>=3.12`; verificar Python 3.12 e 3.13.
+- Base validada: DuckDB `1.5.5`, Polars `1.44.2`, PyArrow `25.0.1`; preservar `uv.lock` e os mínimos atualizados do `pyproject.toml`.
+- Extensão DuckLake observada nessa base: `d8a1881e`, repositório `core`; verificar capacidades na extensão efetivamente carregada.
+- Um escritor por lake é precondição operacional desta entrega; o consumidor deve serializar handles, processos e SQL externo que alterem o mesmo catálogo.
+- Uma conexão DuckDB e um consumidor de parsing/escrita por execução; downloads podem permanecer concorrentes.
+- `Lake.ingest` continua append; nenhuma deduplicação, substituição de escopo ou migração de tabelas antigas.
+- Estados de `ScopeOutcome` permanecem `ok`, `skipped`, `failed`; ordem e multiplicidade das entradas devem ser preservadas.
+- `ImportResult.snapshot_id` permanece `int | None`; `None` significa que não há identificação confirmada disponível.
+- Não adicionar dependências de execução nesta entrega.
+- Não executar FTP/IBGE/CNES ao vivo na suíte de aprovação; usar fixtures para rede e DuckLake real em diretórios temporários.
+- Nenhum COMMIT de resultado desconhecido pode ser repetido automaticamente.
+- Não implementar coordenação distribuída, idempotência durável, fonte IBGE, promoções de tipos ou manutenção nesta entrega.

@@ -1,0 +1,608 @@
+{
+  "recorded_at": "2026-09-10T13:16:34.329362+00:00",
+  "source_commit": "30ce3245aecd64928995f344b7ff51156c18fbe9",
+  "base_commit": "fcb9d5b7b5b085c94cae6dacf688c52577909c7a",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "python": "3.13.12 (main, Mar  3 2026, 15:32:44) [Clang 21.1.4 ]",
+  "packages": {
+    "duckdb": "1.5.5",
+    "polars": "1.44.2",
+    "pyarrow": "25.0.1",
+    "datasus-dbc": "0.1.3",
+    "pytest": "9.1.1",
+    "ruff": "0.16.6",
+    "mypy": "2.3.1"
+  },
+  "sha256": {
+    "pyproject.toml": "769684d7c71089bd4b5c3642e5a3f5cc3da2dccaef4256fbd037e416fe7a2658",
+    "src/omnisus_db/__init__.py": "a1edc30715af86b2ca346f823748dc4e0a0e3916b6eaee59b54ef28433b7b4c5",
+    "src/omnisus_db/_version.py": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed",
+    "src/omnisus_db/cli/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/cli/main.py": "282d43216bf7ad3e9d1e64c79e8c59b1f19190a8ab4da5f08d48bdbce22342eb",
+    "src/omnisus_db/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/data/dicionarios/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/lake/__init__.py": "4cf375e9f4a6a26c1cd7ab83e0015804b26e504d70a8a6d7d0ef5f9307abb2a6",
+    "src/omnisus_db/lake/_transactions.py": "94edc6f19701f1aad6e0d0b3c9f680b32f4cb5fac990c9d687cd1108341e6964",
+    "src/omnisus_db/lake/catalog.py": "50a20f3dc44e802e97583a4c8406ef058f7a4e164107f8f64fa3e0a8f7efe117",
+    "src/omnisus_db/lake/connection.py": "19ae35eadf594e63e23b7c3b75aae252775e77060471b7318d668f806899e342",
+    "src/omnisus_db/lake/operations.py": "fe4c2d8d492cdf62b2f4383ca4d9f468b9189b0a244270f1eb375fce84f676eb",
+    "src/omnisus_db/lake/schema.py": "79d595d12a0d8ccf79be16455f56c45bb3ff89e8a8e679808d12a085f94c8749",
+    "src/omnisus_db/sources/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/_base.py": "3b880b16b21d62999bbba3007f32955ff6754071e9dddf425a688d20bc5c4eee",
+    "src/omnisus_db/sources/cnes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/master.py": "671e763c3efc61a63e905203d229542c2a25974fb8a379f7f7db08d776e2be90",
+    "src/omnisus_db/sources/cnes/importers/st.py": "366fd978be8f4e33813e026073530f5524481e4ceec36e984a77fe1460176a2e",
+    "src/omnisus_db/sources/datasus_ftp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/datasus_ftp/_cache.py": "3c97664b15eb6b844237eef6fcc7c8d847fbda9f32fd593b5ceb10498d3ee80a",
+    "src/omnisus_db/sources/datasus_ftp/_ftp.py": "13739bd1edc04554d5b651da12a5ab66109fd45cf021c266a3350a89f3393e68",
+    "src/omnisus_db/sources/datasus_ftp/_runner.py": "52992f91cdc3eec41c2c85e60de6d79a1df7541ffabc7fb1d58c9c9e2a80a6dd",
+    "src/omnisus_db/sources/datasus_ftp/datasets.py": "6eb7264e8bad1603c0f1c69b5468618992f8e6ae9d0b5153cf2dc808ae0d5d63",
+    "src/omnisus_db/sources/datasus_ftp/fetch.py": "c9dc6b614c58e593c6d055ddd837f39238a05e1d8f1c2545067f6bc567df3f9a",
+    "src/omnisus_db/sources/datasus_ftp/filenames.py": "391992033b6ce1cd55ce56bb74e39f4c5afedd96b04dc2c1fbdb0ddc4004ddf3",
+    "src/omnisus_db/sources/datasus_ftp/inventory.py": "1a53db4c30b321df91ec10112c7b10d7b82c8a69ca8497c35b0334a36d09c59b",
+    "src/omnisus_db/sources/datasus_ftp/parse.py": "b9f0d301e527807465ed51f3708b0bd7e8b8939a305ce58bfeb92b621056d000",
+    "src/omnisus_db/sources/ibge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/fetch.py": "57799120e19d59895cc3322e8c7aad826319e9a18da08818de6ae4aaea80d036",
+    "src/omnisus_db/sources/ibge/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/importers/pop.py": "053b7764d8a806daa0c9c888567fd0f42073a24b2968aebad9b54f791dbe95a0",
+    "src/omnisus_db/sources/ibge/parse.py": "54f9cb8d52a08f3ecd20d7db46a9ddea6896209f1467195dcba974e3d8128c34",
+    "src/omnisus_db/transforms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/transforms/cns.py": "9f922749d914d83b8ed587d72ba96906bea3ebb4a5771d98e1b40eb9bd38da40",
+    "src/omnisus_db/transforms/codes.py": "c7fad736e948ee5a08ac93ade18ef8f402b770fb8c7ce710092aac28588ca16a",
+    "src/omnisus_db/transforms/dictionaries.py": "e6a7712c8b9194c6368aeb136efb9360804451e24b7102ffba4fca041351b9be",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/conftest.py": "506f41137b9359d4c765d53eb1141007374260d00c240183d29c3def8bedc7b4",
+    "tests/helpers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/helpers/connection_faults.py": "5ce6d21c5c8f84e1d8ef63726a298c7fe688eb8c68775683a0a15f330e2add45",
+    "tests/integration/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/integration/test_cnes_e2e.py": "f2bdc05256cce10a29b32945394596b0d7fc9dbc237a0fdf21bcd9f437e7d1ae",
+    "tests/integration/test_fetch_ftp_real.py": "59aa772dda15499db71e2231e38380a1a1b2cf8ab9deaca12a510b3c945624ab",
+    "tests/integration/test_ibge_pop_e2e.py": "9a54aed8453285d31247f999cf65150fa5187d475a460ec1c537703b1a192331",
+    "tests/integration/test_registry_probe.py": "19245eb0d1ef92c7a2826116815196ac39b9a5f1123a9965631f82ee0ee136f0",
+    "tests/integration/test_sia_bi_e2e.py": "a18a550410c3c7909d9182f56917d5136e433c0a110957686f56b2016064c883",
+    "tests/integration/test_sih_e2e.py": "2731b3c5759a1feab4a5cf5e6bb79474b2b3ff49268366842849338049fa0c8c",
+    "tests/integration/test_sim_e2e.py": "dc511655aa927c775640af40386138f743a4622d31015c0f9f2196bc6d4ae445",
+    "tests/integration/test_sinasc_e2e.py": "bbd6222577c1d38ac9e874461d1f4deca0e83faaddf4ac0e0c8c11709fc160f6",
+    "tests/perf/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/perf/bench_dbf_parse.py": "0585e330b5b60670c43b5f05a1d5f4421009f60e7c6363c7e7f839bdf091922c",
+    "tests/perf/bench_full_pipeline.py": "cf2ed5d528ee3713ad613c782083129c838eb22428fa08a8090c56e2ff3b3ca0",
+    "tests/unit/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/cli/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/cli/test_inventory_cmd.py": "49f7a1ef80959adef531c6502d6fba3170d6e025e276a67701516b668e2e6e4e",
+    "tests/unit/cli/test_main.py": "be8814aa077ec2202d4d190f060cf4b20879e78f6c8ca7cbf0c7fca2935b2879",
+    "tests/unit/lake/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/lake/test_bootstrap.py": "84f4d942e899a2f1995ebdad544055b3dc57f87da5303a85484eaef7f4acd98b",
+    "tests/unit/lake/test_catalog.py": "d8bd7fc44b906fb4b6674b00f2e3c223fee0ffd0521d2e4244cb186a5afc4234",
+    "tests/unit/lake/test_connection.py": "ded7d68886982c44a35df98e2ce490fc7eec6e2105b36c7e4335ead66e2d9320",
+    "tests/unit/lake/test_ingest_performance.py": "c9d72437b3bba6695bacec3d99bb7d9def0f3893094c5454a47d0576c351b7eb",
+    "tests/unit/lake/test_operations.py": "279e1795a802c2e0a35e2adf219b2d4494a6db2580664b9835f28744e8ef5f03",
+    "tests/unit/lake/test_schema.py": "1ca8ee5553962f0eb62fe442e07e4c991e9b46b605e89ea825b2c24edf6e5d78",
+    "tests/unit/lake/test_sink.py": "c33923bfb4277a35e81cffda4e852edd5c173ca16777024dd86f966202a5ccbe",
+    "tests/unit/lake/test_transactions.py": "7d4d0e828e08671ae0dbc3393bc37c3cd9e5ce9442846840eeacd4fca6674f14",
+    "tests/unit/sources/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/sources/cnes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/sources/cnes/test_master.py": "eef10d72c469992976d4f85e183b94c40c4b6ed309168728e63b2f601fa842df",
+    "tests/unit/sources/datasus_ftp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/sources/datasus_ftp/test_available.py": "dc452a0a931658b9dff5a16deef514dcfb82265dcc8796a338687f43fb6b822c",
+    "tests/unit/sources/datasus_ftp/test_datasets.py": "86ffa2a64ab8b20a61808b20b52cf5ea40613dd355945c91d90516f4bc8c32ee",
+    "tests/unit/sources/datasus_ftp/test_fetch.py": "0062f3c8521f8013a44708bf086d2bc668269b340820f1a0fa487230f1451fd7",
+    "tests/unit/sources/datasus_ftp/test_filenames.py": "55cef74e01b7b53f0019557eacc102466f03e1dc4663bf21998db3e567dcf53a",
+    "tests/unit/sources/datasus_ftp/test_filenames_golden.py": "7564231e0ab931caaef488ee5da4bde0694dcfa8e29c55dc74324891b246eba1",
+    "tests/unit/sources/datasus_ftp/test_integrity.py": "d8fe7d708bd62143074d6f269c1b31ccec163116f43b4f47be47774fcc557846",
+    "tests/unit/sources/datasus_ftp/test_inventory_cache.py": "e884edc5cdd104109ac5a4426ab0650315f0f870afc29f55d4fd441de0e1e24e",
+    "tests/unit/sources/datasus_ftp/test_list_dir.py": "20d9d41aada93d9c1c02f8b2a39ac1df7eba4aeec9936762527568d16099d368",
+    "tests/unit/sources/datasus_ftp/test_msdos_parsing.py": "0245ff9ab166f1a179f4160d3c77eda0048e634724616fa082d7893a31607ffb",
+    "tests/unit/sources/datasus_ftp/test_parse.py": "c19ff79bd44779bf66692c9c2265ac21cf485848b33853ce70765cb4b83f016e",
+    "tests/unit/sources/datasus_ftp/test_runner.py": "43bbf2d8dcc5bd6de53619dfd6c0fdfc2bd9f3fa488d2a9bb05c83220109988d",
+    "tests/unit/sources/datasus_ftp/test_runner_concurrency.py": "da6eb11516e412244eb87a3724146707e2dc11052ad3fd6d79c5f22cb0ce27cd",
+    "tests/unit/sources/datasus_ftp/test_runner_failures.py": "d75956ba14e4816ba3bb3a6405fd529b9f43e05e8a507eb9c8b8ce03d2dd5bee",
+    "tests/unit/sources/datasus_ftp/test_sia_apac.py": "080a1dfd40bc9f1cbfc3acc45e5d30e8ce560b670fc96b5f477eacf67ccc62f8",
+    "tests/unit/sources/datasus_ftp/test_sia_bi.py": "e75a23af602e3e729320d446b42d1beb9751077ba0a94e68fc4b52038e2de596",
+    "tests/unit/sources/datasus_ftp/test_tolerance.py": "818027d4337e3374a3240c1edb749632cc2cae9dbc216f0e4e7670f20b5d01e6",
+    "tests/unit/sources/ibge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/sources/ibge/test_fetch.py": "c3861afc36b6c61798e2f87b1ee149a81fd990e5798a604779aecaf2b51dff93",
+    "tests/unit/sources/ibge/test_parse.py": "d811a02d263889fc85dd3068688e55b06723b576e944efdadf708a49790c42ac",
+    "tests/unit/sources/test_base.py": "f74a637d321a1a705698339f173d823df62e10b9bf6bcc23f1cbfcade2385fc9",
+    "tests/unit/test_public_api.py": "e298234bdba68db28cccad447d739a1aee70f70e0961ec5ac868b67338040408",
+    "tests/unit/test_registry_consistency.py": "4b3554de725362c87b2a5867dca35b5bdc386b2e259bc4e72131a4357e67772e",
+    "tests/unit/transforms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/unit/transforms/test_cns.py": "f8ad2fafa09e022de555d7058080d69f4f7dec334188d299d03520e696d88f34",
+    "tests/unit/transforms/test_codes.py": "7f624f668010e5a2c202706fe577e0ba377bf79d46eb76fb6c6ab3bd69efdee1",
+    "tests/unit/transforms/test_dictionaries.py": "777281d9636df988288fdd1a2a47ac0edf99a9e74e824c811125f3ea4463a183",
+    "tests/unit/transforms/test_pandera_interop.py": "95708147ed5aff36fd41f90c87f26a61410be47303dcc67069a570db0923c935",
+    "uv.lock": "86ab93886331fe169731bb7487d6eeabf635f11d7d5df299fe725edb4e5317fe"
+  },
+  "commands": [
+    {
+      "name": "sync",
+      "command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--all-extras",
+        "--python",
+        "3.13"
+      ],
+      "started": "2026-09-10T13:12:44.232371+00:00",
+      "exit_code": 0,
+      "log": "sync.log"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "dev",
+        "ruff",
+        "check",
+        "."
+      ],
+      "started": "2026-09-10T13:12:44.329034+00:00",
+      "exit_code": 0,
+      "log": "lint.log"
+    },
+    {
+      "name": "format",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "dev",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "started": "2026-09-10T13:12:44.394805+00:00",
+      "exit_code": 0,
+      "log": "format.log"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "dev",
+        "mypy",
+        "src"
+      ],
+      "started": "2026-09-10T13:12:44.435601+00:00",
+      "exit_code": 0,
+      "log": "mypy.log"
+    },
+    {
+      "name": "generated-docs",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "python",
+        "scripts/gen_datasets_doc.py",
+        "--check"
+      ],
+      "started": "2026-09-10T13:12:44.680924+00:00",
+      "exit_code": 0,
+      "log": "generated-docs.log"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "docs",
+        "mkdocs",
+        "build",
+        "--strict"
+      ],
+      "started": "2026-09-10T13:12:45.082468+00:00",
+      "exit_code": 0,
+      "log": "docs.log"
+    },
+    {
+      "name": "dictionaries",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "dev",
+        "frictionless",
+        "validate",
+        "src/omnisus_db/data/dicionarios/aux_cid10.yaml",
+        "src/omnisus_db/data/dicionarios/aux_municipios.yaml",
+        "src/omnisus_db/data/dicionarios/aux_uf.yaml",
+        "src/omnisus_db/data/dicionarios/cnes_st.yaml",
+        "src/omnisus_db/data/dicionarios/ibge_pop.yaml",
+        "src/omnisus_db/data/dicionarios/sia_abo.yaml",
+        "src/omnisus_db/data/dicionarios/sia_ad.yaml",
+        "src/omnisus_db/data/dicionarios/sia_am.yaml",
+        "src/omnisus_db/data/dicionarios/sia_aq.yaml",
+        "src/omnisus_db/data/dicionarios/sia_atd.yaml",
+        "src/omnisus_db/data/dicionarios/sia_bi.yaml",
+        "src/omnisus_db/data/dicionarios/sia_ps.yaml",
+        "src/omnisus_db/data/dicionarios/sih_rd.yaml",
+        "src/omnisus_db/data/dicionarios/sim_do.yaml",
+        "src/omnisus_db/data/dicionarios/sinasc_nv.yaml"
+      ],
+      "started": "2026-09-10T13:12:45.823512+00:00",
+      "exit_code": 0,
+      "log": "dictionaries.log"
+    },
+    {
+      "name": "pytest-py313",
+      "command": [
+        "uv",
+        "run",
+        "--locked",
+        "--extra",
+        "dev",
+        "pytest",
+        "-m",
+        "not e2e and not perf",
+        "--cov=omnisus_db",
+        "--cov-fail-under=85"
+      ],
+      "started": "2026-09-10T13:12:46.336944+00:00",
+      "exit_code": 0,
+      "log": "pytest-py313.log"
+    },
+    {
+      "name": "pytest-py312",
+      "command": [
+        "/private/tmp/omnisus-d1-py312/bin/pytest",
+        "-m",
+        "not e2e and not perf",
+        "--cov=omnisus_db",
+        "--cov-fail-under=85"
+      ],
+      "started": "2026-09-10T13:13:22.819990+00:00",
+      "exit_code": 0,
+      "log": "pytest-py312.log"
+    },
+    {
+      "name": "build",
+      "command": [
+        "uv",
+        "build"
+      ],
+      "started": "2026-09-10T13:13:59.475633+00:00",
+      "exit_code": 0,
+      "log": "build.log"
+    },
+    {
+      "name": "lock",
+      "command": [
+        "uv",
+        "lock",
+        "--check"
+      ],
+      "started": "2026-09-10T13:14:00.666758+00:00",
+      "exit_code": 0,
+      "log": "lock.log"
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "started": "2026-09-10T13:14:00.689126+00:00",
+      "exit_code": 0,
+      "log": "diff.log"
+    },
+    {
+      "name": "wheel-install",
+      "command": [
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        "/private/tmp/omnisus-d1-wheel312",
+        "--only-binary=:all:",
+        "dist/omnisus_db-0.1.0-py3-none-any.whl"
+      ],
+      "exit_code": 0,
+      "log": "wheel-install.log"
+    },
+    {
+      "name": "wheel-pip-check",
+      "command": [
+        "uv",
+        "pip",
+        "check",
+        "--python",
+        "/private/tmp/omnisus-d1-wheel312"
+      ],
+      "exit_code": 0,
+      "log": "wheel-pip-check.log"
+    },
+    {
+      "name": "wheel-smoke",
+      "command": "/private/tmp/omnisus-d1-wheel312/bin/python -I - (isolated import, real transaction, pending and committed snapshot assertions, row readback)",
+      "exit_code": 0,
+      "log": "wheel-smoke.log"
+    }
+  ],
+  "limits": [
+    "Validation executed locally on macOS arm64; Linux and Windows CI not run in this session.",
+    "One writer is an operational precondition; no cross-process coordination implemented.",
+    "Approval suite excludes e2e and perf; no live source certification."
+  ],
+  "ducklake_extension": [
+    [
+      "d8a1881e",
+      "core"
+    ]
+  ],
+  "test_results": {
+    "python3.13.12": {
+      "passed": 429,
+      "deselected": 47,
+      "coverage_percent": 91.97,
+      "seconds": 35.9
+    },
+    "python3.12.13": {
+      "passed": 429,
+      "deselected": 47,
+      "coverage_percent": 91.97,
+      "seconds": 35.45
+    }
+  },
+  "artifacts": {
+    "omnisus_db-0.1.0-py3-none-any.whl": "1e194eb0fa1e9856856f081b75b21b6bd86092bc46400955a9334aac7225f900",
+    ".gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+    "omnisus_db-0.1.0.tar.gz": "324fa6066f317a6535a81614ef1b93cc893fd9be4d42d0658e7053d1356d8a14"
+  },
+  "wheel_packages": [
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1"
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22"
+    },
+    {
+      "name": "chardet",
+      "version": "7.6.0"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.1"
+    },
+    {
+      "name": "datasus-dbc",
+      "version": "0.1.3"
+    },
+    {
+      "name": "dbfread2",
+      "version": "0.1.0"
+    },
+    {
+      "name": "duckdb",
+      "version": "1.5.5"
+    },
+    {
+      "name": "frictionless",
+      "version": "5.19.0"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1"
+    },
+    {
+      "name": "humanize",
+      "version": "4.16.0"
+    },
+    {
+      "name": "idna",
+      "version": "3.19"
+    },
+    {
+      "name": "isodate",
+      "version": "0.7.2"
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6"
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0"
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1"
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0"
+    },
+    {
+      "name": "marko",
+      "version": "2.2.4"
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3"
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2"
+    },
+    {
+      "name": "mypy-extensions",
+      "version": "1.1.0"
+    },
+    {
+      "name": "obstore",
+      "version": "0.11.1"
+    },
+    {
+      "name": "omnisus-db",
+      "version": "0.1.0"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3"
+    },
+    {
+      "name": "pandera",
+      "version": "0.33.1"
+    },
+    {
+      "name": "petl",
+      "version": "1.7.25"
+    },
+    {
+      "name": "polars",
+      "version": "1.44.2"
+    },
+    {
+      "name": "polars-runtime-32",
+      "version": "1.44.2"
+    },
+    {
+      "name": "pyarrow",
+      "version": "25.0.1"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.5"
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.46.5"
+    },
+    {
+      "name": "pydantic-settings",
+      "version": "2.15.0"
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0"
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.3"
+    },
+    {
+      "name": "python-slugify",
+      "version": "9.0.0"
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3"
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2"
+    },
+    {
+      "name": "rfc3986",
+      "version": "2.0.0"
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0"
+    },
+    {
+      "name": "rpds-py",
+      "version": "2026.6.3"
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4"
+    },
+    {
+      "name": "simpleeval",
+      "version": "1.0.7"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0"
+    },
+    {
+      "name": "structlog",
+      "version": "26.1.0"
+    },
+    {
+      "name": "tabulate",
+      "version": "0.10.0"
+    },
+    {
+      "name": "text-unidecode",
+      "version": "1.3"
+    },
+    {
+      "name": "tomli-w",
+      "version": "1.2.0"
+    },
+    {
+      "name": "typeguard",
+      "version": "4.6.0"
+    },
+    {
+      "name": "typer",
+      "version": "0.27.2"
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0"
+    },
+    {
+      "name": "typing-inspect",
+      "version": "0.9.0"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.7.0"
+    },
+    {
+      "name": "validators",
+      "version": "0.35.0"
+    }
+  ],
+  "final_review": "All actionable findings addressed; no new Critical/Important breakage; no parked findings."
+}

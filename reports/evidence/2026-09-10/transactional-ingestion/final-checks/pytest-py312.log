@@ -1,0 +1,102 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/transactional-ingestion
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, asyncio-1.4.0, benchmark-5.3.0, pyfakefs-6.2.0, typeguard-4.6.0, anyio-4.15.1, respx-0.23.1, hypothesis-6.168.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 476 items / 47 deselected / 429 selected
+
+tests/integration/test_cnes_e2e.py .                                     [  0%]
+tests/integration/test_ibge_pop_e2e.py .                                 [  0%]
+tests/integration/test_sia_bi_e2e.py .                                   [  0%]
+tests/integration/test_sih_e2e.py .                                      [  0%]
+tests/integration/test_sim_e2e.py .                                      [  1%]
+tests/integration/test_sinasc_e2e.py .                                   [  1%]
+tests/unit/cli/test_inventory_cmd.py .........                           [  3%]
+tests/unit/cli/test_main.py ..........................                   [  9%]
+tests/unit/lake/test_bootstrap.py ..                                     [ 10%]
+tests/unit/lake/test_catalog.py ....                                     [ 10%]
+tests/unit/lake/test_connection.py ....                                  [ 11%]
+tests/unit/lake/test_ingest_performance.py ...........                   [ 14%]
+tests/unit/lake/test_operations.py ..........                            [ 16%]
+tests/unit/lake/test_schema.py ......                                    [ 18%]
+tests/unit/lake/test_sink.py ...                                         [ 18%]
+tests/unit/lake/test_transactions.py ........................            [ 24%]
+tests/unit/sources/cnes/test_master.py ..............                    [ 27%]
+tests/unit/sources/datasus_ftp/test_available.py .....................   [ 32%]
+tests/unit/sources/datasus_ftp/test_datasets.py ................         [ 36%]
+tests/unit/sources/datasus_ftp/test_fetch.py .........                   [ 38%]
+tests/unit/sources/datasus_ftp/test_filenames.py ..........              [ 40%]
+tests/unit/sources/datasus_ftp/test_filenames_golden.py ................ [ 44%]
+.....................                                                    [ 49%]
+tests/unit/sources/datasus_ftp/test_integrity.py .....                   [ 50%]
+tests/unit/sources/datasus_ftp/test_inventory_cache.py ................. [ 54%]
+                                                                         [ 54%]
+tests/unit/sources/datasus_ftp/test_list_dir.py ........                 [ 56%]
+tests/unit/sources/datasus_ftp/test_msdos_parsing.py ..................  [ 60%]
+tests/unit/sources/datasus_ftp/test_parse.py .....                       [ 61%]
+tests/unit/sources/datasus_ftp/test_runner.py .......                    [ 63%]
+tests/unit/sources/datasus_ftp/test_runner_concurrency.py ......         [ 64%]
+tests/unit/sources/datasus_ftp/test_runner_failures.py ..........        [ 67%]
+tests/unit/sources/datasus_ftp/test_sia_apac.py ........................ [ 72%]
+............                                                             [ 75%]
+tests/unit/sources/datasus_ftp/test_sia_bi.py .......                    [ 77%]
+tests/unit/sources/datasus_ftp/test_tolerance.py ......                  [ 78%]
+tests/unit/sources/ibge/test_fetch.py ..                                 [ 79%]
+tests/unit/sources/ibge/test_parse.py ...                                [ 79%]
+tests/unit/sources/test_base.py ...                                      [ 80%]
+tests/unit/test_public_api.py .........................                  [ 86%]
+tests/unit/test_registry_consistency.py ..........                       [ 88%]
+tests/unit/transforms/test_cns.py .......                                [ 90%]
+tests/unit/transforms/test_codes.py ...                                  [ 90%]
+tests/unit/transforms/test_dictionaries.py ............................. [ 97%]
+                                                                         [ 97%]
+tests/unit/transforms/test_pandera_interop.py ..........                 [100%]
+
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.13-final-0 _______________
+
+Name                                                Stmts   Miss  Cover
+-----------------------------------------------------------------------
+src/omnisus_db/__init__.py                             62      2    97%
+src/omnisus_db/_version.py                              1      0   100%
+src/omnisus_db/cli/__init__.py                          0      0   100%
+src/omnisus_db/cli/main.py                            189     24    87%
+src/omnisus_db/data/__init__.py                         0      0   100%
+src/omnisus_db/data/dicionarios/__init__.py             0      0   100%
+src/omnisus_db/lake/__init__.py                         4      0   100%
+src/omnisus_db/lake/_transactions.py                    7      0   100%
+src/omnisus_db/lake/catalog.py                         25      1    96%
+src/omnisus_db/lake/connection.py                      20      0   100%
+src/omnisus_db/lake/operations.py                     213      5    98%
+src/omnisus_db/lake/schema.py                           8      0   100%
+src/omnisus_db/sources/__init__.py                      0      0   100%
+src/omnisus_db/sources/_base.py                        47      0   100%
+src/omnisus_db/sources/cnes/__init__.py                 0      0   100%
+src/omnisus_db/sources/cnes/importers/__init__.py       0      0   100%
+src/omnisus_db/sources/cnes/importers/master.py        99      6    94%
+src/omnisus_db/sources/cnes/importers/st.py             6      6     0%
+src/omnisus_db/sources/datasus_ftp/__init__.py          0      0   100%
+src/omnisus_db/sources/datasus_ftp/_cache.py           61      7    89%
+src/omnisus_db/sources/datasus_ftp/_ftp.py              7      0   100%
+src/omnisus_db/sources/datasus_ftp/_runner.py         145      5    97%
+src/omnisus_db/sources/datasus_ftp/datasets.py         56      0   100%
+src/omnisus_db/sources/datasus_ftp/fetch.py            40      6    85%
+src/omnisus_db/sources/datasus_ftp/filenames.py        43      2    95%
+src/omnisus_db/sources/datasus_ftp/inventory.py       143      9    94%
+src/omnisus_db/sources/datasus_ftp/parse.py            90      9    90%
+src/omnisus_db/sources/ibge/__init__.py                 0      0   100%
+src/omnisus_db/sources/ibge/fetch.py                   10      0   100%
+src/omnisus_db/sources/ibge/importers/__init__.py       0      0   100%
+src/omnisus_db/sources/ibge/importers/pop.py            9      0   100%
+src/omnisus_db/sources/ibge/parse.py                   17      0   100%
+src/omnisus_db/transforms/__init__.py                   0      0   100%
+src/omnisus_db/transforms/cns.py                       35     11    69%
+src/omnisus_db/transforms/codes.py                      8      0   100%
+src/omnisus_db/transforms/dictionaries.py             200     31    84%
+-----------------------------------------------------------------------
+TOTAL                                                1545    124    92%
+Required test coverage of 85% reached. Total coverage: 91.97%
+===================== 429 passed, 47 deselected in 35.45s ======================

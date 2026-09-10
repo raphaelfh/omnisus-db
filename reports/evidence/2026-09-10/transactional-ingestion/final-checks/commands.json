@@ -1,0 +1,219 @@
+[
+  {
+    "name": "sync",
+    "command": [
+      "uv",
+      "sync",
+      "--locked",
+      "--all-extras",
+      "--python",
+      "3.13"
+    ],
+    "started": "2026-09-10T13:12:44.232371+00:00",
+    "exit_code": 0,
+    "log": "sync.log"
+  },
+  {
+    "name": "lint",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "dev",
+      "ruff",
+      "check",
+      "."
+    ],
+    "started": "2026-09-10T13:12:44.329034+00:00",
+    "exit_code": 0,
+    "log": "lint.log"
+  },
+  {
+    "name": "format",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "dev",
+      "ruff",
+      "format",
+      "--check",
+      "."
+    ],
+    "started": "2026-09-10T13:12:44.394805+00:00",
+    "exit_code": 0,
+    "log": "format.log"
+  },
+  {
+    "name": "mypy",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "dev",
+      "mypy",
+      "src"
+    ],
+    "started": "2026-09-10T13:12:44.435601+00:00",
+    "exit_code": 0,
+    "log": "mypy.log"
+  },
+  {
+    "name": "generated-docs",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "python",
+      "scripts/gen_datasets_doc.py",
+      "--check"
+    ],
+    "started": "2026-09-10T13:12:44.680924+00:00",
+    "exit_code": 0,
+    "log": "generated-docs.log"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "docs",
+      "mkdocs",
+      "build",
+      "--strict"
+    ],
+    "started": "2026-09-10T13:12:45.082468+00:00",
+    "exit_code": 0,
+    "log": "docs.log"
+  },
+  {
+    "name": "dictionaries",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "dev",
+      "frictionless",
+      "validate",
+      "src/omnisus_db/data/dicionarios/aux_cid10.yaml",
+      "src/omnisus_db/data/dicionarios/aux_municipios.yaml",
+      "src/omnisus_db/data/dicionarios/aux_uf.yaml",
+      "src/omnisus_db/data/dicionarios/cnes_st.yaml",
+      "src/omnisus_db/data/dicionarios/ibge_pop.yaml",
+      "src/omnisus_db/data/dicionarios/sia_abo.yaml",
+      "src/omnisus_db/data/dicionarios/sia_ad.yaml",
+      "src/omnisus_db/data/dicionarios/sia_am.yaml",
+      "src/omnisus_db/data/dicionarios/sia_aq.yaml",
+      "src/omnisus_db/data/dicionarios/sia_atd.yaml",
+      "src/omnisus_db/data/dicionarios/sia_bi.yaml",
+      "src/omnisus_db/data/dicionarios/sia_ps.yaml",
+      "src/omnisus_db/data/dicionarios/sih_rd.yaml",
+      "src/omnisus_db/data/dicionarios/sim_do.yaml",
+      "src/omnisus_db/data/dicionarios/sinasc_nv.yaml"
+    ],
+    "started": "2026-09-10T13:12:45.823512+00:00",
+    "exit_code": 0,
+    "log": "dictionaries.log"
+  },
+  {
+    "name": "pytest-py313",
+    "command": [
+      "uv",
+      "run",
+      "--locked",
+      "--extra",
+      "dev",
+      "pytest",
+      "-m",
+      "not e2e and not perf",
+      "--cov=omnisus_db",
+      "--cov-fail-under=85"
+    ],
+    "started": "2026-09-10T13:12:46.336944+00:00",
+    "exit_code": 0,
+    "log": "pytest-py313.log"
+  },
+  {
+    "name": "pytest-py312",
+    "command": [
+      "/private/tmp/omnisus-d1-py312/bin/pytest",
+      "-m",
+      "not e2e and not perf",
+      "--cov=omnisus_db",
+      "--cov-fail-under=85"
+    ],
+    "started": "2026-09-10T13:13:22.819990+00:00",
+    "exit_code": 0,
+    "log": "pytest-py312.log"
+  },
+  {
+    "name": "build",
+    "command": [
+      "uv",
+      "build"
+    ],
+    "started": "2026-09-10T13:13:59.475633+00:00",
+    "exit_code": 0,
+    "log": "build.log"
+  },
+  {
+    "name": "lock",
+    "command": [
+      "uv",
+      "lock",
+      "--check"
+    ],
+    "started": "2026-09-10T13:14:00.666758+00:00",
+    "exit_code": 0,
+    "log": "lock.log"
+  },
+  {
+    "name": "diff",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "started": "2026-09-10T13:14:00.689126+00:00",
+    "exit_code": 0,
+    "log": "diff.log"
+  },
+  {
+    "name": "wheel-install",
+    "command": [
+      "uv",
+      "pip",
+      "install",
+      "--python",
+      "/private/tmp/omnisus-d1-wheel312",
+      "--only-binary=:all:",
+      "dist/omnisus_db-0.1.0-py3-none-any.whl"
+    ],
+    "exit_code": 0,
+    "log": "wheel-install.log"
+  },
+  {
+    "name": "wheel-pip-check",
+    "command": [
+      "uv",
+      "pip",
+      "check",
+      "--python",
+      "/private/tmp/omnisus-d1-wheel312"
+    ],
+    "exit_code": 0,
+    "log": "wheel-pip-check.log"
+  },
+  {
+    "name": "wheel-smoke",
+    "command": "/private/tmp/omnisus-d1-wheel312/bin/python -I - (isolated import, real transaction, pending and committed snapshot assertions, row readback)",
+    "exit_code": 0,
+    "log": "wheel-smoke.log"
+  }
+]

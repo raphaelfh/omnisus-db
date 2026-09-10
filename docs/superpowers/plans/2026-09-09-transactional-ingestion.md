@@ -1,6 +1,6 @@
 # Transactional Ingestion Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Corrigir A01, A04, A06 e A08, preservando dados e tornando os resultados de importação coerentes com commits e rollbacks.
 
@@ -26,6 +26,10 @@
 - Não implementar coordenação distribuída, idempotência durável, fonte IBGE, promoções de tipos ou manutenção nesta entrega.
 
 ---
+
+## Status da execução
+
+Concluída em 2026-09-10, com código funcional em `30ce324` e revisão integral aprovada após correções. Evidências: `reports/2026-09-10-implementacao-ingestao-transacional.md`. Gate final: 429 testes por versão Python 3.12/3.13, 91,97% de cobertura e wheel limpo aprovado. As notas de estado de partida abaixo descrevem o momento anterior à execução.
 
 ## Estado de partida e limites
 
@@ -58,7 +62,7 @@ O contrato inicial de um escritor é operacional; não há um bloqueio entre pro
 
 **Interfaces:** Consome `Lake.connect()` e `_columns`/`_ensured`. Produz `TransactionReceipt`, `TransactionStateError`, `CommitOutcomeUnknown`, `Lake.in_transaction`, `Lake.is_usable`, `Lake._read_snapshot()` e context manager `Lake.transaction() -> Iterator[TransactionReceipt]`.
 
-- [ ] **1. Criar um seam de falha em torno da conexão real.** Criar `tests/helpers/__init__.py` vazio e o helper abaixo. `before`/`after` falham uma única vez por prefixo; outros comandos vão para DuckDB real.
+- [x] **1. Criar um seam de falha em torno da conexão real.** Criar `tests/helpers/__init__.py` vazio e o helper abaixo. `before`/`after` falham uma única vez por prefixo; outros comandos vão para DuckDB real.
 
 ```python
 class FaultyConnection:
@@ -89,7 +93,7 @@ class FaultyConnection:
         return getattr(self.connection, name)
 ```
 
-- [ ] **2. Adicionar regressões de cache e estado transacional.** Iniciar o arquivo de teste com os imports abaixo; os testes das próximas tarefas serão acrescentados ao mesmo arquivo.
+- [x] **2. Adicionar regressões de cache e estado transacional.** Iniciar o arquivo de teste com os imports abaixo; os testes das próximas tarefas serão acrescentados ao mesmo arquivo.
 
 ```python
 import polars as pl
@@ -171,7 +175,7 @@ def test_begin_failure_stops_the_handle(tmp_path):
         assert not lake.is_usable
 ```
 
-- [ ] **3. Executar as regressões antes da correção.**
+- [x] **3. Executar as regressões antes da correção.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/lake/test_transactions.py -q
@@ -179,7 +183,7 @@ uv run --locked --extra dev pytest tests/unit/lake/test_transactions.py -q
 
 Esperado: falha por cache inválido e pelos novos tipos/interfaces ainda inexistentes. Confirmar a falha de comportamento do cache isoladamente, não apenas ImportError dos tipos novos.
 
-- [ ] **4. Criar os tipos em `_transactions.py` e exportar os erros em `lake/__init__.py`.**
+- [x] **4. Criar os tipos em `_transactions.py` e exportar os erros em `lake/__init__.py`.**
 
 ```python
 from dataclasses import dataclass
@@ -261,7 +265,7 @@ self.connect()
 
 Isso impede que um método que usa `_con` diretamente contorne a invalidação do handle. A manutenção continua pendente em D3; aqui muda somente a guarda de uso.
 
-- [ ] **5. Substituir `Lake.transaction` pela fronteira abaixo.** O aviso posterior a COMMIT não altera o estado confirmado. Não consultar snapshot anterior como se identificasse uma transação vazia.
+- [x] **5. Substituir `Lake.transaction` pela fronteira abaixo.** O aviso posterior a COMMIT não altera o estado confirmado. Não consultar snapshot anterior como se identificasse uma transação vazia.
 
 ```python
 @contextlib.contextmanager
@@ -322,7 +326,7 @@ def transaction(self) -> Iterator[TransactionReceipt]:
         self._ensured.clear()
 ```
 
-- [ ] **6. Verificar isolamento de uso, fechamento e transação vazia.** Acrescentar:
+- [x] **6. Verificar isolamento de uso, fechamento e transação vazia.** Acrescentar:
 
 ```python
 def test_empty_and_nested_transactions(tmp_path):
@@ -339,7 +343,7 @@ def test_empty_and_nested_transactions(tmp_path):
     assert lake.is_usable is False
 ```
 
-- [ ] **7. Executar testes e checks da tarefa.**
+- [x] **7. Executar testes e checks da tarefa.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/lake/test_transactions.py tests/unit/lake/test_operations.py -q
@@ -349,7 +353,7 @@ uv run --locked --extra dev mypy src
 
 Esperado: todos passam; o controle de falha depois de COMMIT deixa dados persistidos e ainda assim comunica confirmação desconhecida, sem retry.
 
-- [ ] **8. Revisar e registrar somente os arquivos da tarefa.**
+- [x] **8. Revisar e registrar somente os arquivos da tarefa.**
 
 ```bash
 git add src/omnisus_db/lake/_transactions.py src/omnisus_db/lake/operations.py src/omnisus_db/lake/__init__.py tests/helpers/__init__.py tests/helpers/connection_faults.py tests/unit/lake/test_transactions.py
@@ -362,7 +366,7 @@ git commit -m "fix: make managed lake transactions recoverable"
 
 **Interfaces:** Consome `Lake.in_transaction`, `_pending_results`, `transaction()` e `_read_snapshot()` da Task 1. Produz `Lake.ingest(table, lazyframe, *, partition_by=()) -> ImportResult` com `snapshot_id=None` durante a transação e preenchido após confirmação.
 
-- [ ] **1. Adicionar testes para resultados pendentes, rollback e metadado indisponível.**
+- [x] **1. Adicionar testes para resultados pendentes, rollback e metadado indisponível.**
 
 ```python
 def test_ingest_results_receive_the_committed_batch_snapshot(tmp_path):
@@ -408,7 +412,7 @@ def test_snapshot_read_failure_does_not_reclassify_a_committed_write(tmp_path, m
         assert lake.is_usable
 ```
 
-- [ ] **2. Executar antes da mudança.**
+- [x] **2. Executar antes da mudança.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/lake/test_transactions.py -k 'snapshot or pending' -q
@@ -416,7 +420,7 @@ uv run --locked --extra dev pytest tests/unit/lake/test_transactions.py -k 'snap
 
 Esperado: resultados dentro de transação ainda contêm o snapshot anterior e falham as assertions de `None`.
 
-- [ ] **3. Fazer `ingest` participar ou possuir a transação.** No início do corpo de `Lake.ingest`, antes da criação do staging:
+- [x] **3. Fazer `ingest` participar ou possuir a transação.** No início do corpo de `Lake.ingest`, antes da criação do staging:
 
 ```python
 self.connect()
@@ -446,7 +450,7 @@ Inside Lake.transaction(), snapshot_id remains None until that context commits.
 Raw SQL BEGIN/COMMIT is outside this managed-transaction contract.
 ```
 
-- [ ] **4. Verificar atomicidade do schema e compatibilidade dos testes existentes.**
+- [x] **4. Verificar atomicidade do schema e compatibilidade dos testes existentes.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/lake -q
@@ -455,7 +459,7 @@ uv run --locked --extra dev mypy src
 
 Esperado: a ingestão direta cria/insere em um commit; dentro de lote, os resultados compartilham o snapshot do lote. Se algum teste antigo exigir contagem de snapshots intermediários de CREATE/ALTER, atualizar somente essa expectativa, preservando assertions de valores e de um snapshot por lote.
 
-- [ ] **5. Registrar a mudança.**
+- [x] **5. Registrar a mudança.**
 
 ```bash
 git add src/omnisus_db/lake/operations.py tests/unit/lake/test_transactions.py tests/unit/lake/test_ingest_performance.py
@@ -468,7 +472,7 @@ git commit -m "fix: finalize ingestion snapshots after commit"
 
 **Interfaces:** Consome `Lake.transaction()`, `Lake.is_usable` e `TransactionStateError`. Produz `ImportAbortedError(report: ImportReport, unresolved: tuple[tuple[int, ScopeKey], ...])`. Preserva `run_scopes(dataset, *, scopes, lake, concurrency=6, batch_size=24) -> ImportReport`.
 
-- [ ] **1. Adicionar o teste mínimo de A01 e o lote misto.**
+- [x] **1. Adicionar o teste mínimo de A01 e o lote misto.**
 
 ```python
 import asyncio
@@ -524,7 +528,7 @@ async def test_repeated_input_positions_are_preserved(tmp_path, monkeypatch, dbc
         assert lake.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()[0] == report.rows
 ```
 
-- [ ] **2. Executar e confirmar a falha de contabilidade.**
+- [x] **2. Executar e confirmar a falha de contabilidade.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_failures.py -q
@@ -532,7 +536,7 @@ uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_fa
 
 Esperado: o caso inválido único retorna outcomes vazios; o lote misto omite 2022. O controle de posições repetidas deve continuar passando depois da correção.
 
-- [ ] **3. Acrescentar a exceção depois de `ImportReport` em `_base.py`.** Importar/exportar o nome na API de topo, na lista existente de imports de `_base` e em `__all__`.
+- [x] **3. Acrescentar a exceção depois de `ImportReport` em `_base.py`.** Importar/exportar o nome na API de topo, na lista existente de imports de `_base` e em `__all__`.
 
 ```python
 class ImportAbortedError(RuntimeError):
@@ -550,7 +554,7 @@ class ImportAbortedError(RuntimeError):
         )
 ```
 
-- [ ] **4. Corrigir a fronteira de publicação no loop do runner.** Importar `ImportAbortedError` de `_base` e `TransactionStateError` de `lake._transactions`. Antes de `ingest_raw`, registrar o escopo; somente o resultado depois do `with` será publicado como `ok`.
+- [x] **4. Corrigir a fronteira de publicação no loop do runner.** Importar `ImportAbortedError` de `_base` e `TransactionStateError` de `lake._transactions`. Antes de `ingest_raw`, registrar o escopo; somente o resultado depois do `with` será publicado como `ok`.
 
 Inicializar `writing: set[int] = set()` ao lado de `batch` em cada iteração. Esse conjunto distingue erro de fetch de escopo que pode ter alterado a transação.
 
@@ -617,7 +621,7 @@ async def produce_all() -> None:
 
 A sentinela representa conclusão normal; a Task 4 adiciona observação de término anormal do produtor.
 
-- [ ] **5. Adicionar teste de confirmação perdida sem retry.**
+- [x] **5. Adicionar teste de confirmação perdida sem retry.**
 
 ```python
 @pytest.mark.asyncio
@@ -675,7 +679,7 @@ async def test_abort_keeps_previously_committed_progress(tmp_path, monkeypatch, 
         assert caught.value.unresolved == ((1, scopes[1]), (2, scopes[2]))
 ```
 
-- [ ] **6. Executar regressões e testes de tolerância existentes.**
+- [x] **6. Executar regressões e testes de tolerância existentes.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_failures.py tests/unit/sources/datasus_ftp/test_tolerance.py tests/unit/sources/datasus_ftp/test_runner_concurrency.py tests/unit/test_public_api.py -q
@@ -683,7 +687,7 @@ uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_fa
 
 Esperado: nenhuma omissão; contagem corresponde a dados confirmados; falha de COMMIT interrompe com exceção e progresso parcial, sem bloquear na limpeza do produtor.
 
-- [ ] **7. Registrar.**
+- [x] **7. Registrar.**
 
 ```bash
 git add src/omnisus_db/sources/_base.py src/omnisus_db/sources/datasus_ftp/_runner.py src/omnisus_db/__init__.py tests/unit/sources/datasus_ftp/test_runner_failures.py
@@ -696,7 +700,7 @@ git commit -m "fix: account for failed scopes and unknown commits"
 
 **Interfaces:** Consome a fila `asyncio.Queue[_Fetched | None]`, o produtor `asyncio.Task[None]` e `ImportAbortedError`. Produz `_next_fetched(queue, producer) -> _Fetched | None` e `_ProducerStoppedError(RuntimeError)` privados.
 
-- [ ] **1. Adicionar teste de produtor encerrado sem sentinela.**
+- [x] **1. Adicionar teste de produtor encerrado sem sentinela.**
 
 ```python
 @pytest.mark.asyncio
@@ -715,7 +719,7 @@ async def test_dead_producer_does_not_leave_queue_waiter():
     assert not (asyncio.all_tasks() - baseline)
 ```
 
-- [ ] **2. Executar antes de implementar.**
+- [x] **2. Executar antes de implementar.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_failures.py::test_dead_producer_does_not_leave_queue_waiter -q
@@ -723,7 +727,7 @@ uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_fa
 
 Esperado: helper inexistente. Esse teste especifica que a espera deve observar produtor e fila, não somente a disponibilidade de um item.
 
-- [ ] **3. Adicionar o helper e substituir `await queue.get()` do consumidor por `await _next_fetched(queue, producer)`.**
+- [x] **3. Adicionar o helper e substituir `await queue.get()` do consumidor por `await _next_fetched(queue, producer)`.**
 
 ```python
 class _ProducerStoppedError(RuntimeError):
@@ -776,7 +780,7 @@ if isinstance(exc, (TransactionStateError, _ProducerStoppedError)) or not lake.i
     raise ImportAbortedError(partial, unresolved) from exc
 ```
 
-- [ ] **4. Acrescentar teste de cancelamento com fila cheia após um commit.** O evento sincroniza o ponto de cancelamento; não usar um sleep de duração arbitrária para adivinhar quando a fila encheu.
+- [x] **4. Acrescentar teste de cancelamento com fila cheia após um commit.** O evento sincroniza o ponto de cancelamento; não usar um sleep de duração arbitrária para adivinhar quando a fila encheu.
 
 ```python
 @pytest.mark.asyncio
@@ -827,7 +831,7 @@ async def test_cancel_with_full_queue_preserves_previous_commit(
     assert not (asyncio.all_tasks() - baseline)
 ```
 
-- [ ] **5. Rodar testes de falha, concorrência e limites.**
+- [x] **5. Rodar testes de falha, concorrência e limites.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/datasus_ftp/test_runner_failures.py tests/unit/sources/datasus_ftp/test_runner_concurrency.py -q
@@ -837,7 +841,7 @@ uv run --locked --extra dev mypy src
 
 Esperado: os testes terminam, sem tarefas pendentes; os limites de fetch existentes continuam passando e o lote confirmado antes do cancelamento permanece íntegro.
 
-- [ ] **6. Registrar.**
+- [x] **6. Registrar.**
 
 ```bash
 git add src/omnisus_db/sources/datasus_ftp/_runner.py tests/unit/sources/datasus_ftp/test_runner_failures.py
@@ -850,7 +854,7 @@ git commit -m "fix: stop ingestion producers without queue deadlocks"
 
 **Interfaces:** Consome `Lake.in_transaction` e `Lake.transaction()`. Produz `_prepare_master_rows(records: list[dict]) -> list[tuple[str, str, str | None, str | None]]`. Preserva `_upsert_master(lake, records) -> None` e retorno inteiro do importador público.
 
-- [ ] **1. Acrescentar imports e regressões de perda de registro e conflito.** O arquivo existente já importa `httpx`, `respx`, `Lake` e `import_cnes_master`; adicionar `pytest` e `FaultyConnection`.
+- [x] **1. Acrescentar imports e regressões de perda de registro e conflito.** O arquivo existente já importa `httpx`, `respx`, `Lake` e `import_cnes_master`; adicionar `pytest` e `FaultyConnection`.
 
 ```python
 import pytest
@@ -891,7 +895,7 @@ def test_conflicting_records_are_rejected_before_delete(tmp_path):
         assert lake.connect().execute("SELECT nome FROM lake.cnes_master").fetchall() == [("OLD",)]
 ```
 
-- [ ] **2. Executar e confirmar a regressão de atomicidade.**
+- [x] **2. Executar e confirmar a regressão de atomicidade.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/cnes/test_master.py -k 'preserves_previous_record or conflicting_records' -q
@@ -899,7 +903,7 @@ uv run --locked --extra dev pytest tests/unit/sources/cnes/test_master.py -k 'pr
 
 Esperado: implementação antiga perde OLD no primeiro teste e não rejeita conflito no segundo.
 
-- [ ] **3. Preparar todos os valores antes da primeira mutação.** Adicionar `from contextlib import nullcontext` e este helper ao módulo CNES:
+- [x] **3. Preparar todos os valores antes da primeira mutação.** Adicionar `from contextlib import nullcontext` e este helper ao módulo CNES:
 
 ```python
 def _prepare_master_rows(
@@ -945,7 +949,7 @@ def _upsert_master(lake: Lake, records: list[dict]) -> None:
         )
 ```
 
-- [ ] **4. Agrupar a publicação pública depois do fetch.** Substituir o corpo de `with Lake.local(target) as lake:` em `import_cnes_master` pelo seguinte; manter assinatura e docstring, atualizando a descrição de atomicidade.
+- [x] **4. Agrupar a publicação pública depois do fetch.** Substituir o corpo de `with Lake.local(target) as lake:` em `import_cnes_master` pelo seguinte; manter assinatura e docstring, atualizando a descrição de atomicidade.
 
 ```python
 if codes is None:
@@ -968,7 +972,7 @@ return len(records)
 
 A validação repetida no helper protege também chamadores diretos de `_upsert_master`; não há consulta de rede adicional. O callback passa a contar códigos únicos, o que deve ser documentado.
 
-- [ ] **5. Adicionar controles de duplicidade e falha da visão.** Reutilizar `_api_url` e `_api_response` já definidos no arquivo de testes existente.
+- [x] **5. Adicionar controles de duplicidade e falha da visão.** Reutilizar `_api_url` e `_api_response` já definidos no arquivo de testes existente.
 
 ```python
 @respx.mock
@@ -1011,7 +1015,7 @@ def test_view_failure_rolls_back_master_refresh(tmp_path, monkeypatch):
         assert lake.connect().execute("SELECT nome FROM lake.cnes_master").fetchall() == [("OLD",)]
 ```
 
-- [ ] **6. Executar a suíte CNES e os testes de transação.**
+- [x] **6. Executar a suíte CNES e os testes de transação.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/sources/cnes/test_master.py tests/unit/lake/test_transactions.py -q
@@ -1020,7 +1024,7 @@ uv run --locked --extra dev mypy src
 
 Esperado: refresh completo ou preservação de OLD; falhas HTTP continuam sem apagar dados anteriores; duplicidades não ampliam a tabela. Não alterar a regra temporal da visão.
 
-- [ ] **7. Registrar.**
+- [x] **7. Registrar.**
 
 ```bash
 git add src/omnisus_db/sources/cnes/importers/master.py tests/unit/sources/cnes/test_master.py
@@ -1033,7 +1037,7 @@ git commit -m "fix: publish CNES master refresh atomically"
 
 **Interfaces:** Consome `odb.ImportAbortedError.report` e `.unresolved`. Preserva comando `omnisus-db import`, retorno `ImportReport` em conclusão normal e código de saída 1 para falha/interrupção.
 
-- [ ] **1. Adicionar um teste real de CLI com DBC inválido e um teste do novo erro público.** O arquivo existente já contém `runner = CliRunner()` e `app`.
+- [x] **1. Adicionar um teste real de CLI com DBC inválido e um teste do novo erro público.** O arquivo existente já contém `runner = CliRunner()` e `app`.
 
 ```python
 def test_import_invalid_dbc_exits_nonzero(monkeypatch, tmp_path):
@@ -1072,7 +1076,7 @@ def test_import_abort_prints_partial_progress(monkeypatch, tmp_path):
     assert "imported" not in result.stdout
 ```
 
-- [ ] **2. Rodar os testes antes de tratar a exceção na CLI.**
+- [x] **2. Rodar os testes antes de tratar a exceção na CLI.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/cli/test_main.py -k 'invalid_dbc or abort_prints' -q
@@ -1080,7 +1084,7 @@ uv run --locked --extra dev pytest tests/unit/cli/test_main.py -k 'invalid_dbc o
 
 Esperado: o controle DBC passa pela Task 3; o teste de texto de interrupção falha, pois a CLI ainda não apresenta progresso parcial.
 
-- [ ] **3. Envolver somente a chamada dos importadores FTP em `try/except`.** Substituir o bloco `if d.name == "cnes_st"` imediatamente antes do resumo:
+- [x] **3. Envolver somente a chamada dos importadores FTP em `try/except`.** Substituir o bloco `if d.name == "cnes_st"` imediatamente antes do resumo:
 
 ```python
 try:
@@ -1108,7 +1112,7 @@ console.print(
 )
 ```
 
-- [ ] **4. Documentar o contrato onde o usuário lê os resultados.** Acrescentar ao guia `docs/guides/inventory.md`:
+- [x] **4. Documentar o contrato onde o usuário lê os resultados.** Acrescentar ao guia `docs/guides/inventory.md`:
 
 ````markdown
 ## Transactions and interrupted imports
@@ -1172,7 +1176,7 @@ Em `CHANGELOG.md`, registrar o efeito concreto:
   explicit codes are fetched once, and conflicting prepared records are rejected.
 ```
 
-- [ ] **5. Verificar CLI, API e documentação.**
+- [x] **5. Verificar CLI, API e documentação.**
 
 ```bash
 uv run --locked --extra dev pytest tests/unit/cli tests/unit/test_public_api.py -q
@@ -1182,7 +1186,7 @@ uv run --locked python scripts/gen_datasets_doc.py --check
 
 Esperado: nenhuma mudança nas assinaturas de importação; erro novo exportado; documentação compila e contagens da CLI refletem outcomes.
 
-- [ ] **6. Registrar.**
+- [x] **6. Registrar.**
 
 ```bash
 git add src/omnisus_db/cli/main.py src/omnisus_db/__init__.py docs/guides/inventory.md CHANGELOG.md tests/unit/cli/test_main.py tests/unit/test_public_api.py
@@ -1193,8 +1197,8 @@ git commit -m "fix: expose interrupted import progress in CLI and API"
 
 Esta seção é o gate de integração das seis tarefas, não uma tarefa de refatoração adicional. Só marcar concluída depois de executar os comandos sobre o estado final.
 
-- [ ] Confirmar que cada teste novo falhou pela razão esperada antes de sua correção; não usar os diagnósticos históricos como substitutos das regressões.
-- [ ] Executar os checks globais:
+- [x] Confirmar RED/GREEN das novas regressões, distinguindo controles de comportamento já implementado que devem permanecer verdes; não usar os diagnósticos históricos como substitutos das regressões.
+- [x] Executar os checks globais:
 
 ```bash
 uv sync --locked --all-extras
@@ -1210,14 +1214,14 @@ uv lock --check
 git diff --check
 ```
 
-- [ ] Executar a mesma seleção em Python 3.12, mantendo o ambiente principal em 3.13:
+- [x] Executar a mesma seleção em Python 3.12, mantendo o ambiente principal em 3.13:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=/private/tmp/omnisus-d1-py312 uv sync --locked --all-extras --python 3.12
 /private/tmp/omnisus-d1-py312/bin/pytest -m "not e2e and not perf" --cov=omnisus_db --cov-fail-under=85
 ```
 
-- [ ] Validar wheel limpo no Python 3.12:
+- [x] Validar wheel limpo no Python 3.12:
 
 ```bash
 uv venv --python 3.12 /private/tmp/omnisus-d1-wheel312
@@ -1228,8 +1232,8 @@ uv pip check --python /private/tmp/omnisus-d1-wheel312
 
 O nome 0.1.0 é a versão atual em `src/omnisus_db/_version.py`; se outra entrega tiver alterado esse arquivo, usar o nome efetivamente produzido por `uv build`, sem alterar a versão para satisfazer este comando. Não certificar Windows/Linux a partir da execução macOS: os jobs existentes devem passar nos respectivos sistemas.
 
-- [ ] Registrar commit, hashes de `src`, `pyproject.toml` e `uv.lock`, versões carregadas, comandos, contagem de testes, falhas e skips em novo arquivo de evidência. Preservar os anexos anteriores.
-- [ ] Revisar o diff final para garantir que não alterou append, fontes IBGE, tipos canônicos, retenção ou política de múltiplos escritores.
+- [x] Registrar commit, hashes de `src`, `pyproject.toml` e `uv.lock`, versões carregadas, comandos, contagem de testes, falhas e skips em novo arquivo de evidência. Preservar os anexos anteriores.
+- [x] Revisar o diff final para garantir que não alterou append, fontes IBGE, tipos canônicos, retenção ou política de múltiplos escritores.
 
 ## Cobertura da especificação e revisão do plano
 
@@ -1243,6 +1247,6 @@ O nome 0.1.0 é a versão atual em `src/omnisus_db/_version.py`; se outra entreg
 | 11–13: CNES atômico e duplicidades | Task 5 |
 | 14: compatibilidade e checks | Task 6 e gate de integração |
 
-Interfaces entre tarefas usam os mesmos nomes da spec. Os códigos apresentados são propostas de implementação e regressão; não foram aplicados a `src` ou `tests` durante o planejamento. A única implementação concluída antes deste plano foi a atualização de dependências.
+Interfaces entre tarefas usam os mesmos nomes da spec. Os códigos apresentados eram propostas durante o planejamento; a execução foi concluída e revisada, com ajustes registrados no relatório de implementação. A atualização de dependências antecedeu este plano. O código efetivamente validado e as evidências finais prevalecem sobre os exemplos originais.
 
 Próximos planos independentes: D2 para produto populacional IBGE; D3 para manutenção e URIs; D4 para tipos e visão CNES; D5 para reprocessamento/proveniência e eventual exclusividade entre processos; D6 para memória e desempenho. Não incorporar essas frentes durante a execução desta entrega sem rever seu escopo.
