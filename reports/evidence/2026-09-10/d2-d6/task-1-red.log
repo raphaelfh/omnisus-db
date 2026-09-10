@@ -1,0 +1,936 @@
+FFFFFFFFFFFFFFFFFFF                                                      [100%]
+=================================== FAILURES ===================================
+_____________________________ test_empty_rejected ______________________________
+
+    def test_empty_rejected():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/sources/ibge/test_parse.py:20: Failed
+___________________ test_official_products[202-2010-census] ____________________
+
+table = 202, year = 2010, product = 'census'
+
+    @pytest.mark.parametrize('table,year,product', [(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    def test_official_products(table, year, product):
+>       frame=parse(payload(table), year, product)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:25:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [{'id': '2', ...io', 'categoria': {...}}], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2010, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+___________________ test_official_products[4714-2022-census] ___________________
+
+table = 4714, year = 2022, product = 'census'
+
+    @pytest.mark.parametrize('table,year,product', [(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    def test_official_products(table, year, product):
+>       frame=parse(payload(table), year, product)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:25:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+__________________ test_official_products[6579-2026-estimate] __________________
+
+table = 6579, year = 2026, product = 'estimate'
+
+    @pytest.mark.parametrize('table,year,product', [(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    def test_official_products(table, year, product):
+>       frame=parse(payload(table), year, product)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:25:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '9324', 'variavel': 'População residente estimada', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2026, product = 'estimate'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_rejects_invalid_source[variable] _____________________
+
+kind = 'variable'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '9324', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+______________________ test_rejects_invalid_source[unit] _______________________
+
+kind = 'unit'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': '%', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+______________________ test_rejects_invalid_source[level] ______________________
+
+kind = 'level'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+______________________ test_rejects_invalid_source[year] _______________________
+
+kind = 'year'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+______________________ test_rejects_invalid_source[code] _______________________
+
+kind = 'code'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_rejects_invalid_source[duplicate] ____________________
+
+kind = 'duplicate'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+_____________________ test_rejects_invalid_source[missing] _____________________
+
+kind = 'missing'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+__________________ test_rejects_invalid_source[extra_result] ___________________
+
+kind = 'extra_result'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series':...]}, {'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_rejects_invalid_source[category] _____________________
+
+kind = 'category'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [{'id': '2', 'categoria': {...}}], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+_____________________ test_rejects_invalid_source[symbol] ______________________
+
+kind = 'symbol'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_rejects_invalid_source[negative] _____________________
+
+kind = 'negative'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+_____________________ test_rejects_invalid_source[decimal] _____________________
+
+kind = 'decimal'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_rejects_invalid_source[overflow] _____________________
+
+kind = 'overflow'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+__________________ test_rejects_invalid_source[empty_series] ___________________
+
+kind = 'empty_series'
+
+    @pytest.mark.parametrize('kind', ['variable','unit','level','year','code','duplicate','missing','extra_result','category','symbol','negative','decimal','overflow','empty_series'])
+    def test_rejects_invalid_source(kind):
+        body=payload(); result=body[0]['resultados'][0]; series=result['series']
+        if kind=='variable': body[0]['id']='9324'
+        if kind=='unit': body[0]['unidade']='%'
+        if kind=='level': series[0]['localidade']['nivel']['id']='N3'
+        if kind=='year': series[0]['serie']={'2021':'100'}
+        if kind=='code': series[0]['localidade']['id']='110001'
+        if kind=='duplicate': series.append(copy.deepcopy(series[0]))
+        if kind=='missing': series.pop()
+        if kind=='extra_result': body[0]['resultados'].append(copy.deepcopy(result))
+        if kind=='category': result['classificacoes']=[{'id':'2','categoria':{'4':'Homens'}}]
+        if kind in ['symbol','negative','decimal','overflow']:
+            series[0]['serie']['2022']={'symbol':'...','negative':'-1','decimal':'1.5','overflow':str(2**64)}[kind]
+        if kind=='empty_series': result['series']=[]
+>       with pytest.raises(ValueError): parse(body)
+                                        ^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [], 'series': []}]}]
+year = 2022, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+____________________ test_census_requires_total_categories _____________________
+
+    def test_census_requires_total_categories():
+        body=payload(202);body[0]['resultados'][0]['classificacoes'][0]['categoria']={'4':'Homens'}
+>       with pytest.raises(ValueError): parse(body,2010)
+                                        ^^^^^^^^^^^^^^^^
+
+tests/unit/sources/ibge/test_parse.py:49:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+body = [{'id': '93', 'variavel': 'População residente', 'unidade': 'Pessoas', 'resultados': [{'classificacoes': [{'id': '2', ...io', 'categoria': {...}}], 'series': [{'localidade': {...}, 'serie': {...}}, {'localidade': {...}, 'serie': {...}}]}]}]
+year = 2010, product = 'census'
+
+    def parse(body, year=2022, product='census'):
+>       return pop_json_to_lazyframe(body, year=year, product=product,
+                                     expected_codes={'1100015', '1100023'}).collect()
+E       TypeError: pop_json_to_lazyframe() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_parse.py:16: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/sources/ibge/test_parse.py::test_empty_rejected - Failed: D...
+FAILED tests/unit/sources/ibge/test_parse.py::test_official_products[202-2010-census]
+FAILED tests/unit/sources/ibge/test_parse.py::test_official_products[4714-2022-census]
+FAILED tests/unit/sources/ibge/test_parse.py::test_official_products[6579-2026-estimate]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[variable]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[unit]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[level]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[year]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[code]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[duplicate]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[missing]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[extra_result]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[category]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[symbol]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[negative]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[decimal]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[overflow]
+FAILED tests/unit/sources/ibge/test_parse.py::test_rejects_invalid_source[empty_series]
+FAILED tests/unit/sources/ibge/test_parse.py::test_census_requires_total_categories
+19 failed in 0.31s
+FFFFFFFFFFFFFFF                                                          [100%]
+=================================== FAILURES ===================================
+____________________ test_validated_fetch[202-2010-census] _____________________
+
+table = 202, year = 2010, product = 'census'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('table,year,product',[(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    async def test_validated_fetch(table,year,product):
+        setup_source(table,year)
+>       publication=await fetch_pop_by_year(year,product=product)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:31: TypeError
+____________________ test_validated_fetch[4714-2022-census] ____________________
+
+table = 4714, year = 2022, product = 'census'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('table,year,product',[(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    async def test_validated_fetch(table,year,product):
+        setup_source(table,year)
+>       publication=await fetch_pop_by_year(year,product=product)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:31: TypeError
+___________________ test_validated_fetch[6579-2026-estimate] ___________________
+
+table = 6579, year = 2026, product = 'estimate'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('table,year,product',[(202,2010,'census'),(4714,2022,'census'),(6579,2026,'estimate')])
+    async def test_validated_fetch(table,year,product):
+        setup_source(table,year)
+>       publication=await fetch_pop_by_year(year,product=product)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:31: TypeError
+___________________ test_invalid_control_documents[metadata] ___________________
+
+kind = 'metadata'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+____________________ test_invalid_control_documents[period] ____________________
+
+kind = 'period'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+___________________ test_invalid_control_documents[universe] ___________________
+
+kind = 'universe'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+______________ test_invalid_control_documents[duplicate_universe] ______________
+
+kind = 'duplicate_universe'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+___________________ test_invalid_control_documents[revision] ___________________
+
+kind = 'revision'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+_____________________ test_invalid_control_documents[http] _____________________
+
+kind = 'http'
+
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize('kind',['metadata','period','universe','duplicate_universe','revision','http'])
+    async def test_invalid_control_documents(kind):
+        routes=setup_source()
+        if kind=='metadata': routes['metadados'].respond(200,json={'id':4714})
+        if kind=='period': routes['periodos'].respond(200,json=[])
+        if kind=='universe': routes['localidades/N6'].respond(200,json=[])
+        if kind=='duplicate_universe': routes['localidades/N6'].respond(200,json=[{'id':'1100015','nivel':{'id':'N6'}}]*2)
+        if kind=='revision': routes['periodos'].respond(200,json=[{'id':'2022'}])
+        if kind=='http': routes['metadados'].respond(503)
+        with pytest.raises((ValueError,httpx.HTTPStatusError)):
+>           await fetch_pop_by_year(2022,product='census')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:49: TypeError
+___________ test_estimate_unavailable_year_does_not_switch_to_census ___________
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_estimate_unavailable_year_does_not_switch_to_census():
+        setup_source(6579,2022)
+        with pytest.raises(ValueError,match='available|unavailable'):
+>           await fetch_pop_by_year(2022,product='estimate')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:56: TypeError
+______________ test_estimate_old_edition_requires_vetted_universe ______________
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_estimate_old_edition_requires_vetted_universe():
+        setup_source(6579,2024)
+        with pytest.raises(ValueError,match='universe'):
+>           await fetch_pop_by_year(2024,product='estimate')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:63: TypeError
+__________________ test_unsupported_product_year[2007-census] __________________
+
+year = 2007, product = 'census'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('year,product',[(2007,'census'),(2023,'estimate'),(2024,'bad'),(True,'estimate')])
+    async def test_unsupported_product_year(year,product):
+>       with pytest.raises(ValueError): await fetch_pop_by_year(year,product=product)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:68: TypeError
+_________________ test_unsupported_product_year[2023-estimate] _________________
+
+year = 2023, product = 'estimate'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('year,product',[(2007,'census'),(2023,'estimate'),(2024,'bad'),(True,'estimate')])
+    async def test_unsupported_product_year(year,product):
+>       with pytest.raises(ValueError): await fetch_pop_by_year(year,product=product)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:68: TypeError
+___________________ test_unsupported_product_year[2024-bad] ____________________
+
+year = 2024, product = 'bad'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('year,product',[(2007,'census'),(2023,'estimate'),(2024,'bad'),(True,'estimate')])
+    async def test_unsupported_product_year(year,product):
+>       with pytest.raises(ValueError): await fetch_pop_by_year(year,product=product)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:68: TypeError
+_________________ test_unsupported_product_year[True-estimate] _________________
+
+year = True, product = 'estimate'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('year,product',[(2007,'census'),(2023,'estimate'),(2024,'bad'),(True,'estimate')])
+    async def test_unsupported_product_year(year,product):
+>       with pytest.raises(ValueError): await fetch_pop_by_year(year,product=product)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: fetch_pop_by_year() got an unexpected keyword argument 'product'
+
+tests/unit/sources/ibge/test_fetch.py:68: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/sources/ibge/test_fetch.py::test_validated_fetch[202-2010-census]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_validated_fetch[4714-2022-census]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_validated_fetch[6579-2026-estimate]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[metadata]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[period]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[universe]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[duplicate_universe]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[revision]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_invalid_control_documents[http]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_estimate_unavailable_year_does_not_switch_to_census
+FAILED tests/unit/sources/ibge/test_fetch.py::test_estimate_old_edition_requires_vetted_universe
+FAILED tests/unit/sources/ibge/test_fetch.py::test_unsupported_product_year[2007-census]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_unsupported_product_year[2023-estimate]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_unsupported_product_year[2024-bad]
+FAILED tests/unit/sources/ibge/test_fetch.py::test_unsupported_product_year[True-estimate]
+15 failed in 0.28s
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+___________________________ test_import_ibge_pop_e2e ___________________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-235/test_import_ibge_pop_e2e0')
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_import_ibge_pop_e2e(tmp_path):
+        mock_source(); lake=Lake.local(f'ducklake:{tmp_path}/test.ducklake')
+        try:
+>           result=await import_pop_year(year=2022,product='census',lake=lake)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: import_pop_year() got an unexpected keyword argument 'product'
+
+tests/integration/test_ibge_pop_e2e.py:27: TypeError
+______ test_manifest_failure_rolls_back_data_and_keeps_prior_publication _______
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-235/test_manifest_failure_rolls_ba0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10af00fc0>
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_manifest_failure_rolls_back_data_and_keeps_prior_publication(tmp_path,monkeypatch):
+        mock_source(); lake=Lake.local(f'ducklake:{tmp_path}/atomic.ducklake')
+        try:
+>           await import_pop_year(year=2022,product='census',lake=lake)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: import_pop_year() got an unexpected keyword argument 'product'
+
+tests/integration/test_ibge_pop_e2e.py:44: TypeError
+____________ test_legacy_table_is_preserved_and_requires_migration _____________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-235/test_legacy_table_is_preserved0')
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_legacy_table_is_preserved_and_requires_migration(tmp_path):
+        mock_source();lake=Lake.local(f'ducklake:{tmp_path}/legacy.ducklake')
+        try:
+            lake.ingest('ibge_pop',pl.DataFrame({'sentinel':[42]}).lazy())
+            with pytest.raises(ValueError,match='legacy|migration'):
+>               await import_pop_year(year=2022,product='census',lake=lake)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: import_pop_year() got an unexpected keyword argument 'product'
+
+tests/integration/test_ibge_pop_e2e.py:64: TypeError
+_ test_append_preserves_publications_and_compatibility_view_refuses_ambiguity __
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-235/test_append_preserves_publicat0')
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_append_preserves_publications_and_compatibility_view_refuses_ambiguity(tmp_path):
+        mock_source();lake=Lake.local(f'ducklake:{tmp_path}/append.ducklake')
+        try:
+>           for _ in range(2): await import_pop_year(year=2022,product='census',lake=lake)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: import_pop_year() got an unexpected keyword argument 'product'
+
+tests/integration/test_ibge_pop_e2e.py:75: TypeError
+_____________________ test_empty_http_payload_never_writes _____________________
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-235/test_empty_http_payload_never_0')
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_empty_http_payload_never_writes(tmp_path):
+        route=mock_source();route.respond(200,json=[])
+        lake=Lake.local(f'ducklake:{tmp_path}/empty.ducklake')
+        try:
+>           with pytest.raises(ValueError): await import_pop_year(year=2022,product='census',lake=lake)
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: import_pop_year() got an unexpected keyword argument 'product'
+
+tests/integration/test_ibge_pop_e2e.py:88: TypeError
+=========================== short test summary info ============================
+FAILED tests/integration/test_ibge_pop_e2e.py::test_import_ibge_pop_e2e - Typ...
+FAILED tests/integration/test_ibge_pop_e2e.py::test_manifest_failure_rolls_back_data_and_keeps_prior_publication
+FAILED tests/integration/test_ibge_pop_e2e.py::test_legacy_table_is_preserved_and_requires_migration
+FAILED tests/integration/test_ibge_pop_e2e.py::test_append_preserves_publications_and_compatibility_view_refuses_ambiguity
+FAILED tests/integration/test_ibge_pop_e2e.py::test_empty_http_payload_never_writes
+5 failed in 0.44s

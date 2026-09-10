@@ -1,0 +1,19 @@
+import asyncio,tempfile
+from pathlib import Path
+from omnisus_db.sources.datasus_ftp import _runner
+from omnisus_db.sources._base import ScopeKey,ImportAbortedError
+from omnisus_db.lake import Lake
+from tests.helpers.connection_faults import FaultyConnection
+raw=Path('tests/fixtures/dbc/sim_rr_2023_mini.dbc').read_bytes()
+async def fetch(**kw): return raw
+async def main():
+    _runner.fetch_dbc_bytes=fetch
+    with tempfile.TemporaryDirectory() as tmp:
+        target=f'ducklake:{tmp}/p.ducklake'
+        with Lake.local(target) as lake:
+            lake._con=FaultyConnection(lake.connect(),after={'COMMIT':RuntimeError('confirmation lost')})
+            try: await _runner.run_scopes('sim_do',scopes=[ScopeKey(uf='RR',ano=2023)]*2,lake=lake,concurrency=1,batch_size=2,policy='skip_same',run_id='lost')
+            except ImportAbortedError as exc:
+                print('determined',len(exc.report.outcomes),'unresolved',[i for i,_ in exc.unresolved])
+        with Lake.local(target) as lake: print('durable_publications',len(lake.publications(run_id='lost')))
+asyncio.run(main())

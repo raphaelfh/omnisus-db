@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, Lake
+from omnisus_db.lake.publication import ImportPolicy
 from omnisus_db.sources._base import (
     ImportAbortedError,
     ImportReport,
@@ -20,6 +21,10 @@ from omnisus_db.sources.datasus_ftp._runner import (
 )
 from omnisus_db.sources.datasus_ftp._runner import run_scopes as _run_scopes_ftp
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
+from omnisus_db.sources.datasus_ftp.fetch import (
+    DEFAULT_MAX_INFLIGHT_BYTES,
+    DEFAULT_MAX_PAYLOAD_BYTES,
+)
 from omnisus_db.sources.datasus_ftp.inventory import (
     FtpEntry,
     FtpPathNotFound,
@@ -108,6 +113,10 @@ def import_dataset(
     target: str = DEFAULT_TARGET,
     concurrency: int = DEFAULT_CONCURRENCY,
     batch_size: int = DEFAULT_BATCH_SIZE,
+    policy: ImportPolicy = "append",
+    run_id: str | None = None,
+    max_payload_bytes: int = DEFAULT_MAX_PAYLOAD_BYTES,
+    max_inflight_bytes: int = DEFAULT_MAX_INFLIGHT_BYTES,
 ) -> ImportReport:
     """Import the given scopes of any DATASUS-FTP dataset into the lake.
 
@@ -135,6 +144,16 @@ def import_dataset(
     scopes share one DuckLake transaction, and therefore one snapshot.
     DATASUS FTP is a shared public resource — raise ``concurrency`` only with
     reason.
+
+    ``policy`` defaults to ``append``; managed scopes also support ``skip_same``,
+    ``error_if_exists`` and ``replace``. A legacy scope without a trustworthy
+    publication manifest cannot use these other policies. Supply ``run_id``
+    before starting to reconcile an unknown commit through ``Lake.publications``.
+
+    ``max_payload_bytes`` limits each compressed download (default 512 MiB).
+    ``max_inflight_bytes`` reserves space for compressed downloads until consumed
+    (default 1 GiB). These are payload limits, not a bound on total process RSS;
+    DBC decompression still materializes the complete DBF.
     """
     d = resolve(dataset)
 
@@ -146,6 +165,10 @@ def import_dataset(
                 lake=lake,
                 concurrency=concurrency,
                 batch_size=batch_size,
+                policy=policy,
+                run_id=run_id,
+                max_payload_bytes=max_payload_bytes,
+                max_inflight_bytes=max_inflight_bytes,
             )
 
     return asyncio.run(run())
@@ -193,19 +216,26 @@ def import_sih(
 def import_ibge_pop(
     *,
     years: Iterable[int] | None = None,
+    product: str | None = None,
     target: str = DEFAULT_TARGET,
 ) -> list[ImportResult]:
-    """Import IBGE population estimates for the given years."""
+    """Import explicit IBGE ``estimate`` or ``census`` population editions.
+
+    Requires explicit years and product. Historical estimates need a verified
+    territorial universe and are unavailable; only the aggregate's latest
+    edition is accepted. Census editions supported: 2010 and 2022. Each result
+    carries a publication_id linked to the canonical data and source manifest.
+    """
     from omnisus_db.sources.ibge.importers.pop import import_pop_year
 
-    if years is None:
-        years = range(2010, 2026)
+    if years is None or product is None:
+        raise ValueError("provide explicit years and product='estimate' or product='census'")
 
     async def run() -> list[ImportResult]:
         results: list[ImportResult] = []
         with Lake.local(target) as lake:
             for y in years:
-                results.append(await import_pop_year(year=y, lake=lake))
+                results.append(await import_pop_year(year=y, lake=lake, product=product))
         return results
 
     return asyncio.run(run())
@@ -218,6 +248,10 @@ def import_cnes_st(
     ufs: Sequence[str] | None = None,
     scopes: Sequence[ScopeKey] | None = None,
     target: str = DEFAULT_TARGET,
+    policy: ImportPolicy = "append",
+    run_id: str | None = None,
+    max_payload_bytes: int = DEFAULT_MAX_PAYLOAD_BYTES,
+    max_inflight_bytes: int = DEFAULT_MAX_INFLIGHT_BYTES,
 ) -> ImportReport:
     """Import CNES-ST (estabelecimentos), monthly, then refresh ``aux_cnes``.
 
@@ -236,7 +270,15 @@ def import_cnes_st(
     if scopes is None:
         assert years is not None, "the check above guarantees this"
         scopes = scopes_for("cnes_st", years=years, ufs=ufs, months=months)
-    report = import_dataset("cnes_st", scopes=scopes, target=target)
+    report = import_dataset(
+        "cnes_st",
+        scopes=scopes,
+        target=target,
+        policy=policy,
+        run_id=run_id,
+        max_payload_bytes=max_payload_bytes,
+        max_inflight_bytes=max_inflight_bytes,
+    )
     with Lake.local(target) as lake:
         lake.ensure_aux_cnes_view()
     return report

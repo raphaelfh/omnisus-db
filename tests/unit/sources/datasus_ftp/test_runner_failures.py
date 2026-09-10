@@ -82,8 +82,8 @@ async def test_producer_failure_marks_rolled_back_write_as_determined(
 
     real_ingest = _runner.ingest_raw
 
-    def observe_first_write(dataset, scope, payload, lake):
-        result = real_ingest(dataset, scope, payload, lake)
+    def observe_first_write(dataset, scope, payload, lake, **kwargs):
+        result = real_ingest(dataset, scope, payload, lake, **kwargs)
         if scope.ano == 2021:
             first_written.set()
         return result

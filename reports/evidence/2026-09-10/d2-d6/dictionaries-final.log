@@ -1,0 +1,21 @@
+─────────────────────────────────── Dataset ────────────────────────────────────
+                                    dataset
+┏━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ name           ┃ type ┃ path                                        ┃ status ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ aux_cid10      │ json │ src/omnisus_db/data/dicionarios/aux_cid10.… │ VALID  │
+│ aux_municipios │ json │ src/omnisus_db/data/dicionarios/aux_munici… │ VALID  │
+│ aux_uf         │ json │ src/omnisus_db/data/dicionarios/aux_uf.yaml │ VALID  │
+│ cnes_st        │ json │ src/omnisus_db/data/dicionarios/cnes_st.ya… │ VALID  │
+│ ibge_pop       │ json │ src/omnisus_db/data/dicionarios/ibge_pop.y… │ VALID  │
+│ sia_abo        │ json │ src/omnisus_db/data/dicionarios/sia_abo.ya… │ VALID  │
+│ sia_ad         │ json │ src/omnisus_db/data/dicionarios/sia_ad.yaml │ VALID  │
+│ sia_am         │ json │ src/omnisus_db/data/dicionarios/sia_am.yaml │ VALID  │
+│ sia_aq         │ json │ src/omnisus_db/data/dicionarios/sia_aq.yaml │ VALID  │
+│ sia_atd        │ json │ src/omnisus_db/data/dicionarios/sia_atd.ya… │ VALID  │
+│ sia_bi         │ json │ src/omnisus_db/data/dicionarios/sia_bi.yaml │ VALID  │
+│ sia_ps         │ json │ src/omnisus_db/data/dicionarios/sia_ps.yaml │ VALID  │
+│ sih_rd         │ json │ src/omnisus_db/data/dicionarios/sih_rd.yaml │ VALID  │
+│ sim_do         │ json │ src/omnisus_db/data/dicionarios/sim_do.yaml │ VALID  │
+│ sinasc_nv      │ json │ src/omnisus_db/data/dicionarios/sinasc_nv.… │ VALID  │
+└────────────────┴──────┴─────────────────────────────────────────────┴────────┘

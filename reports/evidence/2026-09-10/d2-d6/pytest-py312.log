@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/d2-d6
+configfile: pyproject.toml
+testpaths: tests
+plugins: asyncio-1.4.0, benchmark-5.3.0, typeguard-4.6.0, anyio-4.15.1, respx-0.23.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 530 items / 47 deselected / 483 selected
+
+tests/integration/test_cnes_e2e.py .                                     [  0%]
+tests/integration/test_ibge_pop_e2e.py .........                         [  2%]
+tests/integration/test_sia_bi_e2e.py .                                   [  2%]
+tests/integration/test_sih_e2e.py .                                      [  2%]
+tests/integration/test_sim_e2e.py .                                      [  2%]
+tests/integration/test_sinasc_e2e.py .                                   [  2%]
+tests/unit/cli/test_inventory_cmd.py .........                           [  4%]
+tests/unit/cli/test_main.py .............................                [ 10%]
+tests/unit/lake/test_bootstrap.py ..                                     [ 11%]
+tests/unit/lake/test_catalog.py ....                                     [ 12%]
+tests/unit/lake/test_connection.py ....                                  [ 12%]
+tests/unit/lake/test_ingest_performance.py ...........                   [ 15%]
+tests/unit/lake/test_maintenance.py ........                             [ 16%]
+tests/unit/lake/test_operations.py ..........                            [ 18%]
+tests/unit/lake/test_publication.py .........                            [ 20%]
+tests/unit/lake/test_schema.py ......                                    [ 21%]
+tests/unit/lake/test_schema_safety.py ........                           [ 23%]
+tests/unit/lake/test_sink.py ...                                         [ 24%]
+tests/unit/lake/test_transactions.py ........................            [ 29%]
+tests/unit/sources/cnes/test_master.py ..............                    [ 32%]
+tests/unit/sources/datasus_ftp/test_available.py .....................   [ 36%]
+tests/unit/sources/datasus_ftp/test_datasets.py ................         [ 39%]
+tests/unit/sources/datasus_ftp/test_fetch.py .........                   [ 41%]
+tests/unit/sources/datasus_ftp/test_filenames.py ..........              [ 43%]
+tests/unit/sources/datasus_ftp/test_integrity.py .....                   [ 44%]
+tests/unit/sources/datasus_ftp/test_inventory_cache.py ................. [ 48%]
+                                                                         [ 48%]
+tests/unit/sources/datasus_ftp/test_list_dir.py ........                 [ 49%]
+tests/unit/sources/datasus_ftp/test_msdos_parsing.py ..................  [ 53%]
+tests/unit/sources/datasus_ftp/test_parse.py .....                       [ 54%]
+tests/unit/sources/datasus_ftp/test_resource_limits.py ..........        [ 56%]
+tests/unit/sources/datasus_ftp/test_runner.py .......                    [ 58%]
+tests/unit/sources/datasus_ftp/test_runner_concurrency.py ......         [ 59%]
+tests/unit/sources/datasus_ftp/test_runner_failures.py ..........        [ 61%]
+tests/unit/sources/datasus_ftp/test_sia_apac.py ........................ [ 66%]
+............                                                             [ 68%]
+tests/unit/sources/datasus_ftp/test_sia_bi.py .......                    [ 70%]
+tests/unit/sources/datasus_ftp/test_staging.py ..........                [ 72%]
+tests/unit/sources/datasus_ftp/test_tolerance.py ......                  [ 73%]
+tests/unit/sources/ibge/test_fetch.py .....................              [ 78%]
+tests/unit/sources/ibge/test_parse.py ...................                [ 81%]
+tests/unit/sources/test_base.py ...                                      [ 82%]
+tests/unit/test_public_api.py .........................                  [ 87%]
+tests/unit/test_registry_consistency.py ..........                       [ 89%]
+tests/unit/transforms/test_cns.py .......                                [ 91%]
+tests/unit/transforms/test_codes.py ...                                  [ 91%]
+tests/unit/transforms/test_dictionaries.py ............................. [ 97%]
+                                                                         [ 97%]
+tests/unit/transforms/test_pandera_interop.py ..........                 [100%]
+
+=============================== warnings summary ===============================
+tests/unit/lake/test_transactions.py::test_commit_failure_invalidates_handle[before]
+tests/unit/lake/test_transactions.py::test_commit_failure_invalidates_handle[after]
+  /Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/d2-d6/tests/unit/lake/test_transactions.py:93: DeprecationWarning: vacuum is deprecated; use cleanup_files with an explicit cutoff
+    operation()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============== 483 passed, 47 deselected, 2 warnings in 44.28s ================

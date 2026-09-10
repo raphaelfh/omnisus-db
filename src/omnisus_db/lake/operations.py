@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import re
 from typing import TYPE_CHECKING, Self
 
 import duckdb
@@ -16,6 +15,7 @@ from omnisus_db.lake._transactions import (
 )
 from omnisus_db.lake.catalog import CatalogURI, parse_target
 from omnisus_db.lake.connection import close_connection, make_connection
+from omnisus_db.lake.sql import qualified, quote_identifier, quote_literal
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -25,8 +25,6 @@ if TYPE_CHECKING:
     from omnisus_db.sources._base import ImportResult
 
 logger = structlog.get_logger(__name__)
-
-_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class Lake:
@@ -50,11 +48,18 @@ class Lake:
         self._columns: dict[str, set[str]] = {}
         """Known column names per table, so schema reconciliation does not
         re-query the catalog for every scope."""
-        self._con = make_connection(
-            catalog_uri=target.catalog_uri,
-            storage_root=target.storage_root,
-            alias=alias,
-        )
+        from omnisus_db.lake.locking import WriterLock
+
+        self._writer_lock = WriterLock(target.catalog_uri)
+        try:
+            self._con = make_connection(
+                catalog_uri=target.catalog_uri,
+                storage_root=target.storage_root,
+                alias=alias,
+            )
+        except BaseException:
+            self._writer_lock.close()
+            raise
 
     @classmethod
     def local(cls, target: str) -> Self:
@@ -66,8 +71,7 @@ class Lake:
         """Open a Postgres-backed cloud DuckLake."""
         if not catalog.startswith(("postgresql://", "postgres://")):
             raise ValueError("cloud catalog must be postgresql://")
-        target_str = f"ducklake:{catalog}?storage={storage}"
-        return cls(target=parse_target(target_str))
+        return cls(target=CatalogURI(catalog_uri=catalog, storage_root=storage))
 
     @property
     def alias(self) -> str:
@@ -99,7 +103,7 @@ class Lake:
             f"""
             SELECT table_name
             FROM information_schema.tables
-            WHERE table_catalog = '{self._alias}'
+            WHERE table_catalog = {quote_literal(self._alias)}
             ORDER BY table_name
             """
         ).fetchall()
@@ -122,7 +126,7 @@ class Lake:
         rows = self._con.execute(
             f"""
             SELECT snapshot_id, snapshot_time::VARCHAR, changes::VARCHAR
-            FROM ducklake_snapshots('{self._alias}')
+            FROM ducklake_snapshots({quote_literal(self._alias)})
             ORDER BY snapshot_id
             """
         ).fetchall()
@@ -200,26 +204,48 @@ class Lake:
             self._columns.clear()
             self._ensured.clear()
 
-    def optimize(self, table: str) -> None:
-        """Legacy compaction wrapper calling ``ducklake_compact_files``.
+    def optimize(self, table: str) -> list[dict]:
+        """Compact table files, retaining historical snapshots."""
+        from omnisus_db.lake.maintenance import run_maintenance
 
-        Maintenance compatibility with the pinned extension remains outside
-        the validated ingestion contract; see the separate maintenance work.
-        """
-        self.connect()
-        self._con.execute(f"CALL ducklake_compact_files('{self._alias}', '{table}')")
+        return run_maintenance(self.connect(), alias=self._alias, operation="compact", table=table)
 
-    def vacuum(self, *, older_than: str = "30 days") -> None:
-        """Legacy wrapper for ``ducklake_cleanup_old_files``.
+    def expire_snapshots(self, *, older_than, dry_run: bool = True) -> list[dict]:
+        """Expire history before a timezone-aware datetime; simulate by default."""
+        from omnisus_db.lake.maintenance import run_maintenance
 
-        This call does not expire snapshots. Its interval argument and extension
-        compatibility require the separate maintenance repair before relying on it.
-        """
-        self.connect()
-        self._con.execute(
-            f"CALL ducklake_cleanup_old_files('{self._alias}', "
-            f"older_than => INTERVAL '{older_than}')"
+        return run_maintenance(
+            self.connect(),
+            alias=self._alias,
+            operation="expire",
+            older_than=older_than,
+            dry_run=dry_run,
         )
+
+    def cleanup_files(self, *, older_than, dry_run: bool = True) -> list[dict]:
+        """Clean obsolete files before a timezone-aware cutoff; simulate by default."""
+        from omnisus_db.lake.maintenance import run_maintenance
+
+        return run_maintenance(
+            self.connect(),
+            alias=self._alias,
+            operation="cleanup",
+            older_than=older_than,
+            dry_run=dry_run,
+        )
+
+    def vacuum(self, *, older_than: str = "30 days") -> list[dict]:
+        """Deprecated cleanup wrapper. This operation does not expire history."""
+        import warnings
+
+        from omnisus_db.lake.maintenance import interval_cutoff
+
+        warnings.warn(
+            "vacuum is deprecated; use cleanup_files with an explicit cutoff",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.cleanup_files(older_than=interval_cutoff(older_than), dry_run=False)
 
     def bootstrap_auxiliares(self) -> None:
         """Load aux_* tables from the packaged bootstrap.zip.
@@ -245,8 +271,8 @@ class Lake:
                     tmp_path = tmp.name
                 try:
                     self._con.execute(
-                        f"CREATE OR REPLACE TABLE {self._alias}.{table} AS "
-                        f"SELECT * FROM read_parquet('{tmp_path}')"
+                        f"CREATE OR REPLACE TABLE {qualified(self._alias, table)} AS "
+                        f"SELECT * FROM read_parquet({quote_literal(tmp_path)})"
                     )
                 finally:
                     os.unlink(tmp_path)
@@ -273,36 +299,46 @@ class Lake:
         if "cnes_st" not in tables:
             return False
 
+        operational = qualified(self._alias, "cnes_st")
+        view = qualified(self._alias, "aux_cnes")
         if "cnes_master" in tables:
             nome_select = "m.nome"
-            join_clause = f"LEFT JOIN {self._alias}.cnes_master m USING (cnes)"
+            join_clause = f"LEFT JOIN {qualified(self._alias, 'cnes_master')} m USING (cnes)"
         else:
             nome_select = "CAST(NULL AS VARCHAR) AS nome"
             join_clause = ""
 
-        self._con.execute(
-            f"""
-            CREATE OR REPLACE VIEW {self._alias}.aux_cnes AS
-            WITH latest AS (
-                SELECT
-                    cnes,
-                    ARG_MAX(tp_unid,  ano * 100 + mes) AS tp_unid,
-                    ARG_MAX(codufmun, ano * 100 + mes) AS codufmun,
-                    MAX(ano * 100 + mes) AS yyyymm_max
-                FROM {self._alias}.cnes_st
-                WHERE cnes IS NOT NULL
-                GROUP BY cnes
+        # Select all rows at the latest competence. Identical repeated imports
+        # can collapse in this view; conflicting rows must never be picked by
+        # incidental load order. The guard remains in the view for later inserts.
+        latest_cte = f"""
+            WITH ranked AS (
+                SELECT cnes, tp_unid, codufmun, CAST(ano AS INTEGER) * 100 + CAST(mes AS INTEGER) AS yyyymm_max,
+                       DENSE_RANK() OVER (PARTITION BY cnes ORDER BY ano DESC NULLS LAST, mes DESC NULLS LAST) AS rank
+                FROM {operational} WHERE cnes IS NOT NULL
+            ), latest AS (
+                SELECT DISTINCT cnes, tp_unid, codufmun, yyyymm_max FROM ranked WHERE rank=1
+            ), checked AS (
+                SELECT *, COUNT(*) OVER (PARTITION BY cnes) AS variants FROM latest
             )
-            SELECT
-                latest.cnes,
-                {nome_select},
-                latest.tp_unid,
-                latest.codufmun,
-                latest.yyyymm_max
-            FROM latest
-            {join_clause}
-            """
-        )
+        """
+        conflict = self._con.execute(
+            latest_cte
+            + "SELECT cnes FROM checked WHERE variants > 1 OR yyyymm_max IS NULL LIMIT 1"
+        ).fetchone()
+        if conflict:
+            raise ValueError(
+                "ambiguous or conflicting latest CNES rows; reconcile source versions before refreshing"
+            )
+        self._con.execute(f"""
+            CREATE OR REPLACE VIEW {view} AS
+            {latest_cte}
+            SELECT CASE WHEN variants != 1 OR yyyymm_max IS NULL
+                        THEN error('conflicting latest CNES rows') ELSE checked.cnes END AS cnes,
+                   {nome_select}, checked.tp_unid, checked.codufmun, checked.yyyymm_max
+            FROM checked {join_clause}
+            WHERE CASE WHEN variants != 1 OR yyyymm_max IS NULL THEN error('conflicting latest CNES rows') ELSE true END
+        """)
         return True
 
     def _staging_columns(self, staging: str) -> list[tuple[str, str]]:
@@ -310,7 +346,7 @@ class Lake:
         return [
             (str(name), str(dtype))
             for name, dtype, *_ in self._con.execute(
-                f"DESCRIBE SELECT * FROM read_parquet('{staging}')"
+                f"DESCRIBE SELECT * FROM read_parquet({quote_literal(str(staging))})"
             ).fetchall()
         ]
 
@@ -319,7 +355,7 @@ class Lake:
             rows = self._con.execute(
                 """
                 SELECT column_name FROM information_schema.columns
-                WHERE table_catalog = ? AND table_name = ?
+                WHERE table_catalog = ? AND table_schema = 'main' AND table_name = ?
                 """,
                 [self._alias, table],
             ).fetchall()
@@ -339,25 +375,48 @@ class Lake:
         """
         if table not in set(self.tables()):
             self._con.execute(
-                f"CREATE TABLE {self._alias}.{table} AS "
-                f"SELECT * FROM read_parquet('{staging}') WHERE 1=0"
+                f"CREATE TABLE {qualified(self._alias, table)} AS "
+                f"SELECT * FROM read_parquet({quote_literal(str(staging))}) WHERE 1=0"
             )
             if partition_by:
-                bad = [c for c in partition_by if not _IDENTIFIER.match(c)]
-                if bad:
-                    raise ValueError(f"partition_by must be plain identifiers; got {bad}")
-                cols = ", ".join(partition_by)
-                self._con.execute(f"ALTER TABLE {self._alias}.{table} SET PARTITIONED BY ({cols})")
+                cols = ", ".join(quote_identifier(c) for c in partition_by)
+                self._con.execute(
+                    f"ALTER TABLE {qualified(self._alias, table)} SET PARTITIONED BY ({cols})"
+                )
             self._columns.pop(table, None)
             self._ensured.add(table)
             return
 
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        from omnisus_db.lake.schema import compatible_type
+
         known = self._table_columns(table)
-        missing = [(n, t) for n, t in self._staging_columns(staging) if n not in known]
+        existing_types = dict(
+            self._con.execute(
+                "SELECT column_name, data_type FROM information_schema.columns WHERE table_catalog = ? AND table_schema = 'main' AND table_name = ?",
+                [self._alias, table],
+            ).fetchall()
+        )
+        incoming = self._staging_columns(staging)
+        null_fields = {f.name for f in pq.read_schema(staging) if pa.types.is_null(f.type)}
+        promotions = []
+        # Validate ALL shared columns before altering any of them.
+        for name, dtype in incoming:
+            if name in existing_types and name not in null_fields:
+                target_type = compatible_type(existing_types[name], dtype)
+                if target_type != existing_types[name]:
+                    promotions.append((name, target_type))
+        for name, dtype in promotions:
+            self._con.execute(
+                f"ALTER TABLE {qualified(self._alias, table)} ALTER COLUMN {quote_identifier(name)} SET TYPE {dtype}"
+            )
+        missing = [(n, t) for n, t in incoming if n not in known]
         for name, dtype in missing:
-            if not _IDENTIFIER.match(name):
-                raise ValueError(f"refusing to add a non-identifier column: {name!r}")
-            self._con.execute(f"ALTER TABLE {self._alias}.{table} ADD COLUMN {name} {dtype}")
+            self._con.execute(
+                f"ALTER TABLE {qualified(self._alias, table)} ADD COLUMN {quote_identifier(name)} {dtype}"
+            )
             known.add(name)
         if missing:
             logger.info(
@@ -391,52 +450,70 @@ class Lake:
         import time
         from pathlib import Path
 
-        from omnisus_db.sources._base import ImportResult
-
         self.connect()
         if not self.in_transaction:
             with self.transaction():
                 return self.ingest(table, lazyframe, partition_by=partition_by)
-
-        t0 = time.monotonic()
+        start = time.monotonic()
         with tempfile.TemporaryDirectory(prefix="omnisus-staging-") as tmp:
-            staging = Path(tmp) / f"{table}.parquet"
-            lazyframe.sink_parquet(
-                staging,
-                row_group_size=1_000_000,
-                compression="zstd",
-            )
-            bytes_written = staging.stat().st_size
+            staging = Path(tmp) / "data.parquet"
+            lazyframe.sink_parquet(staging, row_group_size=1_000_000, compression="zstd")
+            result = self.ingest_parquet(table, staging, partition_by=partition_by)
+        result.duration_seconds = time.monotonic() - start
+        return result
 
-            self._ensure_table(table, str(staging), partition_by)
-            # BY NAME, not positional: eras differ in both column count and
-            # order, and a column this era lacks must land as NULL rather than
-            # shifting every value one place to the left.
-            # INSERT reports its own row count, so the separate
-            # SELECT count(*) over the same staging file is pure waste.
-            inserted = self._con.execute(
-                f"INSERT INTO {self._alias}.{table} BY NAME "
-                f"SELECT * FROM read_parquet('{staging}')"
-            ).fetchone()
-            rows = 0 if inserted is None else int(inserted[0])
+    def ingest_parquet(
+        self, table: str, staging, *, partition_by: tuple[str, ...] = ()
+    ) -> ImportResult:
+        """Append an existing validated staging file without rewriting it."""
+        import time
+        from pathlib import Path
 
-        duration = time.monotonic() - t0
+        from omnisus_db.sources._base import ImportResult
 
+        self.connect()
+        staging = Path(staging)
+        if not self.in_transaction:
+            with self.transaction():
+                return self.ingest_parquet(table, staging, partition_by=partition_by)
+        start = time.monotonic()
+        self._ensure_table(table, str(staging), partition_by)
+        inserted = self._con.execute(
+            f"INSERT INTO {qualified(self._alias, table)} BY NAME SELECT * FROM read_parquet({quote_literal(str(staging))})"
+        ).fetchone()
         result = ImportResult(
-            rows=int(rows),
-            bytes_written=int(bytes_written),
-            duration_seconds=duration,
-            snapshot_id=None,
+            rows=0 if inserted is None else int(inserted[0]),
+            bytes_written=staging.stat().st_size,
+            duration_seconds=time.monotonic() - start,
         )
         self._pending_results.append(result)
         return result
+
+    def publish_scope(self, table: str, staging, **kwargs) -> ImportResult | None:
+        """Publish a validated source scope with an explicit replay policy."""
+        from omnisus_db.lake.publication import publish_scope
+
+        return publish_scope(self, table, staging, **kwargs)
+
+    def publications(self, *, run_id: str | None = None) -> list[dict]:
+        """Read durable publication IDs, including after an unknown commit outcome."""
+        from omnisus_db.lake.publication import publications
+
+        return publications(self, run_id=run_id)
+
+    def attempts(self, *, run_id: str | None = None) -> list[dict]:
+        """Read failed attempts recorded after known data rollbacks."""
+        from omnisus_db.lake.publication import attempts
+
+        return attempts(self, run_id=run_id)
 
     def close(self) -> None:
         if self._closed:
             return
         try:
-            close_connection(self._con)
+            close_connection(self._con, self._alias)
         finally:
+            self._writer_lock.close()
             self._closed = True
             self._columns.clear()
             self._ensured.clear()

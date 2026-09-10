@@ -60,7 +60,7 @@ def init(
     ),
 ) -> None:
     """Initialize a new lake and load auxiliary tables."""
-    console.print(f"[bold]Initializing[/bold] lake at {target}")
+    console.print("[bold]Initializing[/bold] lake")
     with Lake.local(target) as lake:
         lake.bootstrap_auxiliares()
         tables = lake.tables()
@@ -84,6 +84,17 @@ def import_cmd(
             "or 'inventory' (ask the server first, import only what exists)."
         ),
     ),
+    product: str | None = typer.Option(
+        None, "--population-product", help="IBGE only: estimate or census"
+    ),
+    policy: str = typer.Option(
+        "append", "--policy", help="FTP: append, skip_same, error_if_exists, replace"
+    ),
+    run_id: str | None = typer.Option(
+        None, "--run-id", help="Durable FTP operation identity for reconciliation"
+    ),
+    max_payload_bytes: int = typer.Option(512 * 1024 * 1024, "--max-payload-bytes"),
+    max_inflight_bytes: int = typer.Option(1024 * 1024 * 1024, "--max-inflight-bytes"),
     target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
 ) -> None:
     """Import a dataset into the lake.
@@ -92,7 +103,13 @@ def import_cmd(
     or when ImportAbortedError interrupts the run. Skipped scopes alone do not
     fail the run. Invalid arguments and other exceptions can also exit non-zero.
     """
+    from typing import cast
+
     import omnisus_db as odb
+    from omnisus_db.lake.publication import ImportPolicy, validate_policy
+
+    validate_policy(policy)
+    import_policy = cast(ImportPolicy, policy)
 
     non_ftp_importers: dict[str, Callable[..., list[odb.ImportResult]]] = {
         "ibge_pop": lambda **kw: odb.import_ibge_pop(**kw),
@@ -116,7 +133,11 @@ def import_cmd(
     if dataset in _NON_FTP:
         name = _NON_FTP[dataset]
         importer = non_ftp_importers[name]
-        results = importer(years=yrs, target=target)
+        if policy != "append" or run_id is not None:
+            raise typer.BadParameter(
+                "--policy and --run-id are FTP-only; IBGE publications retain their own provenance"
+            )
+        results = importer(years=yrs, product=product, target=target)
         total_rows = sum(r.rows for r in results)
         console.print(
             f"[green]:heavy_check_mark:[/green] imported [bold]{total_rows:,}[/bold] rows "
@@ -135,9 +156,24 @@ def import_cmd(
         if d.name == "cnes_st":
             # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
             # It takes the planned scopes, so --plan reaches this branch too.
-            report = odb.import_cnes_st(scopes=scopes, target=target)
+            report = odb.import_cnes_st(
+                scopes=scopes,
+                target=target,
+                policy=import_policy,
+                run_id=run_id,
+                max_payload_bytes=max_payload_bytes,
+                max_inflight_bytes=max_inflight_bytes,
+            )
         else:
-            report = odb.import_dataset(d, scopes=scopes, target=target)
+            report = odb.import_dataset(
+                d,
+                scopes=scopes,
+                target=target,
+                policy=import_policy,
+                run_id=run_id,
+                max_payload_bytes=max_payload_bytes,
+                max_inflight_bytes=max_inflight_bytes,
+            )
     except odb.ImportAbortedError as exc:
         console.print(
             "[red]import interrupted[/red]: "
@@ -332,10 +368,8 @@ def lake_optimize_cmd(
         try:
             lake.optimize(table)
         except Exception as exc:
-            # ducklake_compact_files can be a no-op or noisy on tiny tables;
-            # surface the message but do not fail the CLI.
-            console.print(f"[yellow]optimize note:[/yellow] {exc}")
-            return
+            console.print(f"[red]optimize failed:[/red] {exc}")
+            raise typer.Exit(1) from exc
     console.print(f"[green]:heavy_check_mark:[/green] optimized {table}")
 
 
@@ -344,10 +378,12 @@ def lake_vacuum_cmd(
     older_than: str = typer.Option("30 days", "--older-than"),
     target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
 ) -> None:
-    """Drop snapshots older than the given interval."""
+    """Deprecated: remove obsolete files, retaining snapshots."""
     with Lake.local(target) as lake:
         lake.vacuum(older_than=older_than)
-    console.print(f"[green]:heavy_check_mark:[/green] vacuumed snapshots older than {older_than}")
+    console.print(
+        f"[green]:heavy_check_mark:[/green] cleaned obsolete files older than {older_than}"
+    )
 
 
 @lake_app.command(name="update-auxiliares")
@@ -380,6 +416,43 @@ def doctor() -> None:
         console.print("[green]:heavy_check_mark:[/green] ducklake extension OK")
     except Exception as exc:
         console.print(f"[red]x[/red] ducklake load failed: {exc}")
+
+
+def _maintenance_command(operation: str, before: str, dry_run: bool, target: str) -> None:
+    from datetime import datetime
+
+    try:
+        cutoff = datetime.fromisoformat(before)
+        with Lake.local(target) as lake:
+            method = lake.expire_snapshots if operation == "expire" else lake.cleanup_files
+            results = method(older_than=cutoff, dry_run=dry_run)
+    except Exception as exc:
+        console.print(f"[red]Maintenance failed:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    label = "simulation" if dry_run else "executed"
+    console.print(f"{operation}: {label}, {len(results)} result(s)")
+
+
+@lake_app.command(name="expire-snapshots")
+def lake_expire_snapshots_cmd(
+    before: str = typer.Option(..., "--before", help="ISO datetime with timezone; history cutoff"),
+    dry_run: bool = typer.Option(True, "--dry-run/--execute"),
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Expire historical snapshots. Simulates unless --execute is supplied."""
+    _maintenance_command("expire", before, dry_run, target)
+
+
+@lake_app.command(name="cleanup-files")
+def lake_cleanup_files_cmd(
+    before: str = typer.Option(
+        ..., "--before", help="ISO datetime with timezone; obsolete-file cutoff"
+    ),
+    dry_run: bool = typer.Option(True, "--dry-run/--execute"),
+    target: str = typer.Option(DEFAULT_TARGET, "--target", "-t"),
+) -> None:
+    """Remove obsolete files. Simulates unless --execute is supplied."""
+    _maintenance_command("cleanup", before, dry_run, target)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,9 @@ from pathlib import Path
 
 import duckdb
 
-SUPPORTED_CATALOG_SCHEMES = ("sqlite", "postgresql", "duckdb")
+from omnisus_db.lake.sql import quote_identifier, quote_literal
+
+SUPPORTED_CATALOG_SCHEMES = ("sqlite", "postgresql", "postgres", "duckdb")
 
 
 def make_connection(
@@ -33,19 +35,26 @@ def make_connection(
     if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
         Path(storage_root).mkdir(parents=True, exist_ok=True)
 
+    quoted_alias = quote_identifier(alias)
     con = duckdb.connect(":memory:")
-    con.execute("INSTALL ducklake; LOAD ducklake;")
-    con.execute(f"ATTACH 'ducklake:{catalog_uri}' AS {alias} (DATA_PATH '{storage_root}')")
-    # DuckLake rewrites every ingested Parquet with its own writer settings and
-    # does not inherit the staging file's compression. Without this, lake files
-    # come out ~3.3x larger than the zstd staging (spec §5.2 item 5). Files
-    # already in a lake keep their size until compacted.
-    con.execute(f"CALL {alias}.set_option('parquet_compression', 'zstd')")
+    try:
+        con.execute("INSTALL ducklake; LOAD ducklake;")
+        con.execute(
+            f"ATTACH {quote_literal('ducklake:' + catalog_uri)} AS {quoted_alias} (DATA_PATH {quote_literal(storage_root)})"
+        )
+        con.execute(f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')")
+    except BaseException as exc:
+        con.close()
+        if scheme in ("postgres", "postgresql") and isinstance(exc, Exception):
+            raise duckdb.ConnectionException(
+                "could not attach remote DuckLake catalog; check connection settings"
+            ) from None
+        raise
     return con
 
 
-def close_connection(con: duckdb.DuckDBPyConnection) -> None:
+def close_connection(con: duckdb.DuckDBPyConnection, alias: str = "lake") -> None:
     """Detach + close cleanly."""
     with contextlib.suppress(duckdb.Error):
-        con.execute("DETACH lake")
+        con.execute(f"DETACH {quote_identifier(alias)}")
     con.close()

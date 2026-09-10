@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import unquote_plus, urlsplit, urlunsplit
 
 
 @dataclass(frozen=True)
@@ -27,17 +27,28 @@ def parse_target(target: str) -> CatalogURI:
             -> storage at ``s3://bucket/lake``
     """
     if not target.startswith("ducklake:"):
-        raise ValueError(f"target must start with 'ducklake:' (got: {target!r})")
+        raise ValueError("target must start with 'ducklake:'")
     body = target[len("ducklake:") :]
 
     if body.startswith(("postgresql://", "postgres://")):
-        split = urlsplit(body)
-        params = parse_qs(split.query)
-        storage = params.get("storage", [None])[0]
-        if not storage:
-            raise ValueError("postgres target requires ?storage=<path or s3 uri>")
-        clean_url = body.split("?", 1)[0]
-        return CatalogURI(catalog_uri=clean_url, storage_root=storage)
+        try:
+            split = urlsplit(body)
+        except ValueError:
+            raise ValueError("invalid postgres target URI") from None
+        storage = []
+        kept = []
+        for part in split.query.split("&"):
+            key, _, value = part.partition("=")
+            if unquote_plus(key) == "storage":
+                storage.append(unquote_plus(value))
+            elif part:
+                kept.append(part)
+        if len(storage) != 1 or not storage[0]:
+            raise ValueError("postgres target requires exactly one ?storage=<path or s3 uri>")
+        clean_url = urlunsplit(
+            (split.scheme, split.netloc, split.path, "&".join(kept), split.fragment)
+        )
+        return CatalogURI(catalog_uri=clean_url, storage_root=storage[0])
 
     storage_path = Path(body).expanduser().resolve()
     catalog_path = storage_path.with_name(storage_path.stem + "-catalog.sqlite")

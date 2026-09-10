@@ -28,6 +28,7 @@ nav:
   - Guides:
       - Getting Started: guides/getting-started.md
       - Knowing what exists: guides/inventory.md
+      - Reprocessing and maintenance: guides/reprocessing-and-maintenance.md
       - Migration from PySUS: guides/migration-from-pysus.md
   - Datasets: datasets.md
   - API reference: api.md

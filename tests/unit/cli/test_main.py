@@ -19,6 +19,21 @@ def test_app_help_lists_top_level_commands() -> None:
         assert verb in result.stdout
 
 
+def test_init_does_not_echo_connection_credentials(monkeypatch) -> None:
+    class UnavailableLake:
+        @staticmethod
+        def local(target):
+            raise ValueError("controlled connection failure")
+
+    monkeypatch.setattr("omnisus_db.cli.main.Lake", UnavailableLake)
+    result = runner.invoke(
+        app,
+        ["init", "--target", "ducklake:postgresql://user:secret@host/db?storage=s3://bucket"],
+    )
+    assert result.exit_code != 0
+    assert "secret" not in result.output
+
+
 def test_init_creates_lake_and_loads_auxiliares(tmp_path: Path) -> None:
     target = f"ducklake:{tmp_path}/omnisus.ducklake"
     result = runner.invoke(app, ["init", "--target", target])
@@ -397,3 +412,34 @@ def test_an_unknown_plan_is_rejected() -> None:
     result = runner.invoke(app, ["import", "sim", "--year", "2023", "--plan", "bogus"])
     assert result.exit_code != 0
     assert "inventory" in result.output and "product" in result.output
+
+
+def test_explicit_maintenance_dry_run_and_cli_failures(tmp_path):
+    target = f"ducklake:{tmp_path}/maintenance.ducklake"
+    runner.invoke(app, ["init", "--target", target])
+    for operation in ("expire-snapshots", "cleanup-files"):
+        result = runner.invoke(
+            app, ["lake", operation, "--before", "2000-01-01T00:00:00+00:00", "--target", target]
+        )
+        assert result.exit_code == 0, result.output
+        assert "simulation" in result.output.lower()
+        invalid = runner.invoke(
+            app, ["lake", operation, "--before", "2000-01-01", "--target", target]
+        )
+        assert invalid.exit_code != 0
+
+
+def test_module_entrypoint_registers_maintenance_commands():
+    import os
+    import subprocess
+    import sys
+
+    env = dict(os.environ, PYTHONPATH="src")
+    result = subprocess.run(
+        [sys.executable, "-m", "omnisus_db.cli.main", "lake", "expire-snapshots", "--help"],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=15,
+    )
+    assert result.returncode == 0, result.stderr

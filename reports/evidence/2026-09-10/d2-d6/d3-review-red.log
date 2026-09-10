@@ -1,0 +1,38 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______________ test_invalid_uri_error_does_not_expose_credentials ______________
+
+    def test_invalid_uri_error_does_not_expose_credentials():
+        with pytest.raises(ValueError) as error:
+            parse_target('ducklake:postgresql://user:SENTINEL_PASSWORD@host＃/db?storage=s3://b')
+>       assert 'SENTINEL_PASSWORD' not in str(error.value)
+E       assert 'SENTINEL_PASSWORD' not in "netloc 'use...ormalization"
+E
+E         'SENTINEL_PASSWORD' is contained here:
+E           netloc 'user:SENTINEL_PASSWORD@host＃' contains invalid characters under NFKC normalization
+E         ?              +++++++++++++++++
+
+tests/unit/lake/test_maintenance.py:88: AssertionError
+____________ test_module_entrypoint_registers_maintenance_commands _____________
+
+    def test_module_entrypoint_registers_maintenance_commands():
+        import os
+        import subprocess
+        import sys
+        env=dict(os.environ, PYTHONPATH='src')
+        result=subprocess.run([sys.executable,'-m','omnisus_db.cli.main','lake','expire-snapshots','--help'],capture_output=True,text=True,env=env,timeout=15)
+>       assert result.returncode==0, result.stderr
+E       AssertionError: Usage: python -m omnisus_db.cli.main lake [OPTIONS] COMMAND [ARGS]...
+E         Try 'python -m omnisus_db.cli.main lake --help' for help.
+E         ╭─ Error ──────────────────────────────────────────────────────────────────────╮
+E         │ No such command 'expire-snapshots'. Did you mean 'snapshots'?                │
+E         ╰──────────────────────────────────────────────────────────────────────────────╯
+E
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['/Users/raphael/PycharmProjects/omnisus-db/.claude/worktrees/d2-d6/.venv/bin/python', '-m', 'om...ean 'snapshots'?                │\n╰──────────────────────────────────────────────────────────────────────────────╯\n").returncode
+
+tests/unit/cli/test_main.py:423: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/lake/test_maintenance.py::test_invalid_uri_error_does_not_expose_credentials
+FAILED tests/unit/cli/test_main.py::test_module_entrypoint_registers_maintenance_commands
+2 failed in 1.75s

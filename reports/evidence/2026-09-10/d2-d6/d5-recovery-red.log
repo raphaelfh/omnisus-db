@@ -1,0 +1,30 @@
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+____________ test_failed_managed_attempt_is_durable_after_rollback _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b18f490>
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-252/test_failed_managed_attempt_is0')
+dbc_fixture = <function dbc_fixture.<locals>._resolve at 0x10b4d9b20>
+
+    def test_failed_managed_attempt_is_durable_after_rollback(monkeypatch,tmp_path,dbc_fixture):
+        raw=dbc_fixture('sim_rr_2023_mini').read_bytes()
+        async def fake(**kw): return raw
+        monkeypatch.setattr('omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes',fake)
+        target=f'ducklake:{tmp_path}/attempt.ducklake'
+        kw=dict(scopes=[ScopeKey(uf='RR',ano=2023)],target=target)
+        first=import_dataset('sim_do',**kw)
+        failed=import_dataset('sim_do',policy='error_if_exists',run_id='failed-attempt',**kw)
+        assert len(failed.failed)==1
+        with Lake.local(target) as lake:
+>           attempts=lake.attempts(run_id='failed-attempt')
+                     ^^^^^^^^^^^^^
+E           AttributeError: 'Lake' object has no attribute 'attempts'
+
+tests/unit/sources/datasus_ftp/test_resource_limits.py:69: AttributeError
+----------------------------- Captured stdout call -----------------------------
+2026-09-10 12:31:42 [info     ] run_scopes.done                dataset=sim_do failed=0 ok=1 rows=3311 skipped=0
+2026-09-10 12:31:43 [warning  ] run_scopes.batch_failed        dataset=sim_do error='source scope already exists'
+2026-09-10 12:31:43 [info     ] run_scopes.done                dataset=sim_do failed=1 ok=0 rows=0 skipped=0
+=========================== short test summary info ============================
+FAILED tests/unit/sources/datasus_ftp/test_resource_limits.py::test_failed_managed_attempt_is_durable_after_rollback
+1 failed, 2 passed in 0.97s

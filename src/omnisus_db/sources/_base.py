@@ -31,6 +31,9 @@ class ImportResult:
     bytes_written: int
     duration_seconds: float
     snapshot_id: int | None = None
+    run_id: str | None = None
+    batch_id: str | None = None
+    publication_id: str | None = None
 
 
 ScopeStatus = Literal["ok", "skipped", "failed"]
@@ -69,6 +72,7 @@ class ImportReport:
     """
 
     outcomes: tuple[ScopeOutcome, ...]
+    run_id: str | None = None
 
     @property
     def rows(self) -> int:

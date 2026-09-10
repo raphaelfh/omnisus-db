@@ -1,0 +1,121 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_manifest_separates_population_reference_from_revision_and_unknown_dates[202-2010-census-2010-08-01-01/02/2019] _
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-258/test_manifest_separates_popula0')
+table = 202, year = 2010, product = 'census', reference = '2010-08-01'
+revision = '01/02/2019'
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize(
+        'table,year,product,reference,revision',
+        [(202, 2010, 'census', '2010-08-01', '01/02/2019'),
+         (4714, 2022, 'census', '2022-08-01', '07/05/2026'),
+         (6579, 2026, 'estimate', '2026-07-01', '28/08/2026')],
+    )
+    async def test_manifest_separates_population_reference_from_revision_and_unknown_dates(
+        tmp_path, table, year, product, reference, revision
+    ):
+        from tests.unit.sources.ibge.test_fetch import setup_source
+
+        setup_source(table, year)
+        lake = Lake.local(f'ducklake:{tmp_path}/dates.ducklake')
+        try:
+            await import_pop_year(year=year, product=product, lake=lake)
+>           row = lake.connect().execute(
+                'SELECT population_reference_date::VARCHAR, '
+                'population_reference_source_url, population_reference_note, '
+                'territorial_reference_date, publication_date, temporal_metadata_note, '
+                'source_revision, collected_at, period '
+                'FROM lake.ibge_population_manifest'
+            ).fetchone()
+E           _duckdb.BinderException: Binder Error: Referenced column "population_reference_date" not found in FROM clause!
+E           Candidate bindings: "publication_id", "source", "ano", "url", "parser_version"
+E
+E           LINE 1: SELECT population_reference_date::VARCHAR, population_reference_so...
+E                          ^
+
+tests/integration/test_ibge_pop_e2e.py:178: BinderException
+_ test_manifest_separates_population_reference_from_revision_and_unknown_dates[4714-2022-census-2022-08-01-07/05/2026] _
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-258/test_manifest_separates_popula1')
+table = 4714, year = 2022, product = 'census', reference = '2022-08-01'
+revision = '07/05/2026'
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize(
+        'table,year,product,reference,revision',
+        [(202, 2010, 'census', '2010-08-01', '01/02/2019'),
+         (4714, 2022, 'census', '2022-08-01', '07/05/2026'),
+         (6579, 2026, 'estimate', '2026-07-01', '28/08/2026')],
+    )
+    async def test_manifest_separates_population_reference_from_revision_and_unknown_dates(
+        tmp_path, table, year, product, reference, revision
+    ):
+        from tests.unit.sources.ibge.test_fetch import setup_source
+
+        setup_source(table, year)
+        lake = Lake.local(f'ducklake:{tmp_path}/dates.ducklake')
+        try:
+            await import_pop_year(year=year, product=product, lake=lake)
+>           row = lake.connect().execute(
+                'SELECT population_reference_date::VARCHAR, '
+                'population_reference_source_url, population_reference_note, '
+                'territorial_reference_date, publication_date, temporal_metadata_note, '
+                'source_revision, collected_at, period '
+                'FROM lake.ibge_population_manifest'
+            ).fetchone()
+E           _duckdb.BinderException: Binder Error: Referenced column "population_reference_date" not found in FROM clause!
+E           Candidate bindings: "publication_id", "source", "ano", "url", "parser_version"
+E
+E           LINE 1: SELECT population_reference_date::VARCHAR, population_reference_so...
+E                          ^
+
+tests/integration/test_ibge_pop_e2e.py:178: BinderException
+_ test_manifest_separates_population_reference_from_revision_and_unknown_dates[6579-2026-estimate-2026-07-01-28/08/2026] _
+
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-258/test_manifest_separates_popula2')
+table = 6579, year = 2026, product = 'estimate', reference = '2026-07-01'
+revision = '28/08/2026'
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    @respx.mock
+    @pytest.mark.parametrize(
+        'table,year,product,reference,revision',
+        [(202, 2010, 'census', '2010-08-01', '01/02/2019'),
+         (4714, 2022, 'census', '2022-08-01', '07/05/2026'),
+         (6579, 2026, 'estimate', '2026-07-01', '28/08/2026')],
+    )
+    async def test_manifest_separates_population_reference_from_revision_and_unknown_dates(
+        tmp_path, table, year, product, reference, revision
+    ):
+        from tests.unit.sources.ibge.test_fetch import setup_source
+
+        setup_source(table, year)
+        lake = Lake.local(f'ducklake:{tmp_path}/dates.ducklake')
+        try:
+            await import_pop_year(year=year, product=product, lake=lake)
+>           row = lake.connect().execute(
+                'SELECT population_reference_date::VARCHAR, '
+                'population_reference_source_url, population_reference_note, '
+                'territorial_reference_date, publication_date, temporal_metadata_note, '
+                'source_revision, collected_at, period '
+                'FROM lake.ibge_population_manifest'
+            ).fetchone()
+E           _duckdb.BinderException: Binder Error: Referenced column "population_reference_date" not found in FROM clause!
+E           Candidate bindings: "publication_id", "source", "ano", "url", "parser_version"
+E
+E           LINE 1: SELECT population_reference_date::VARCHAR, population_reference_so...
+E                          ^
+
+tests/integration/test_ibge_pop_e2e.py:178: BinderException
+=========================== short test summary info ============================
+FAILED tests/integration/test_ibge_pop_e2e.py::test_manifest_separates_population_reference_from_revision_and_unknown_dates[202-2010-census-2010-08-01-01/02/2019]
+FAILED tests/integration/test_ibge_pop_e2e.py::test_manifest_separates_population_reference_from_revision_and_unknown_dates[4714-2022-census-2022-08-01-07/05/2026]
+FAILED tests/integration/test_ibge_pop_e2e.py::test_manifest_separates_population_reference_from_revision_and_unknown_dates[6579-2026-estimate-2026-07-01-28/08/2026]
+3 failed, 6 deselected in 0.42s

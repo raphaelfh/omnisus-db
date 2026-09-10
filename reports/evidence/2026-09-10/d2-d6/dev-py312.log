@@ -1,0 +1,17 @@
+Using Python 3.12.13 environment at: /tmp/omnisus-d2-d6-py312
+WARN hypothesis==6.168.0 needs to be downloaded from a registry
+WARN ruff==0.16.6 needs to be downloaded from a registry
+WARN hypothesis needs to be downloaded from a registry
+  × No solution found when resolving dependencies:
+  ╰─▶ Because hypothesis==6.168.0 needs to be downloaded from a registry
+      and only hypothesis<=6.168.0 is available, we can conclude that
+      hypothesis>=6.168.0 cannot be used.
+      And because omnisus-db[dev]==0.1.0 depends on hypothesis>=6.168.0, we
+      can conclude that omnisus-db[dev]==0.1.0 cannot be used.
+      And because only omnisus-db[dev]==0.1.0 is available and you
+      require omnisus-db[dev], we can conclude that your requirements are
+      unsatisfiable.
+
+      hint: Packages were unavailable because the network was disabled. When
+      the network is disabled, registry packages may only be read from the
+      cache.

@@ -90,7 +90,7 @@ report = odb.import_dataset("sim_do", scopes=odb.available("sim_do"))
 
 report.rows          # rows ingested
 report.ok            # scopes imported
-report.skipped       # outside declared coverage or missing upstream
+report.skipped       # outside coverage, missing upstream, or identical managed publication
 report.failed        # download, parsing or write failures; inspect each reason
 ```
 
@@ -101,13 +101,17 @@ can also produce a non-zero exit status.
 
 ## Transactions and interrupted imports
 
-Use one writer per lake. Serialize write handles, processes and external SQL
-clients that target the same catalog. This release does not provide a
-cross-process writer lock or distributed retry coordination.
+Local `Lake` handles acquire a cooperative lock before opening the catalog; a
+second handle or process fails immediately. Close the first handle before
+opening another. External SQL clients, network filesystems and cloud writers
+still require external coordination.
 
 A completed import returns one outcome for every requested input position.
-Repeated input scopes remain repeated append operations. `ok` means committed;
-`failed` means an unsuccessful scope; `skipped` means a documented absence.
+Repeated scopes remain append operations with the default policy. `ok` means
+committed; `failed` means unsuccessful; `skipped` means a documented absence or
+the same managed publication under `skip_same`. A skip relying on a write in the
+active batch is confirmed only when that batch commits. Use explicit
+[reprocessing policies](reprocessing-and-maintenance.md) to change replay behavior.
 
 If transaction initialization, commit acknowledgement or rollback fails, or a
 producer stops unexpectedly, the FTP runner raises
@@ -115,6 +119,11 @@ producer stops unexpectedly, the FTP runner raises
 `unresolved` contains `(input_index, scope)` pairs that need inspection or were
 not processed. Do not retry the whole import automatically: an unacknowledged
 commit may already have written data.
+
+Pass `run_id` before starting, then query `Lake.publications(run_id=...)` on a
+new handle to reconcile durable publications. `Lake.attempts(run_id=...)` lists
+known failed attempts recorded separately after rollback for completed runs.
+An interrupted process may not have persisted that failure log.
 
 ```python
 import omnisus_db as odb

@@ -36,7 +36,9 @@ omnisus-db import sim --plan inventory --year 2023 --ufs RR
 ```
 
 If the listing has no matching scope, choose one it actually lists. Imports
-append data: repeating a scope inserts it again. Use one writer per lake.
+append data by default: repeating a scope inserts it again. Use `--policy skip_same`
+to skip a previously managed publication with the same source and parser version.
+Local handles enforce a cooperative single-writer lock.
 See [inventory and import results](inventory.md) for skipped scopes, failures
 and interrupted imports.
 
@@ -73,8 +75,14 @@ omnisus-db import sinasc --plan inventory --years 2020-2024
 A completed FTP import reports every requested position. The CLI exits 1 for
 failed scopes or interrupted imports. Inspect an unknown commit before retrying;
 see [the transaction contract](inventory.md#transactions-and-interrupted-imports).
-The separate [IBGE population importer](../sources/ibge_pop.md) has an unresolved
-source-selection limitation and a different return type.
+The separate [IBGE population importer](../sources/ibge_pop.md) requires an explicit
+product and edition and returns a list of results. For example:
+
+```bash
+omnisus-db import ibge-pop --year 2022 --population-product census
+```
+
+Historical estimates without a verified territorial universe are unavailable.
 
 ## Cloud target
 
@@ -87,6 +95,9 @@ omnisus-db import sim --year 2023 --ufs RR \
 ```
 
 The DuckDB connection needs the appropriate catalog and object-storage
-credentials. The current target parser extracts `storage` and drops other
-PostgreSQL query parameters; do not rely on such parameters being forwarded.
-The D1 acceptance tests validate local catalogs, not concurrent cloud writers.
+credentials. The parser extracts exactly one `storage` parameter and preserves
+other PostgreSQL query parameters, including `sslmode`. Percent-encode embedded
+query characters in the storage value, or use `Lake.cloud(catalog=...,
+storage=...)` in Python to pass the values separately.
+Acceptance tests validate local catalogs; cloud concurrency still requires
+external writer coordination. See [reprocessing and maintenance](reprocessing-and-maintenance.md).

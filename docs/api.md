@@ -29,7 +29,10 @@ and `report.ok`. `import_ibge_pop` returns `list[ImportResult]`, while
 `ImportAbortedError` interrupts an FTP run when it cannot safely continue.
 Inspect its `report` for determined outcomes and `unresolved` for
 `(input_index, ScopeKey)` pairs before retrying. Imports append data unless an
-importer explicitly implements replacement, as CNES master does.
+explicit replay `policy` is selected. FTP imports accept `append` (default),
+`skip_same`, `error_if_exists` and `replace`. See
+[reprocessing and maintenance](guides/reprocessing-and-maintenance.md) for legacy
+scope restrictions, run IDs and byte budgets.
 
 ::: omnisus_db.import_dataset
 ::: omnisus_db.import_sim
@@ -44,6 +47,8 @@ importer explicitly implements replacement, as CNES master does.
 `ImportResult.bytes_written` measures the temporary staging Parquet file, not
 final lake storage growth. `snapshot_id=None` can mean an uncommitted result or
 an unavailable snapshot ID; it does not alone establish whether a write committed.
+Managed FTP results also carry `run_id`, `batch_id` and `publication_id`; IBGE
+results carry their canonical `publication_id`.
 
 ::: omnisus_db.sources._base.ImportReport
 ::: omnisus_db.sources._base.ScopeOutcome
@@ -53,7 +58,8 @@ an unavailable snapshot ID; it does not alone establish whether a write committe
 ## The lake
 
 Use a target URI such as `ducklake:./omnisus.ducklake` with `Lake.local`.
-Use one writer per lake and `Lake.transaction()` for managed writes; raw SQL
+Local handles enforce a cooperative writer lock for their lifetime.
+Use `Lake.transaction()` for managed writes; raw SQL
 transaction control is outside this contract. Managed transactions cannot nest.
 
 ```python
@@ -70,6 +76,16 @@ with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
 
 The receipt's `snapshot_id` may remain `None` after a successful commit when no new snapshot was created or the lookup was unavailable.
 See [Architecture](architecture.md) for rollback and recovery boundaries.
+
+`Lake.publications(run_id=...)` reads the durable source-publication manifest;
+`Lake.attempts(run_id=...)` reads separately recorded known failures.
+`Lake.ingest_parquet` appends a staging file directly. `Lake.publish_scope` adds
+scope validation, source identity and replay policy to that write.
+
+`Lake.optimize(table)` merges adjacent files. `Lake.expire_snapshots` and
+`Lake.cleanup_files` take `older_than` as a timezone-aware datetime and default
+to `dry_run=True`. Each returns a list of result dictionaries. `Lake.vacuum` is
+a deprecated physical cleanup alias; it does not expire snapshots.
 
 ::: omnisus_db.Lake
 ::: omnisus_db.DEFAULT_TARGET
