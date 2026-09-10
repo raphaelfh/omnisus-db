@@ -3,10 +3,49 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
 from omnisus_db.lake.connection import make_connection
+
+
+@pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite", "duckdb"])
+def test_catalog_backend_selector(scheme, tmp_path, monkeypatch):
+    con = Mock()
+    monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
+    uri = (
+        f"{scheme}://user:p'ass@localhost/test"
+        if scheme in ("postgres", "postgresql")
+        else f"{scheme}:{tmp_path}/cat"
+    )
+    make_connection(catalog_uri=uri, storage_root=str(tmp_path), alias='a"b')
+    backend = "postgres:" if scheme in ("postgres", "postgresql") else ""
+    escaped_uri = uri.replace("'", "''")
+    con.execute.assert_any_call(
+        f'ATTACH \'ducklake:{backend}{escaped_uri}\' AS "a""b" '
+        f"(DATA_PATH '{str(tmp_path).replace(chr(39), chr(39) * 2)}')"
+    )
+
+
+@pytest.mark.parametrize("scheme", ["postgres", "postgresql"])
+def test_remote_attach_failure_hides_credentials_and_closes(scheme, tmp_path, monkeypatch):
+    import traceback
+
+    import duckdb
+
+    con = Mock()
+    secret = "synthetic-secret"
+    con.execute.side_effect = [None, duckdb.Error(f"connection failed: {secret}")]
+    monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
+    with pytest.raises(duckdb.ConnectionException) as caught:
+        make_connection(
+            catalog_uri=f"{scheme}://user:{secret}@localhost/test",
+            storage_root=str(tmp_path),
+        )
+    assert secret not in "".join(traceback.format_exception(caught.value))
+    assert caught.value.__suppress_context__
+    con.close.assert_called_once()
 
 
 def test_make_connection_returns_duckdb_with_ducklake_loaded(tmp_path: Path) -> None:

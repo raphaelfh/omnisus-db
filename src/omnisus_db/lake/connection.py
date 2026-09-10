@@ -35,12 +35,16 @@ def make_connection(
     if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
         Path(storage_root).mkdir(parents=True, exist_ok=True)
 
+    # DuckLake requires an explicit backend selector before a PostgreSQL URI.
+    metadata_path = (
+        "postgres:" + catalog_uri if scheme in ("postgres", "postgresql") else catalog_uri
+    )
     quoted_alias = quote_identifier(alias)
     con = duckdb.connect(":memory:")
     try:
         con.execute("INSTALL ducklake; LOAD ducklake;")
         con.execute(
-            f"ATTACH {quote_literal('ducklake:' + catalog_uri)} AS {quoted_alias} (DATA_PATH {quote_literal(storage_root)})"
+            f"ATTACH {quote_literal('ducklake:' + metadata_path)} AS {quoted_alias} (DATA_PATH {quote_literal(storage_root)})"
         )
         con.execute(f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')")
     except BaseException as exc:

@@ -1,0 +1,158 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________________ test_cloud_managed_publication[postgresql] __________________
+
+postgres_catalog = 'postgresql:///?user=postgres&dbname=omnisus_selector_0e72970805bd49b2a738ee0f31c1b124&host=127.0.0.1&port=65026'
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-362/test_cloud_managed_publication0')
+scheme = 'postgresql'
+
+    @pytest.mark.parametrize("scheme", ["postgresql", "postgres"])
+    def test_cloud_managed_publication(postgres_catalog, tmp_path, scheme):
+        catalog = postgres_catalog.replace("postgresql:", scheme + ":", 1)
+        storage = str(tmp_path / "storage")
+        staging = tmp_path / "synthetic.parquet"
+        pl.DataFrame({"ano": [2024, 2024], "uf": ["SP", "SP"], "value": [11, 22]}).write_parquet(
+            staging
+        )
+        publication = dict(
+            scope=ScopeKey(uf="SP", ano=2024),
+            source_sha256=hashlib.sha256(staging.read_bytes()).hexdigest(),
+            parser_version="synthetic-v1",
+            run_id="selector-gate",
+        )
+>       with Lake.cloud(catalog=catalog, storage=storage) as lake:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_postgres_lake.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/omnisus_db/lake/operations.py:74: in cloud
+    return cls(target=CatalogURI(catalog_uri=catalog, storage_root=storage))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/omnisus_db/lake/operations.py:55: in __init__
+    self._con = make_connection(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+catalog_uri = 'postgresql:///?user=postgres&dbname=omnisus_selector_0e72970805bd49b2a738ee0f31c1b124&host=127.0.0.1&port=65026'
+storage_root = '/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-362/test_cloud_managed_publication0/storage'
+alias = 'lake'
+
+    def make_connection(
+        *,
+        catalog_uri: str,
+        storage_root: str,
+        alias: str = "lake",
+    ) -> duckdb.DuckDBPyConnection:
+        """Open a DuckDB connection with ducklake attached.
+    
+        Args:
+            catalog_uri: ``sqlite:/path/to/catalog.sqlite`` or ``postgresql://...``.
+            storage_root: filesystem path or s3:// URI for Parquet storage.
+            alias: schema alias for the attached ducklake (default ``lake``).
+    
+        Returns:
+            Connected ``DuckDBPyConnection`` with ducklake loaded and attached.
+        """
+        scheme = catalog_uri.split(":", 1)[0].lower()
+        if scheme not in SUPPORTED_CATALOG_SCHEMES:
+            raise ValueError(f"unsupported catalog scheme: {scheme!r}")
+    
+        if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
+            Path(storage_root).mkdir(parents=True, exist_ok=True)
+    
+        quoted_alias = quote_identifier(alias)
+        con = duckdb.connect(":memory:")
+        try:
+            con.execute("INSTALL ducklake; LOAD ducklake;")
+            con.execute(
+                f"ATTACH {quote_literal('ducklake:' + catalog_uri)} AS {quoted_alias} (DATA_PATH {quote_literal(storage_root)})"
+            )
+            con.execute(f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')")
+        except BaseException as exc:
+            con.close()
+            if scheme in ("postgres", "postgresql") and isinstance(exc, Exception):
+>               raise duckdb.ConnectionException(
+                    "could not attach remote DuckLake catalog; check connection settings"
+                ) from None
+E               _duckdb.ConnectionException: could not attach remote DuckLake catalog; check connection settings
+
+src/omnisus_db/lake/connection.py:49: ConnectionException
+___________________ test_cloud_managed_publication[postgres] ___________________
+
+postgres_catalog = 'postgresql:///?user=postgres&dbname=omnisus_selector_b3d798a4b10c4546a579ad44984a89c7&host=127.0.0.1&port=65026'
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-362/test_cloud_managed_publication1')
+scheme = 'postgres'
+
+    @pytest.mark.parametrize("scheme", ["postgresql", "postgres"])
+    def test_cloud_managed_publication(postgres_catalog, tmp_path, scheme):
+        catalog = postgres_catalog.replace("postgresql:", scheme + ":", 1)
+        storage = str(tmp_path / "storage")
+        staging = tmp_path / "synthetic.parquet"
+        pl.DataFrame({"ano": [2024, 2024], "uf": ["SP", "SP"], "value": [11, 22]}).write_parquet(
+            staging
+        )
+        publication = dict(
+            scope=ScopeKey(uf="SP", ano=2024),
+            source_sha256=hashlib.sha256(staging.read_bytes()).hexdigest(),
+            parser_version="synthetic-v1",
+            run_id="selector-gate",
+        )
+>       with Lake.cloud(catalog=catalog, storage=storage) as lake:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_postgres_lake.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/omnisus_db/lake/operations.py:74: in cloud
+    return cls(target=CatalogURI(catalog_uri=catalog, storage_root=storage))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/omnisus_db/lake/operations.py:55: in __init__
+    self._con = make_connection(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+catalog_uri = 'postgres:///?user=postgres&dbname=omnisus_selector_b3d798a4b10c4546a579ad44984a89c7&host=127.0.0.1&port=65026'
+storage_root = '/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-362/test_cloud_managed_publication1/storage'
+alias = 'lake'
+
+    def make_connection(
+        *,
+        catalog_uri: str,
+        storage_root: str,
+        alias: str = "lake",
+    ) -> duckdb.DuckDBPyConnection:
+        """Open a DuckDB connection with ducklake attached.
+    
+        Args:
+            catalog_uri: ``sqlite:/path/to/catalog.sqlite`` or ``postgresql://...``.
+            storage_root: filesystem path or s3:// URI for Parquet storage.
+            alias: schema alias for the attached ducklake (default ``lake``).
+    
+        Returns:
+            Connected ``DuckDBPyConnection`` with ducklake loaded and attached.
+        """
+        scheme = catalog_uri.split(":", 1)[0].lower()
+        if scheme not in SUPPORTED_CATALOG_SCHEMES:
+            raise ValueError(f"unsupported catalog scheme: {scheme!r}")
+    
+        if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
+            Path(storage_root).mkdir(parents=True, exist_ok=True)
+    
+        quoted_alias = quote_identifier(alias)
+        con = duckdb.connect(":memory:")
+        try:
+            con.execute("INSTALL ducklake; LOAD ducklake;")
+            con.execute(
+                f"ATTACH {quote_literal('ducklake:' + catalog_uri)} AS {quoted_alias} (DATA_PATH {quote_literal(storage_root)})"
+            )
+            con.execute(f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')")
+        except BaseException as exc:
+            con.close()
+            if scheme in ("postgres", "postgresql") and isinstance(exc, Exception):
+>               raise duckdb.ConnectionException(
+                    "could not attach remote DuckLake catalog; check connection settings"
+                ) from None
+E               _duckdb.ConnectionException: could not attach remote DuckLake catalog; check connection settings
+
+src/omnisus_db/lake/connection.py:49: ConnectionException
+=========================== short test summary info ============================
+FAILED tests/integration/test_postgres_lake.py::test_cloud_managed_publication[postgresql]
+FAILED tests/integration/test_postgres_lake.py::test_cloud_managed_publication[postgres]
+2 failed in 0.54s

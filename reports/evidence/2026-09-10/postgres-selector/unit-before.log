@@ -1,0 +1,100 @@
+FF....                                                                   [100%]
+=================================== FAILURES ===================================
+___________________ test_catalog_backend_selector[postgres] ____________________
+
+scheme = 'postgres'
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a612520>
+
+    @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite", "duckdb"])
+    def test_catalog_backend_selector(scheme, tmp_path, monkeypatch):
+        con = Mock()
+        monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
+        uri = (
+            f"{scheme}://user:p'ass@localhost/test"
+            if scheme in ("postgres", "postgresql")
+            else f"{scheme}:{tmp_path}/cat"
+        )
+        make_connection(catalog_uri=uri, storage_root=str(tmp_path), alias='a"b')
+        backend = "postgres:" if scheme in ("postgres", "postgresql") else ""
+        escaped_uri = uri.replace("'", "''")
+>       con.execute.assert_any_call(
+            f"ATTACH 'ducklake:{backend}{escaped_uri}' AS \"a\"\"b\" "
+            f"(DATA_PATH '{str(tmp_path).replace(chr(39), chr(39) * 2)}')"
+        )
+
+tests/unit/lake/test_connection.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Mock name='mock.execute' id='4468781616'>
+args = ('ATTACH \'ducklake:postgres:postgres://user:p\'\'ass@localhost/test\' AS "a""b" (DATA_PATH \'/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_0\')',)
+kwargs = {}
+
+    def assert_any_call(self, /, *args, **kwargs):
+        """assert the mock has been called with the specified arguments.
+    
+        The assert passes if the mock has *ever* been called, unlike
+        `assert_called_with` and `assert_called_once_with` that only pass if
+        the call is the most recent one."""
+        expected = self._call_matcher(_Call((args, kwargs), two=True))
+        cause = expected if isinstance(expected, Exception) else None
+        actual = [self._call_matcher(c) for c in self.call_args_list]
+        if cause or expected not in _AnyComparer(actual):
+            expected_string = self._format_mock_call_signature(args, kwargs)
+>           raise AssertionError(
+                '%s call not found' % expected_string
+            ) from cause
+E           AssertionError: execute('ATTACH \'ducklake:postgres:postgres://user:p\'\'ass@localhost/test\' AS "a""b" (DATA_PATH \'/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_0\')') call not found
+
+../../Library/Application Support/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/unittest/mock.py:1050: AssertionError
+__________________ test_catalog_backend_selector[postgresql] ___________________
+
+scheme = 'postgresql'
+tmp_path = PosixPath('/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a612780>
+
+    @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite", "duckdb"])
+    def test_catalog_backend_selector(scheme, tmp_path, monkeypatch):
+        con = Mock()
+        monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
+        uri = (
+            f"{scheme}://user:p'ass@localhost/test"
+            if scheme in ("postgres", "postgresql")
+            else f"{scheme}:{tmp_path}/cat"
+        )
+        make_connection(catalog_uri=uri, storage_root=str(tmp_path), alias='a"b')
+        backend = "postgres:" if scheme in ("postgres", "postgresql") else ""
+        escaped_uri = uri.replace("'", "''")
+>       con.execute.assert_any_call(
+            f"ATTACH 'ducklake:{backend}{escaped_uri}' AS \"a\"\"b\" "
+            f"(DATA_PATH '{str(tmp_path).replace(chr(39), chr(39) * 2)}')"
+        )
+
+tests/unit/lake/test_connection.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Mock name='mock.execute' id='4468782960'>
+args = ('ATTACH \'ducklake:postgres:postgresql://user:p\'\'ass@localhost/test\' AS "a""b" (DATA_PATH \'/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_1\')',)
+kwargs = {}
+
+    def assert_any_call(self, /, *args, **kwargs):
+        """assert the mock has been called with the specified arguments.
+    
+        The assert passes if the mock has *ever* been called, unlike
+        `assert_called_with` and `assert_called_once_with` that only pass if
+        the call is the most recent one."""
+        expected = self._call_matcher(_Call((args, kwargs), two=True))
+        cause = expected if isinstance(expected, Exception) else None
+        actual = [self._call_matcher(c) for c in self.call_args_list]
+        if cause or expected not in _AnyComparer(actual):
+            expected_string = self._format_mock_call_signature(args, kwargs)
+>           raise AssertionError(
+                '%s call not found' % expected_string
+            ) from cause
+E           AssertionError: execute('ATTACH \'ducklake:postgres:postgresql://user:p\'\'ass@localhost/test\' AS "a""b" (DATA_PATH \'/private/var/folders/4r/23s40zyn5sj803822cccdlg80000gn/T/pytest-of-raphael/pytest-361/test_catalog_backend_selector_1\')') call not found
+
+../../Library/Application Support/uv/python/cpython-3.13.12-macos-aarch64-none/lib/python3.13/unittest/mock.py:1050: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/lake/test_connection.py::test_catalog_backend_selector[postgres]
+FAILED tests/unit/lake/test_connection.py::test_catalog_backend_selector[postgresql]
+2 failed, 4 passed, 4 deselected in 0.40s
