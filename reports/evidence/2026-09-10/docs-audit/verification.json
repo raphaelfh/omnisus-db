@@ -1,0 +1,19 @@
+{
+  "merged_commit": "eb4cf662a0f214791e00888adc2b06120bfa692a",
+  "merge_from": "fcb9d5b",
+  "merge_mode": "fast-forward",
+  "python": "3.13.12",
+  "passed": 429,
+  "deselected": 47,
+  "coverage_percent": 91.97,
+  "seconds": 39.5,
+  "docs_markdown_files": 19,
+  "cli_examples_parsed": 16,
+  "python_blocks_parsed": 14,
+  "ducklake_examples_executed": 3,
+  "runtime_ast_unchanged_modules": 3,
+  "mkdocs_strict": "passed",
+  "generated_datasets": "current",
+  "all_local_docs_links": "resolved",
+  "remote_push": false
+}

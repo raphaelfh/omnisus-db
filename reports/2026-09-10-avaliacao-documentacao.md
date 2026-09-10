@@ -32,7 +32,9 @@ A revisão independente por subagente cobriu página inicial, API, arquitetura e
 - Três exemplos de documentação foram executados em um DuckLake temporário: consulta inicial, consulta de migração e ingestão com recibo/snapshot.
 - Comparação de AST, ignorando docstrings, confirmou lógica inalterada nos três módulos de `src/` editados. O script do catálogo mudou somente textos de apresentação.
 
-A suíte selecionada será executada novamente em `main` após o merge, com `not e2e and not perf`. Não se executaram fontes de dados ao vivo nem se inferiu resultado de CI remota durante esta avaliação.
+Merge local concluído por fast-forward em `main`, de `fcb9d5b` para `eb4cf66`, sem conflitos. Após o merge, Python 3.13.12 passou em **429 testes**, com **47 casos excluídos** pela seleção `not e2e and not perf`, **91,97% de cobertura** e duração de 39,50 s. MkDocs strict e a verificação do catálogo gerado também passaram em `main`. Todos os links Markdown locais dos 19 documentos resolveram no checkout principal. Os arquivos locais não versionados anteriores foram preservados. Não se executaram fontes de dados ao vivo nem se inferiu resultado de CI remota durante esta avaliação.
+
+Logs finais em `reports/evidence/2026-09-10/docs-audit/`; o commit de evidência posterior altera apenas este relatório e esses anexos.
 
 ## Limites que continuam explícitos
 
