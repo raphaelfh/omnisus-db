@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Sequence
+from contextlib import nullcontext
 
 import httpx
 import structlog
@@ -130,25 +131,42 @@ def _ensure_master_table(lake: Lake) -> None:
 
 
 def _upsert_master(lake: Lake, records: list[dict]) -> None:
-    """Upsert records into ``cnes_master`` — delete existing rows for the
-    incoming CNES codes, then insert the new ones.
-
-    DuckLake doesn't support PRIMARY KEY / ON CONFLICT, so this is the
-    simplest atomic-ish upsert. Idempotent by construction.
-    """
-    if not records:
+    """Atomically replace the supplied CNES rows."""
+    rows = _prepare_master_rows(records)
+    if not rows:
         return
-    con = lake.connect()
-    codes = [r["cnes"] for r in records]
-    placeholders = ", ".join("?" for _ in codes)
-    con.execute(
-        f"DELETE FROM {lake.alias}.cnes_master WHERE cnes IN ({placeholders})",
-        codes,
-    )
-    con.executemany(
-        f"INSERT INTO {lake.alias}.cnes_master VALUES (?, ?, ?, ?)",
-        [(r["cnes"], r["nome"], r["nome_fantasia"], r["razao_social"]) for r in records],
-    )
+    context = nullcontext() if lake.in_transaction else lake.transaction()
+    with context:
+        con = lake.connect()
+        codes = [row[0] for row in rows]
+        placeholders = ", ".join("?" for _ in codes)
+        con.execute(
+            f"DELETE FROM {lake.alias}.cnes_master WHERE cnes IN ({placeholders})",
+            codes,
+        )
+        con.executemany(f"INSERT INTO {lake.alias}.cnes_master VALUES (?, ?, ?, ?)", rows)
+
+
+def _prepare_master_rows(
+    records: list[dict],
+) -> list[tuple[str, str, str | None, str | None]]:
+    prepared: dict[str, tuple[str, str, str | None, str | None]] = {}
+    for record in records:
+        code = record.get("cnes")
+        name = record.get("nome")
+        if not isinstance(code, str) or len(code) != 7 or not code.isascii() or not code.isdigit():
+            raise ValueError("CNES code must contain seven ASCII digits")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("CNES record must contain a usable name")
+        fantasia = record.get("nome_fantasia")
+        razao = record.get("razao_social")
+        if any(value is not None and not isinstance(value, str) for value in (fantasia, razao)):
+            raise ValueError("CNES optional names must be strings or None")
+        row = (code, name, fantasia, razao)
+        if code in prepared and prepared[code] != row:
+            raise ValueError(f"conflicting CNES records for {code}")
+        prepared[code] = row
+    return list(prepared.values())
 
 
 def import_cnes_master(
@@ -169,22 +187,26 @@ def import_cnes_master(
         only_missing: when ``True`` (default), skip codes already in
             ``cnes_master`` — re-runs become incremental top-ups.
         progress: optional ``(done, total)`` callback fired after each fetch
-            completes. Used by the backend to stream job progress to the UI.
+            completes for each unique requested code. Used by the backend to
+            stream job progress to the UI.
 
-    Returns the number of records written in this run. Refreshes ``aux_cnes``
-    so the new names are immediately visible to consumers.
+    Returns the number of records written in this run. The table refresh and
+    ``aux_cnes`` view refresh are published atomically after fetching.
     """
     with Lake.local(target) as lake:
-        _ensure_master_table(lake)
-
         if codes is None:
             codes = _codes_from_lake(lake, only_missing=only_missing)
-        codes = list(codes)
+        codes = list(dict.fromkeys(str(code).zfill(7) for code in codes))
+        if any(len(code) != 7 or not code.isascii() or not code.isdigit() for code in codes):
+            raise ValueError("CNES codes must contain seven ASCII digits")
         logger.info("cnes_master.start", codes=len(codes), only_missing=only_missing)
 
         records = asyncio.run(_fetch_all(codes, concurrency=concurrency, progress=progress))
-        _upsert_master(lake, records)
-        lake.ensure_aux_cnes_view()
+        _prepare_master_rows(records)
+        with lake.transaction():
+            _ensure_master_table(lake)
+            _upsert_master(lake, records)
+            lake.ensure_aux_cnes_view()
 
         logger.info("cnes_master.done", fetched=len(records), requested=len(codes))
         return len(records)

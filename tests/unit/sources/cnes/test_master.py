@@ -6,10 +6,12 @@ import json
 from pathlib import Path
 
 import httpx
+import pytest
 import respx
 
 from omnisus_db import import_cnes_master
 from omnisus_db.lake import Lake
+from tests.helpers.connection_faults import FaultyConnection
 
 
 def _api_url(cnes_unpadded: str) -> str:
@@ -325,3 +327,79 @@ def test_import_cnes_master_invokes_progress_callback(tmp_path: Path) -> None:
     assert all(total == 3 for _, total in calls)
     # Order is non-deterministic (concurrent), but done values must be 1,2,3.
     assert sorted(d for d, _ in calls) == [1, 2, 3]
+
+
+def test_upsert_failure_preserves_previous_record(tmp_path):
+    from omnisus_db.sources.cnes.importers.master import _ensure_master_table, _upsert_master
+
+    with Lake.local(f"ducklake:{tmp_path}/atomic.ducklake") as lake:
+        _ensure_master_table(lake)
+        lake.connect().execute(
+            "INSERT INTO lake.cnes_master VALUES ('1234567', 'OLD', 'OLD', NULL)"
+        )
+        lake._con = FaultyConnection(
+            lake.connect(), before={"INSERT INTO": RuntimeError("insert failed")}
+        )
+        records = [
+            {"cnes": "1234567", "nome": "NEW", "nome_fantasia": "NEW", "razao_social": None}
+        ]
+        with pytest.raises(RuntimeError, match="insert failed"):
+            _upsert_master(lake, records)
+        assert lake.connect().execute("SELECT nome FROM lake.cnes_master").fetchall() == [("OLD",)]
+
+
+def test_conflicting_records_are_rejected_before_delete(tmp_path):
+    from omnisus_db.sources.cnes.importers.master import _ensure_master_table, _upsert_master
+
+    with Lake.local(f"ducklake:{tmp_path}/conflict.ducklake") as lake:
+        _ensure_master_table(lake)
+        lake.connect().execute(
+            "INSERT INTO lake.cnes_master VALUES ('1234567', 'OLD', 'OLD', NULL)"
+        )
+        records = [
+            {"cnes": "1234567", "nome": "A", "nome_fantasia": "A", "razao_social": None},
+            {"cnes": "1234567", "nome": "B", "nome_fantasia": "B", "razao_social": None},
+        ]
+        with pytest.raises(ValueError, match="conflicting"):
+            _upsert_master(lake, records)
+        assert lake.connect().execute("SELECT nome FROM lake.cnes_master").fetchall() == [("OLD",)]
+
+
+@respx.mock
+def test_duplicate_codes_fetch_once(tmp_path):
+    route = respx.get(_api_url("1234567")).mock(
+        return_value=httpx.Response(
+            200, json=_api_response(1234567, nome_fantasia="NEW", razao="NEW SA")
+        )
+    )
+    target = f"ducklake:{tmp_path}/dedup.ducklake"
+    assert import_cnes_master(codes=["1234567", "1234567"], target=target) == 1
+    assert route.call_count == 1
+    with Lake.local(target) as lake:
+        assert lake.connect().execute("SELECT count(*) FROM lake.cnes_master").fetchone()[0] == 1
+
+
+@respx.mock
+def test_view_failure_rolls_back_master_refresh(tmp_path, monkeypatch):
+    from omnisus_db.sources.cnes.importers.master import _ensure_master_table
+
+    target = f"ducklake:{tmp_path}/view.ducklake"
+    with Lake.local(target) as lake:
+        _ensure_master_table(lake)
+        lake.connect().execute(
+            "INSERT INTO lake.cnes_master VALUES ('1234567', 'OLD', 'OLD', NULL)"
+        )
+    respx.get(_api_url("1234567")).mock(
+        return_value=httpx.Response(
+            200, json=_api_response(1234567, nome_fantasia="NEW", razao="NEW SA")
+        )
+    )
+
+    def fail_view(self):
+        raise RuntimeError("view unavailable")
+
+    monkeypatch.setattr(Lake, "ensure_aux_cnes_view", fail_view)
+    with pytest.raises(RuntimeError, match="view unavailable"):
+        import_cnes_master(codes=["1234567"], target=target)
+    with Lake.local(target) as lake:
+        assert lake.connect().execute("SELECT nome FROM lake.cnes_master").fetchall() == [("OLD",)]
