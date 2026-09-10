@@ -1,0 +1,179 @@
+{
+  "collected_on": "2026-09-09",
+  "repository_reference": "011e77bdf14afcc3d72ebb666247d0968f92c165",
+  "scope": "Complemento de fontes primárias da pesquisa; não é resultado de execução de correções.",
+  "official_api_responses": [
+    {
+      "url": "https://servicodados.ibge.gov.br/api/v3/agregados/4714/metadados",
+      "body": {
+        "id": 4714,
+        "nome": "População Residente, Área territorial e Densidade demográfica",
+        "URL": "https://sidra.ibge.gov.br/tabela/4714",
+        "pesquisa": "Censo Demográfico",
+        "assunto": "Território",
+        "periodicidade": {
+          "frequencia": "anual",
+          "inicio": 2022,
+          "fim": 2022
+        },
+        "nivelTerritorial": {
+          "Administrativo": [
+            "N1",
+            "N2",
+            "N6",
+            "N3"
+          ],
+          "Especial": [],
+          "IBGE": []
+        },
+        "variaveis": [
+          {
+            "id": 93,
+            "nome": "População residente",
+            "unidade": "Pessoas",
+            "sumarizacao": []
+          },
+          {
+            "id": 6318,
+            "nome": "Área da unidade territorial",
+            "unidade": "Quilômetros quadrados",
+            "sumarizacao": []
+          },
+          {
+            "id": 614,
+            "nome": "Densidade demográfica",
+            "unidade": "Habitante por quilômetro quadrado",
+            "sumarizacao": []
+          }
+        ],
+        "classificacoes": []
+      }
+    },
+    {
+      "url": "https://servicodados.ibge.gov.br/api/v3/agregados/202/metadados",
+      "body": {
+        "id": 202,
+        "nome": "População residente, por sexo e situação do domicílio",
+        "URL": "https://sidra.ibge.gov.br/tabela/202",
+        "pesquisa": "Censo Demográfico",
+        "assunto": "Pessoas",
+        "periodicidade": {
+          "frequencia": "anual",
+          "inicio": 1970,
+          "fim": 2010
+        },
+        "nivelTerritorial": {
+          "Administrativo": [
+            "N15",
+            "N102",
+            "N1",
+            "N10",
+            "N2",
+            "N8",
+            "N9",
+            "N6",
+            "N14",
+            "N7",
+            "N13",
+            "N11",
+            "N3"
+          ],
+          "Especial": [],
+          "IBGE": []
+        },
+        "variaveis": [
+          {
+            "id": 93,
+            "nome": "População residente",
+            "unidade": "Pessoas",
+            "sumarizacao": [
+              "nivelTerritorial"
+            ]
+          },
+          {
+            "id": 1000093,
+            "nome": "População residente - percentual do total geral",
+            "unidade": "%",
+            "sumarizacao": []
+          }
+        ],
+        "classificacoes": [
+          {
+            "id": 2,
+            "nome": "Sexo",
+            "sumarizacao": {
+              "status": true,
+              "excecao": []
+            },
+            "categorias": [
+              {
+                "id": 0,
+                "nome": "Total",
+                "unidade": null,
+                "nivel": 0
+              },
+              {
+                "id": 4,
+                "nome": "Homens",
+                "unidade": null,
+                "nivel": 1
+              },
+              {
+                "id": 5,
+                "nome": "Mulheres",
+                "unidade": null,
+                "nivel": 1
+              }
+            ]
+          },
+          {
+            "id": 1,
+            "nome": "Situação do domicílio",
+            "sumarizacao": {
+              "status": true,
+              "excecao": []
+            },
+            "categorias": [
+              {
+                "id": 0,
+                "nome": "Total",
+                "unidade": null,
+                "nivel": 0
+              },
+              {
+                "id": 1,
+                "nome": "Urbana",
+                "unidade": null,
+                "nivel": 1
+              },
+              {
+                "id": 2,
+                "nome": "Rural",
+                "unidade": null,
+                "nivel": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "ducklake_source_review": {
+    "extension_version_recorded_by_audit": "415a9ebd",
+    "resolved_commit": "415a9ebdbd73db50a8c6ba703eb733ed16bcf33a",
+    "commit_date": "2026-04-09T13:07:03Z",
+    "commit_message": "Merge pull request #966 from pdet/v1.0",
+    "source_url": "https://github.com/duckdb/ducklake/blob/415a9ebdbd73db50a8c6ba703eb733ed16bcf33a/src/functions/ducklake_last_committed_snapshot.cpp",
+    "test_url": "https://github.com/duckdb/ducklake/blob/415a9ebdbd73db50a8c6ba703eb733ed16bcf33a/test/sql/snapshot_info/ducklake_last_commit.test",
+    "state_url": "https://github.com/duckdb/ducklake/blob/415a9ebdbd73db50a8c6ba703eb733ed16bcf33a/src/include/storage/ducklake_catalog.hpp",
+    "finding": "A função existe no commit auditado. O estado é armazenado no catálogo; o teste oficial lê na conexão padrão o valor alterado pelo COMMIT em con1. Não assumir isolamento por conexão para um catálogo compartilhado.",
+    "verification_limit": "Leitura estática do código e dos testes oficiais; os testes oficiais não foram executados localmente nesta pesquisa."
+  },
+  "ibge_2023": {
+    "url": "https://www.ibge.gov.br/biblioteca/visualizacao/livros/liv102024.pdf",
+    "inspected_sections": "Capa e páginas 6–7",
+    "population_reference_on_cover": "2022-07-31",
+    "territorial_reference_on_cover": "2023-04-30",
+    "finding": "Publicação municipal de 2023 usa segunda apuração do Censo 2022, com atualização territorial. Não é uma estimativa municipal anual homogênea com a série 6579."
+  }
+}

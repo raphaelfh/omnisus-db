@@ -1,0 +1,9 @@
+{
+  "reports/2026-09-09-avaliacao-engenharia-dados.md": "2c4a3b4ffb1e1378b71ddac345d221f83bbc20eaac7cd52b40be40f7806811c5",
+  "reports/2026-09-09-revisao-adversarial.md": "136d290b3189ce00d3349b431d0a1318c5297701782b6265869ced8cf89530b5",
+  "reports/evidence/2026-09-09/adversarial/controls.json": "ffe08724e4d4ff8a24731955f39a24b76487e34345007512b82a21c89e89fa8f",
+  "reports/evidence/2026-09-09/adversarial/controls.py": "f5e1144fe1f819693c64db7c87f67536de13e33205c67376890dddba24fd31c0",
+  "reports/evidence/2026-09-09/adversarial/original-report.md": "af64070c2f31135defad1503d4174332ef04681d4ee9eeef3b93073d24632642",
+  "reports/evidence/2026-09-09/adversarial/repeated-observations.json": "a8ceaeb59299c09487b81cbe66972009e2aa62fd653f9256cb499e346809ef57",
+  "reports/evidence/2026-09-09/verification.json": "e20474c218d40d83157b92139d19e114dfcdba9daf397b8e9a77a52dd528de48"
+}

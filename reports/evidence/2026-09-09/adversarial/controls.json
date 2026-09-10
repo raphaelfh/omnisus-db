@@ -1,0 +1,144 @@
+{
+  "started_at": "2026-09-10T00:50:10.076203+00:00",
+  "finished_at": "2026-09-10T00:50:10.750945+00:00",
+  "original_report_commit": "e681aceb869004dc192c4aaa588a51adc6d54ac7",
+  "current_commit": "011e77bdf14afcc3d72ebb666247d0968f92c165",
+  "imported_package": "/Users/raphael/PycharmProjects/omnisus-db/src/omnisus_db/__init__.py",
+  "files_sha256": {
+    ".github/workflows/release.yml": "f8ae39a6dc8e210ff9654edce621f00f99b964afd8e79f61b6db6975bffb2eda",
+    ".github/workflows/test.yml": "3cd270e347e3b1e7186ea1d000d4585235f3ca38a05c825dc01d6def26ccd86e",
+    "pyproject.toml": "9548aee14eb11f5a24ae3c241dd7017ad414c78097b1a4b5d7eb2b196fab7804",
+    "src/omnisus_db/__init__.py": "3bf05412013e1ae93aac4785f65db7aeac30bba1a2d48774c31669c7bdc16e2a",
+    "src/omnisus_db/_version.py": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed",
+    "src/omnisus_db/cli/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/cli/main.py": "48fa684887e7f4f4be56d7f58096cf094c25307509fed340cb485fb7262338aa",
+    "src/omnisus_db/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/data/dicionarios/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/lake/__init__.py": "81445d7d910b4a493239e29fa392eaa7fb29aff8a30a6221fe3402acaf4b0e76",
+    "src/omnisus_db/lake/catalog.py": "50a20f3dc44e802e97583a4c8406ef058f7a4e164107f8f64fa3e0a8f7efe117",
+    "src/omnisus_db/lake/connection.py": "19ae35eadf594e63e23b7c3b75aae252775e77060471b7318d668f806899e342",
+    "src/omnisus_db/lake/operations.py": "7485e90e51a9cfe6cd8f84e506f1cb3eb37a3cc0f136b937bd56b6c7b2241553",
+    "src/omnisus_db/lake/schema.py": "79d595d12a0d8ccf79be16455f56c45bb3ff89e8a8e679808d12a085f94c8749",
+    "src/omnisus_db/sources/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/_base.py": "54a6ed929c3150147861fbd0198aa1b2ffe35147b936f4e2bed380d95a714063",
+    "src/omnisus_db/sources/cnes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/master.py": "e39a7a7fe7231ed451e03f13748b6b4f8f34feb22b039f1808a17360818e68cf",
+    "src/omnisus_db/sources/cnes/importers/st.py": "366fd978be8f4e33813e026073530f5524481e4ceec36e984a77fe1460176a2e",
+    "src/omnisus_db/sources/datasus_ftp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/datasus_ftp/_cache.py": "3c97664b15eb6b844237eef6fcc7c8d847fbda9f32fd593b5ceb10498d3ee80a",
+    "src/omnisus_db/sources/datasus_ftp/_ftp.py": "13739bd1edc04554d5b651da12a5ab66109fd45cf021c266a3350a89f3393e68",
+    "src/omnisus_db/sources/datasus_ftp/_runner.py": "cb1f953217b765048bfba94be3d6f84617509879893a12014ce56eeed3764cac",
+    "src/omnisus_db/sources/datasus_ftp/datasets.py": "6eb7264e8bad1603c0f1c69b5468618992f8e6ae9d0b5153cf2dc808ae0d5d63",
+    "src/omnisus_db/sources/datasus_ftp/fetch.py": "c9dc6b614c58e593c6d055ddd837f39238a05e1d8f1c2545067f6bc567df3f9a",
+    "src/omnisus_db/sources/datasus_ftp/filenames.py": "391992033b6ce1cd55ce56bb74e39f4c5afedd96b04dc2c1fbdb0ddc4004ddf3",
+    "src/omnisus_db/sources/datasus_ftp/inventory.py": "1a53db4c30b321df91ec10112c7b10d7b82c8a69ca8497c35b0334a36d09c59b",
+    "src/omnisus_db/sources/datasus_ftp/parse.py": "b9f0d301e527807465ed51f3708b0bd7e8b8939a305ce58bfeb92b621056d000",
+    "src/omnisus_db/sources/ibge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/fetch.py": "57799120e19d59895cc3322e8c7aad826319e9a18da08818de6ae4aaea80d036",
+    "src/omnisus_db/sources/ibge/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/importers/pop.py": "053b7764d8a806daa0c9c888567fd0f42073a24b2968aebad9b54f791dbe95a0",
+    "src/omnisus_db/sources/ibge/parse.py": "54f9cb8d52a08f3ecd20d7db46a9ddea6896209f1467195dcba974e3d8128c34",
+    "src/omnisus_db/transforms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/transforms/cns.py": "9f922749d914d83b8ed587d72ba96906bea3ebb4a5771d98e1b40eb9bd38da40",
+    "src/omnisus_db/transforms/codes.py": "c7fad736e948ee5a08ac93ade18ef8f402b770fb8c7ce710092aac28588ca16a",
+    "src/omnisus_db/transforms/dictionaries.py": "e6a7712c8b9194c6368aeb136efb9360804451e24b7102ffba4fca041351b9be",
+    "uv.lock": "9316bc38032b5d02d78d4759b1690458c30d56e390d3d77c74dc8b50d1c6b00a"
+  },
+  "source_and_tests_changed_since_original_commit": "",
+  "release_at_original_commit": {
+    "requires_python": ">=3.13",
+    "lock_requires_python": ">=3.13",
+    "gate_commands": [
+      "- run: uv python install 3.13",
+      "uv venv -p 3.13 .gate",
+      "- run: uv python install 3.13"
+    ]
+  },
+  "release_at_current_commit": {
+    "requires_python": ">=3.12",
+    "lock_requires_python": ">=3.12",
+    "gate_commands": [
+      "- run: uv python install 3.12",
+      "uv venv -p 3.12 .gate",
+      "- run: uv python install 3.13"
+    ]
+  },
+  "results": {
+    "snapshot_control": {
+      "direct_reported": 2,
+      "direct_committed": 2,
+      "batched_reported": 2,
+      "batched_committed": 3
+    },
+    "upsert_control_without_vs_with_transaction": {
+      "False": 0,
+      "True": 1
+    },
+    "partial_batch": {
+      "requested_years": [
+        2021,
+        2022,
+        2023
+      ],
+      "outcomes": [
+        {
+          "year": 2021,
+          "status": "failed"
+        },
+        {
+          "year": 2023,
+          "status": "ok"
+        }
+      ],
+      "stored_year_counts": [
+        [
+          2023,
+          3311
+        ]
+      ]
+    },
+    "numeric_order_control_int_first_vs_float_first": {
+      "False": {
+        "values": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ],
+        "schema": [
+          [
+            "v",
+            "BIGINT",
+            "YES",
+            null,
+            "NULL",
+            null
+          ]
+        ]
+      },
+      "True": {
+        "values": [
+          [
+            1.0
+          ],
+          [
+            1.75
+          ]
+        ],
+        "schema": [
+          [
+            "v",
+            "DOUBLE",
+            "YES",
+            null,
+            "NULL",
+            null
+          ]
+        ]
+      }
+    }
+  }
+}

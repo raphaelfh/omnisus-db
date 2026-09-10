@@ -1,0 +1,127 @@
+{
+  "python": "3.13.12",
+  "duckdb": "1.5.5",
+  "catalog_query": "postgresql://example.invalid/db",
+  "ibge_wrong_year": [
+    {
+      "codigo_ibge": "3550308",
+      "ano": 2021,
+      "populacao": 100
+    }
+  ],
+  "ducklake": "d8a1881e",
+  "ibge_empty_import": {
+    "rows": 0,
+    "table_created": true
+  },
+  "int_first": [
+    [
+      1,
+      "BIGINT"
+    ],
+    [
+      2,
+      "BIGINT"
+    ]
+  ],
+  "float_first": [
+    [
+      1.0,
+      "DOUBLE"
+    ],
+    [
+      1.5,
+      "DOUBLE"
+    ]
+  ],
+  "cnes_latest_with_null": [
+    [
+      "05",
+      "330455",
+      202402
+    ]
+  ],
+  "append_twice_rows": 2,
+  "optimize": {
+    "error": "CatalogException",
+    "message": "Catalog Error: Table Function with name ducklake_compact_files does not exist!\nDid you mean \"ducklake_options\"?"
+  },
+  "vacuum": {
+    "error": "InvalidInputException",
+    "message": "Invalid Input Error: Failed to cast value: Unimplemented type for cast (INTERVAL -> TIMESTAMP WITH TIME ZONE)"
+  },
+  "maintenance_functions": [
+    [
+      "ducklake_merge_adjacent_files",
+      [
+        "col0",
+        "col1",
+        "min_file_size",
+        "max_file_size",
+        "max_compacted_files",
+        "schema"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "UBIGINT",
+        "UBIGINT",
+        "UBIGINT",
+        "VARCHAR"
+      ]
+    ],
+    [
+      "ducklake_merge_adjacent_files",
+      [
+        "col0",
+        "max_compacted_files",
+        "max_file_size",
+        "min_file_size"
+      ],
+      [
+        "VARCHAR",
+        "UBIGINT",
+        "UBIGINT",
+        "UBIGINT"
+      ]
+    ],
+    [
+      "ducklake_expire_snapshots",
+      [
+        "col0",
+        "dry_run",
+        "versions",
+        "older_than"
+      ],
+      [
+        "VARCHAR",
+        "BOOLEAN",
+        "UBIGINT[]",
+        "TIMESTAMP WITH TIME ZONE"
+      ]
+    ],
+    [
+      "ducklake_cleanup_old_files",
+      [
+        "col0",
+        "dry_run",
+        "cleanup_all",
+        "older_than"
+      ],
+      [
+        "VARCHAR",
+        "BOOLEAN",
+        "BOOLEAN",
+        "TIMESTAMP WITH TIME ZONE"
+      ]
+    ]
+  ],
+  "cli_optimize": {
+    "exit_code": 0,
+    "output": "optimize note: Catalog Error: Table Function with name ducklake_compact_files \ndoes not exist!\nDid you mean \"ducklake_options\"?\n"
+  },
+  "quoted_local_path": {
+    "error": "ParserException",
+    "message": "Parser Error: syntax error at or near \"Avila\"\n\nLINE 1: ...zyn5sj803822cccdlg80000gn/T/omnisus-d2-d6-audit-ykn1feqd/D'Avila/lake-catalog.sqlite' AS lake (DATA_PATH '/private...\n                                                                      ^"
+  }
+}

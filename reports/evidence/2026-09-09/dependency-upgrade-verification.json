@@ -1,0 +1,415 @@
+{
+  "started_on": "2026-09-09",
+  "finalized_on": "2026-09-10",
+  "commit": "5e44fa382edff0375403a2058cce910a63067d89",
+  "scope": "Dependency update validation; functional remediation plan not executed",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "packages_updated": {
+    "annotated-doc": {
+      "before": "0.0.4",
+      "after": "0.0.5"
+    },
+    "annotated-types": {
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    "anyio": {
+      "before": "4.13.0",
+      "after": "4.15.1"
+    },
+    "backrefs": {
+      "before": "7.0",
+      "after": "8.0"
+    },
+    "boto3": {
+      "before": "1.43.2",
+      "after": "1.43.91"
+    },
+    "botocore": {
+      "before": "1.43.2",
+      "after": "1.43.91"
+    },
+    "certifi": {
+      "before": "2026.4.22",
+      "after": "2026.7.22"
+    },
+    "cffi": {
+      "before": "2.0.0",
+      "after": "2.1.1"
+    },
+    "cfn-lint": {
+      "before": "1.47.1",
+      "after": "1.56.2"
+    },
+    "chardet": {
+      "before": "7.4.3",
+      "after": "7.6.0"
+    },
+    "charset-normalizer": {
+      "before": "3.4.7",
+      "after": "3.5.1"
+    },
+    "click": {
+      "before": "8.3.3",
+      "after": "8.5.0"
+    },
+    "coverage": {
+      "before": "7.13.5",
+      "after": "7.16.0"
+    },
+    "cryptography": {
+      "before": "47.0.0",
+      "after": "50.0.1"
+    },
+    "distlib": {
+      "before": "0.4.0",
+      "after": "0.4.3"
+    },
+    "docker": {
+      "before": "7.1.0",
+      "after": "7.2.0"
+    },
+    "duckdb": {
+      "before": "1.5.2",
+      "after": "1.5.5"
+    },
+    "filelock": {
+      "before": "3.29.0",
+      "after": "3.32.6"
+    },
+    "flask-cors": {
+      "before": "6.0.2",
+      "after": "6.0.5"
+    },
+    "graphql-core": {
+      "before": "3.2.8",
+      "after": "3.2.12"
+    },
+    "griffelib": {
+      "before": "2.0.2",
+      "after": "2.3.0"
+    },
+    "humanize": {
+      "before": "4.15.0",
+      "after": "4.16.0"
+    },
+    "hypothesis": {
+      "before": "6.152.4",
+      "after": "6.168.0"
+    },
+    "idna": {
+      "before": "3.13",
+      "after": "3.19"
+    },
+    "joserfc": {
+      "before": "1.6.4",
+      "after": "1.7.5"
+    },
+    "jsonschema-path": {
+      "before": "0.4.6",
+      "after": "0.5.0"
+    },
+    "librt": {
+      "before": "0.9.0",
+      "after": "0.15.0"
+    },
+    "markdown": {
+      "before": "3.10.2",
+      "after": "3.10.3"
+    },
+    "markdown-it-py": {
+      "before": "4.0.0",
+      "after": "4.2.0"
+    },
+    "marko": {
+      "before": "2.2.2",
+      "after": "2.2.4"
+    },
+    "mkdocs-material": {
+      "before": "9.7.6",
+      "after": "9.7.7"
+    },
+    "mkdocstrings": {
+      "before": "1.0.4",
+      "after": "1.0.6"
+    },
+    "mkdocstrings-python": {
+      "before": "2.0.3",
+      "after": "2.0.8"
+    },
+    "moto": {
+      "before": "5.2.0",
+      "after": "5.2.3"
+    },
+    "mypy": {
+      "before": "1.20.2",
+      "after": "2.3.1"
+    },
+    "obstore": {
+      "before": "0.9.4",
+      "after": "0.11.1"
+    },
+    "openapi-schema-validator": {
+      "before": "0.8.1",
+      "after": "0.9.0"
+    },
+    "openapi-spec-validator": {
+      "before": "0.8.5",
+      "after": "0.9.0"
+    },
+    "packaging": {
+      "before": "26.2",
+      "after": "26.3"
+    },
+    "pandera": {
+      "before": "0.31.1",
+      "after": "0.33.1"
+    },
+    "pathable": {
+      "before": "0.5.0",
+      "after": "0.6.0"
+    },
+    "petl": {
+      "before": "1.7.17",
+      "after": "1.7.25"
+    },
+    "platformdirs": {
+      "before": "4.9.6",
+      "after": "4.11.8"
+    },
+    "polars": {
+      "before": "1.40.1",
+      "after": "1.44.2"
+    },
+    "polars-runtime-32": {
+      "before": "1.40.1",
+      "after": "1.44.2"
+    },
+    "pre-commit": {
+      "before": "4.6.0",
+      "after": "4.6.2"
+    },
+    "psycopg": {
+      "before": "3.3.4",
+      "after": "3.3.5"
+    },
+    "psycopg-binary": {
+      "before": "3.3.4",
+      "after": "3.3.5"
+    },
+    "pyarrow": {
+      "before": "24.0.0",
+      "after": "25.0.1"
+    },
+    "pydantic": {
+      "before": "2.13.3",
+      "after": "2.13.5"
+    },
+    "pydantic-core": {
+      "before": "2.46.3",
+      "after": "2.46.5"
+    },
+    "pydantic-settings": {
+      "before": "2.14.0",
+      "after": "2.15.0"
+    },
+    "pygments": {
+      "before": "2.20.0",
+      "after": "2.21.0"
+    },
+    "pymdown-extensions": {
+      "before": "10.21.2",
+      "after": "11.0.2"
+    },
+    "pytest": {
+      "before": "9.0.3",
+      "after": "9.1.1"
+    },
+    "pytest-asyncio": {
+      "before": "1.3.0",
+      "after": "1.4.0"
+    },
+    "pytest-benchmark": {
+      "before": "5.2.3",
+      "after": "5.3.0"
+    },
+    "python-discovery": {
+      "before": "1.2.2",
+      "after": "1.6.0"
+    },
+    "python-dotenv": {
+      "before": "1.2.2",
+      "after": "1.2.3"
+    },
+    "python-slugify": {
+      "before": "8.0.4",
+      "after": "9.0.0"
+    },
+    "pywin32": {
+      "before": "311",
+      "after": "312"
+    },
+    "regex": {
+      "before": "2026.4.4",
+      "after": "2026.9.10"
+    },
+    "requests": {
+      "before": "2.33.1",
+      "after": "2.34.2"
+    },
+    "responses": {
+      "before": "0.26.0",
+      "after": "0.26.3"
+    },
+    "rpds-py": {
+      "before": "0.30.0",
+      "after": "2026.6.3"
+    },
+    "ruff": {
+      "before": "0.15.12",
+      "after": "0.16.6"
+    },
+    "s3transfer": {
+      "before": "0.17.0",
+      "after": "0.19.2"
+    },
+    "setuptools": {
+      "before": "82.0.1",
+      "after": "84.0.0"
+    },
+    "structlog": {
+      "before": "25.5.0",
+      "after": "26.1.0"
+    },
+    "typeguard": {
+      "before": "4.5.1",
+      "after": "4.6.0"
+    },
+    "typer": {
+      "before": "0.25.1",
+      "after": "0.27.2"
+    },
+    "typing-extensions": {
+      "before": "4.15.0",
+      "after": "4.16.0"
+    },
+    "typing-inspection": {
+      "before": "0.4.2",
+      "after": "0.4.4"
+    },
+    "tzdata": {
+      "before": "2026.2",
+      "after": "2026.3"
+    },
+    "urllib3": {
+      "before": "2.6.3",
+      "after": "2.7.0"
+    },
+    "virtualenv": {
+      "before": "21.3.0",
+      "after": "21.7.9"
+    },
+    "wrapt": {
+      "before": "2.1.2",
+      "after": "2.4.0"
+    }
+  },
+  "added": [
+    "ast-serialize",
+    "py-cpuinfo2"
+  ],
+  "removed": [
+    "aws-sam-translator",
+    "py-cpuinfo"
+  ],
+  "ducklake": {
+    "duckdb": "1.5.5",
+    "extension_version": "d8a1881e",
+    "installed_from": "core",
+    "single_writer_parameterized_snapshot_probe": {
+      "receipt": 1,
+      "latest": 1
+    }
+  },
+  "test_runs": [
+    {
+      "python": "3.13.12",
+      "selected": 386,
+      "passed": 386,
+      "deselected": 47,
+      "duration_seconds": 40.3,
+      "coverage_percent": 91.28
+    },
+    {
+      "python": "3.12.13",
+      "selected": 386,
+      "passed": 386,
+      "deselected": 47,
+      "duration_seconds": 38.69,
+      "coverage_percent": 91.28
+    }
+  ],
+  "selection": "not e2e and not perf",
+  "checks": {
+    "ruff_check_global": "passed",
+    "ruff_format_global": "passed after explicit Markdown exclusion",
+    "mypy": "passed: 35 source files",
+    "generated_docs": "passed",
+    "mkdocs_strict": "passed",
+    "frictionless": "15 resources VALID",
+    "uv_lock_check": "passed",
+    "uv_pip_check_dev": "146 packages compatible",
+    "uv_pip_check_wheel": "60 packages compatible",
+    "wheel_only_python312": "passed on macOS arm64",
+    "isolated_wheel_import": "passed outside repository using python -I",
+    "bootstrap_in_wheel": true
+  },
+  "not_validated": [
+    "Windows execution",
+    "Linux execution",
+    "wheel-only Python 3.13 installation",
+    "live source E2E",
+    "national performance",
+    "functional remediation tasks"
+  ],
+  "hashes": {
+    "pyproject.toml": "769684d7c71089bd4b5c3642e5a3f5cc3da2dccaef4256fbd037e416fe7a2658",
+    "uv.lock": "86ab93886331fe169731bb7487d6eeabf635f11d7d5df299fe725edb4e5317fe",
+    ".pre-commit-config.yaml": "2e9599eb0be78992841536274ea0c2bae2fb278cf026deccde00eac7192aee67",
+    "src/omnisus_db/__init__.py": "3bf05412013e1ae93aac4785f65db7aeac30bba1a2d48774c31669c7bdc16e2a",
+    "src/omnisus_db/_version.py": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed",
+    "src/omnisus_db/cli/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/cli/main.py": "48fa684887e7f4f4be56d7f58096cf094c25307509fed340cb485fb7262338aa",
+    "src/omnisus_db/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/data/dicionarios/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/lake/__init__.py": "81445d7d910b4a493239e29fa392eaa7fb29aff8a30a6221fe3402acaf4b0e76",
+    "src/omnisus_db/lake/catalog.py": "50a20f3dc44e802e97583a4c8406ef058f7a4e164107f8f64fa3e0a8f7efe117",
+    "src/omnisus_db/lake/connection.py": "19ae35eadf594e63e23b7c3b75aae252775e77060471b7318d668f806899e342",
+    "src/omnisus_db/lake/operations.py": "7485e90e51a9cfe6cd8f84e506f1cb3eb37a3cc0f136b937bd56b6c7b2241553",
+    "src/omnisus_db/lake/schema.py": "79d595d12a0d8ccf79be16455f56c45bb3ff89e8a8e679808d12a085f94c8749",
+    "src/omnisus_db/sources/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/_base.py": "54a6ed929c3150147861fbd0198aa1b2ffe35147b936f4e2bed380d95a714063",
+    "src/omnisus_db/sources/cnes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/cnes/importers/master.py": "e39a7a7fe7231ed451e03f13748b6b4f8f34feb22b039f1808a17360818e68cf",
+    "src/omnisus_db/sources/cnes/importers/st.py": "366fd978be8f4e33813e026073530f5524481e4ceec36e984a77fe1460176a2e",
+    "src/omnisus_db/sources/datasus_ftp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/datasus_ftp/_cache.py": "3c97664b15eb6b844237eef6fcc7c8d847fbda9f32fd593b5ceb10498d3ee80a",
+    "src/omnisus_db/sources/datasus_ftp/_ftp.py": "13739bd1edc04554d5b651da12a5ab66109fd45cf021c266a3350a89f3393e68",
+    "src/omnisus_db/sources/datasus_ftp/_runner.py": "cb1f953217b765048bfba94be3d6f84617509879893a12014ce56eeed3764cac",
+    "src/omnisus_db/sources/datasus_ftp/datasets.py": "6eb7264e8bad1603c0f1c69b5468618992f8e6ae9d0b5153cf2dc808ae0d5d63",
+    "src/omnisus_db/sources/datasus_ftp/fetch.py": "c9dc6b614c58e593c6d055ddd837f39238a05e1d8f1c2545067f6bc567df3f9a",
+    "src/omnisus_db/sources/datasus_ftp/filenames.py": "391992033b6ce1cd55ce56bb74e39f4c5afedd96b04dc2c1fbdb0ddc4004ddf3",
+    "src/omnisus_db/sources/datasus_ftp/inventory.py": "1a53db4c30b321df91ec10112c7b10d7b82c8a69ca8497c35b0334a36d09c59b",
+    "src/omnisus_db/sources/datasus_ftp/parse.py": "b9f0d301e527807465ed51f3708b0bd7e8b8939a305ce58bfeb92b621056d000",
+    "src/omnisus_db/sources/ibge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/fetch.py": "57799120e19d59895cc3322e8c7aad826319e9a18da08818de6ae4aaea80d036",
+    "src/omnisus_db/sources/ibge/importers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/sources/ibge/importers/pop.py": "053b7764d8a806daa0c9c888567fd0f42073a24b2968aebad9b54f791dbe95a0",
+    "src/omnisus_db/sources/ibge/parse.py": "54f9cb8d52a08f3ecd20d7db46a9ddea6896209f1467195dcba974e3d8128c34",
+    "src/omnisus_db/transforms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/omnisus_db/transforms/cns.py": "9f922749d914d83b8ed587d72ba96906bea3ebb4a5771d98e1b40eb9bd38da40",
+    "src/omnisus_db/transforms/codes.py": "c7fad736e948ee5a08ac93ade18ef8f402b770fb8c7ce710092aac28588ca16a",
+    "src/omnisus_db/transforms/dictionaries.py": "e6a7712c8b9194c6368aeb136efb9360804451e24b7102ffba4fca041351b9be"
+  }
+}
