@@ -46,6 +46,32 @@ uncommitted scopes, never the run, and they are reported failed and safe to
 retry. ``batch_size=1`` restores per-scope atomicity."""
 
 
+class _ProducerStoppedError(RuntimeError):
+    """The producer exited without completing the input stream."""
+
+
+async def _next_fetched(
+    queue: asyncio.Queue[_Fetched | None],
+    producer: asyncio.Task[None],
+) -> _Fetched | None:
+    """Wait for either the next item or abnormal producer termination."""
+    waiting = asyncio.create_task(queue.get())
+    try:
+        done, _ = await asyncio.wait({waiting, producer}, return_when=asyncio.FIRST_COMPLETED)
+        if waiting in done:
+            return waiting.result()
+        if producer.cancelled():
+            raise _ProducerStoppedError("producer cancelled")
+        error = producer.exception()
+        if error is not None:
+            raise _ProducerStoppedError("producer failed") from error
+        return await waiting
+    finally:
+        if not waiting.done():
+            waiting.cancel()
+        await asyncio.gather(waiting, return_exceptions=True)
+
+
 async def import_scope(
     *,
     dataset: str | Dataset,
@@ -176,7 +202,14 @@ async def run_scopes(
                 await queue.put((index, scope, raw, None))
 
     async def produce_all() -> None:
-        await asyncio.gather(*(produce(i, s) for i, s in queued))
+        tasks = [asyncio.create_task(produce(i, s)) for i, s in queued]
+        try:
+            await asyncio.gather(*tasks)
+        except BaseException:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
         await queue.put(None)
 
     producer = asyncio.create_task(produce_all())
@@ -188,7 +221,7 @@ async def run_scopes(
             try:
                 with lake.transaction():
                     while len(batch) < batch_size:
-                        item = await queue.get()
+                        item = await _next_fetched(queue, producer)
                         if item is None:
                             exhausted = True
                             break
@@ -215,13 +248,24 @@ async def run_scopes(
                             raise
                         batch[index] = ScopeOutcome(scope=scope, status="ok", result=result)
             except Exception as exc:
-                if isinstance(exc, TransactionStateError) or not lake.is_usable:
+                if (
+                    isinstance(exc, (TransactionStateError, _ProducerStoppedError))
+                    or not lake.is_usable
+                ):
+                    rollback_known = not isinstance(exc, TransactionStateError) and lake.is_usable
                     determined = dict(outcomes)
-                    determined.update(
-                        (i, outcome)
-                        for i, outcome in batch.items()
-                        if outcome.status != "ok" and i not in writing
-                    )
+                    for i, outcome in batch.items():
+                        if i in writing and not rollback_known:
+                            continue
+                        determined[i] = (
+                            outcome
+                            if outcome.status != "ok"
+                            else ScopeOutcome(
+                                scope=outcome.scope,
+                                status="failed",
+                                reason=f"batch rolled back: {exc}",
+                            )
+                        )
                     partial = ImportReport(tuple(determined[i] for i in sorted(determined)))
                     unresolved = tuple(
                         (i, scope) for i, scope in enumerate(scopes) if i not in determined

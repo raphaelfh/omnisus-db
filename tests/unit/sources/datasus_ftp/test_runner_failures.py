@@ -1,9 +1,120 @@
+import asyncio
+
 import pytest
 
 from omnisus_db.lake import Lake
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp._runner import run_scopes
 from tests.helpers.connection_faults import FaultyConnection
+
+
+@pytest.mark.asyncio
+async def test_dead_producer_does_not_leave_queue_waiter():
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    baseline = asyncio.all_tasks()
+
+    async def fail():
+        raise ValueError("producer stopped")
+
+    producer = asyncio.create_task(fail())
+    queue = asyncio.Queue(maxsize=1)
+    with pytest.raises(_runner._ProducerStoppedError):
+        await asyncio.wait_for(_runner._next_fetched(queue, producer), timeout=2)
+    assert not (asyncio.all_tasks() - baseline)
+
+
+@pytest.mark.asyncio
+async def test_abnormal_producer_cancels_and_awaits_sibling(tmp_path, monkeypatch):
+    from omnisus_db import ImportAbortedError
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    sibling_started = asyncio.Event()
+    sibling_cancelled = asyncio.Event()
+
+    async def fetch(*, dataset, scope):
+        if scope.ano == 2021:
+            return b"first"
+        sibling_started.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            sibling_cancelled.set()
+            raise
+
+    real_queue = asyncio.Queue
+
+    class FailingQueue(real_queue):
+        async def put(self, item):
+            if item is not None and item[0] == 0:
+                await sibling_started.wait()
+                raise RuntimeError("queue rejected item")
+            await super().put(item)
+
+    monkeypatch.setattr(_runner, "fetch_dbc_bytes", fetch)
+    monkeypatch.setattr(_runner.asyncio, "Queue", FailingQueue)
+    scopes = [ScopeKey(uf="RR", ano=year) for year in (2021, 2022)]
+    baseline = asyncio.all_tasks()
+    with (
+        Lake.local(f"ducklake:{tmp_path}/producer.ducklake") as lake,
+        pytest.raises(ImportAbortedError),
+    ):
+        await asyncio.wait_for(
+            _runner.run_scopes("sim_do", scopes=scopes, lake=lake, concurrency=2, batch_size=1),
+            timeout=2,
+        )
+    assert sibling_cancelled.is_set()
+    assert not (asyncio.all_tasks() - baseline)
+
+
+@pytest.mark.asyncio
+async def test_cancel_with_full_queue_preserves_previous_commit(
+    tmp_path, monkeypatch, dbc_fixture
+):
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    raw = dbc_fixture("sim_rr_2023_mini").read_bytes()
+
+    async def fetch(**kwargs):
+        return raw
+
+    real_next = _runner._next_fetched
+    paused = asyncio.Event()
+    hold = asyncio.Event()
+    calls = 0
+
+    async def pause_second_item(queue, producer):
+        nonlocal calls
+        item = await real_next(queue, producer)
+        calls += 1
+        if calls == 2:
+            while not queue.full():  # noqa: ASYNC110 - yield until deterministic state
+                await asyncio.sleep(0)
+            paused.set()
+            await hold.wait()
+        return item
+
+    monkeypatch.setattr(_runner, "fetch_dbc_bytes", fetch)
+    monkeypatch.setattr(_runner, "_next_fetched", pause_second_item)
+    scopes = [ScopeKey(uf="RR", ano=year) for year in range(2015, 2024)]
+    baseline = asyncio.all_tasks()
+    with Lake.local(f"ducklake:{tmp_path}/cancel.ducklake") as lake:
+        task = asyncio.create_task(
+            _runner.run_scopes("sim_do", scopes=scopes, lake=lake, concurrency=1, batch_size=1)
+        )
+        try:
+            await asyncio.wait_for(paused.wait(), timeout=5)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await asyncio.wait_for(task, timeout=2)
+            assert lake.is_usable
+            assert lake.connect().execute("SELECT DISTINCT ano FROM lake.sim_do").fetchall() == [
+                (2015,)
+            ]
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+    assert not (asyncio.all_tasks() - baseline)
 
 
 @pytest.mark.asyncio
