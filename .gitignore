@@ -12,6 +12,10 @@ htmlcov/
 coverage.xml
 dist/
 build/
+native/**/target/
+native/**/fuzz/artifacts/
+native/**/fuzz/corpus/
+*.whl
 *.egg-info/
 .DS_Store
 .idea/

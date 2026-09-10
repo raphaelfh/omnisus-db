@@ -15,23 +15,11 @@ from omnisus_db.sources.datasus_ftp.parse import (
     DbfIntegrityError,
     dbc_bytes_to_lazyframe,
 )
+from tests.support.dbf import make_dbf as build_dbf
 
 
 def make_dbf(nrec_declared: int, records: list[bytes], eof: bytes = b"\x1a") -> bytes:
-    """Minimal DBF: one field NOME C(3); rec_len=4 (1 flag + 3 chars)."""
-    hdr_len = 32 + 32 + 1
-    rec_len = 4
-    h = bytearray(32)
-    h[0] = 0x03
-    h[1:4] = bytes([24, 1, 1])
-    h[4:8] = nrec_declared.to_bytes(4, "little")
-    h[8:10] = hdr_len.to_bytes(2, "little")
-    h[10:12] = rec_len.to_bytes(2, "little")
-    f = bytearray(32)
-    f[0:4] = b"NOME"
-    f[11] = ord("C")
-    f[16] = 3
-    return bytes(h) + bytes(f) + b"\x0d" + b"".join(records) + eof
+    return build_dbf([("NOME", "C", 3, 0)], records, declared_rows=nrec_declared, eof=eof)
 
 
 @pytest.fixture
@@ -59,7 +47,7 @@ def test_truncated_dbf_raises_integrity_error(fake_decompress) -> None:
 
 def test_early_eof_marker_raises_integrity_error(fake_decompress) -> None:
     """Byte length is right but an embedded 0x1A stops the parser early."""
-    fake_decompress(make_dbf(3, [b" AAA", b"\x1aBB", b" CCC"]))
+    fake_decompress(make_dbf(3, [b" AAA", b"\x1aBBB", b" CCC"]))
     with pytest.raises(DbfIntegrityError):
         dbc_bytes_to_lazyframe(b"ignored", dataset="sim_do")
 

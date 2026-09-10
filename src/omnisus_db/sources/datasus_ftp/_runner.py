@@ -123,6 +123,7 @@ def ingest_raw(
     batch_id: str | None = None,
 ) -> ImportResult | None:
     """Validate to staging, then publish one source version atomically."""
+    from omnisus_db.sources.datasus_ftp.dbf_contract import publication_parser_version
     from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 
     with tempfile.TemporaryDirectory(prefix="omnisus-source-") as tmp:
@@ -146,7 +147,7 @@ def ingest_raw(
             staging,
             scope=scope,
             source_sha256=hashlib.sha256(raw).hexdigest(),
-            parser_version="dbc-staging-v1:" + dictionary_hash,
+            parser_version=publication_parser_version(dictionary_hash),
             policy=policy,
             run_id=run_id,
             batch_id=batch_id,

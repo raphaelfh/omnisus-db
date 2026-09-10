@@ -21,7 +21,7 @@ repository; these working documents are not published to this site.
 ```text
 bounded concurrent FTP fetches -> one parse/write consumer
   -> datasus_dbc.decompress_bytes -> complete DBF bytes
-  -> dbfread2 records -> bounded Arrow batches -> temporary IPC spool
+  -> Python dbfread2 or optional Rust reader -> bounded Arrow batches -> temporary IPC spool
   -> reconcile batch schemas -> temporary Parquet (Snappy)
   -> managed transaction: schema + scope policy + data + manifest -> COMMIT
 ```
@@ -43,6 +43,31 @@ the same signed-integer, unsigned-integer or floating-point family. Incompatible
 families and decimal changes fail before insertion. The staging parser also
 rejects incompatible values before Arrow inference can erase information.
 Previously coerced values require an explicit source rebuild to recover.
+
+### Optional native DBF reader
+
+`native/omnisus-db-dbf` builds a separate `omnisus_db_dbf` Python extension using
+PyO3 and Arrow. The main package keeps its pure-Python wheel. Set
+`OMNISUS_DBF_BACKEND=rust` to require native decoding, `python` to use dbfread2,
+or `auto` to use Rust when installed and the DBF metadata is supported. The
+default remains Python until performance and distribution gates are met.
+
+The native reader supports C/N fields and the DBF layouts covered by the committed
+fixtures. It preserves empty strings, strict encodings and int64 precision.
+Other field types use Python in auto mode. Auto fallback is allowed only for an
+absent optional package or unsupported metadata before iteration; an installed
+but broken module, corrupt data or a late decoding error is surfaced.
+
+Both adapters deliver closable RecordBatch iterators to the same staging writer.
+Lowercasing, partitions, null/schema reconciliation, IPC spooling and atomic
+Parquet replacement remain in Python. Rust owns its input buffer and each Arrow
+batch owns its exported data; the initial DBF copy is included in resource
+measurements. This does not make DBC decompression incremental.
+
+`dbc-staging-v1:<dictionary hash>` identifies output semantics rather than the
+execution language. Backend and native package version are logged separately.
+Changing between equivalent backends therefore preserves `skip_same`; a change
+in decoding semantics requires a new parser contract version.
 
 `Lake.ingest` remains append. FTP imports use `Lake.publish_scope`, with `append`
 as the default and explicit `skip_same`, `error_if_exists` and `replace` policies.

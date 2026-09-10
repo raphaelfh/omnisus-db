@@ -8,9 +8,25 @@ in the parent `omnisus` repository)
 
 This ADR records the May 2026 measurements and roadmap decision. Its benchmark
 numbers and proposed v0.2.0 work are historical, not current performance
-guarantees or a release commitment. The current parser still uses `dbfread2`;
-the optional Rust DBF package shown below is a proposal, not an installed
-dependency. See [Architecture](../architecture.md) for the implemented pipeline.
+guarantees or a release commitment. A separate optional extension is now implemented
+in `native/omnisus-db-dbf`; Python remains available. See
+[Architecture](../architecture.md) for the implemented pipeline and the
+[validation report](../../reports/rust-dbf-validation.md) for measured results.
+
+## September 2026 implementation
+
+The implementation keeps a small PyO3/Arrow package in this repository and a
+single shared staging writer. It decodes C/N bytes directly rather than using
+`dbase::FieldValue`, whose f64 numeric representation and empty-string behavior
+do not preserve the existing contract. Reader batches may have different null
+schemas, reconciled by the existing IPC spool. Unsupported metadata falls back
+only before iteration; corruption and late failures never trigger a retry.
+
+The source-publication identity remains semantic so installing an equivalent
+backend does not invalidate `skip_same`. The design and execution details are in
+`docs/superpowers/specs/2026-09-10-rust-dbf-design.md` and
+`docs/superpowers/plans/2026-09-10-rust-dbf.md`. The measurements below remain an
+unchanged historical record.
 
 ## Context
 

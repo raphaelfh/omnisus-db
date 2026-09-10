@@ -7,17 +7,15 @@ DBF, IPC and Parquet; no list of frames or lazy references to deleted files.
 
 from __future__ import annotations
 
-import datetime as dt
 import os
 import tempfile
 from dataclasses import dataclass
-from decimal import Decimal
 from pathlib import Path
-from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from omnisus_db.sources.datasus_ftp.dbf_batches import open_dbf_batches
 from omnisus_db.transforms.dictionaries import load_dicionario
 
 
@@ -25,26 +23,6 @@ from omnisus_db.transforms.dictionaries import load_dicionario
 class StagingResult:
     rows: int
     bytes: int
-
-
-def _family(value: Any) -> type:
-    # bool is an int subclass; datetime is a date subclass.
-    for cls in (bool, int, float, str, bytes, Decimal, dt.datetime, dt.date, dt.time):
-        if isinstance(value, cls):
-            return cls
-    raise TypeError(f"Unsupported DBF value type: {type(value).__name__}")
-
-
-def _table(records: list[dict[str, Any]]) -> pa.Table:
-    names = dict.fromkeys(name for record in records for name in record)
-    columns = {}
-    for name in names:
-        values = [record.get(name) for record in records]
-        families = {_family(value) for value in values if value is not None}
-        if len(families) > 1:
-            raise TypeError(f"Incompatible value families in DBF column {name}")
-        columns[name] = pa.array(values, safe=True)
-    return pa.table(columns)
 
 
 def _merge_schema(existing: pa.Schema, incoming: pa.Schema) -> pa.Schema:
@@ -98,9 +76,9 @@ def dbc_bytes_to_parquet(
     with tempfile.TemporaryDirectory(prefix=".dbc-stage-", dir=path.parent) as directory:
         root = Path(directory)
 
-        def spool(buffer: list[dict[str, Any]]) -> None:
+        def spool(batch: pa.RecordBatch) -> None:
             nonlocal batches, schema
-            table = _table(buffer)
+            table = pa.Table.from_batches([batch])
             lowered = [name.lower() for name in table.column_names]
             if len(set(lowered)) != len(lowered):
                 raise ValueError("DBF column names collide after lowercasing")
@@ -126,22 +104,12 @@ def dbc_bytes_to_parquet(
                 writer.write_table(table)
             batches += 1
 
-        buffer: list[dict[str, Any]] = []
-        stream = parse._stream_records(dbf_bytes, encoding=dic.encoding)
-        try:
-            for rec in stream:
-                parsed += 1
-                buffer.append(rec)
-                if len(buffer) >= parse.BATCH_ROWS:
-                    spool(buffer)
-                    buffer.clear()
-            if buffer:
-                spool(buffer)
-                buffer.clear()
-        finally:
-            close = getattr(stream, "close", None)
-            if close is not None:
-                close()
+        with open_dbf_batches(
+            dbf_bytes, encoding=dic.encoding, batch_rows=parse.BATCH_ROWS
+        ) as stream:
+            for batch in stream:
+                parsed += batch.num_rows
+                spool(batch)
         parse._check_record_count(dbf_bytes, parsed, dataset=dataset)
         del dbf_bytes
         if not batches:

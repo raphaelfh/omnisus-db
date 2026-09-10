@@ -1,0 +1,190 @@
+categoria,arquivo,bytes,comprimidos,diretorio
+DATASUS,MAPAS/,0,0,true
+DATASUS,MAPAS/ac_municip.MAP,39458,25029,false
+DATASUS,MAPAS/al_municip.MAP,39986,23510,false
+DATASUS,MAPAS/am_municip.MAP,210506,168366,false
+DATASUS,MAPAS/ap_municip.MAP,49242,33491,false
+DATASUS,MAPAS/ba_municip.MAP,363874,284509,false
+DATASUS,MAPAS/br_divadm.MAP,878058,601985,false
+DATASUS,MAPAS/br_frontfaixa.MAP,725570,509094,false
+DATASUS,MAPAS/br_frontzona.MAP,254498,190006,false
+DATASUS,MAPAS/br_macsaud.MAP,849578,608926,false
+DATASUS,MAPAS/br_micibge.MAP,1910218,1187114,false
+DATASUS,MAPAS/br_municip.MAP,4987642,3796680,false
+DATASUS,MAPAS/br_regiao.MAP,232610,196831,false
+DATASUS,MAPAS/br_regmetr.MAP,790170,600321,false
+DATASUS,MAPAS/br_regsaud.MAP,1756490,1205838,false
+DATASUS,MAPAS/br_semiarido.MAP,757866,529678,false
+DATASUS,MAPAS/br_uf.MAP,443058,317318,false
+DATASUS,MAPAS/br_ufsigla.MAP,443058,317093,false
+DATASUS,MAPAS/ce_municip.MAP,138250,101969,false
+DATASUS,MAPAS/df_municip.MAP,1554,1171,false
+DATASUS,MAPAS/es_municip.MAP,69714,45066,false
+DATASUS,MAPAS/go_municip.MAP,276522,213895,false
+DATASUS,MAPAS/ma_municip.MAP,195210,149861,false
+DATASUS,MAPAS/mg_municip.MAP,818850,651488,false
+DATASUS,MAPAS/ms_municip.MAP,146866,109442,false
+DATASUS,MAPAS/mt_municip.MAP,315738,252896,false
+DATASUS,MAPAS/pa_municip.MAP,290146,237585,false
+DATASUS,MAPAS/pb_municip.MAP,93962,62402,false
+DATASUS,MAPAS/pe_municip.MAP,100266,69516,false
+DATASUS,MAPAS/pi_municip.MAP,121378,86825,false
+DATASUS,MAPAS/pr_municip.MAP,291194,218603,false
+DATASUS,MAPAS/rj_municip.MAP,71834,48393,false
+DATASUS,MAPAS/rn_municip.MAP,59690,36421,false
+DATASUS,MAPAS/ro_municip.MAP,79994,55238,false
+DATASUS,MAPAS/rr_municip.MAP,48610,33357,false
+DATASUS,MAPAS/rs_municip.MAP,332266,255204,false
+DATASUS,MAPAS/sc_municip.MAP,186866,136171,false
+DATASUS,MAPAS/se_municip.MAP,36250,20162,false
+DATASUS,MAPAS/sp_municip.MAP,432250,334689,false
+DATASUS,MAPAS/to_municip.MAP,177634,139526,false
+DATASUS,autoexec.r,276,175,false
+DATASUS,CarregaWayPoint.xsl,1148,577,false
+DATASUS,dbf2dbc.exe,46592,26824,false
+DATASUS,defcnv.htm,16176,5381,false
+DATASUS,DocTabWin.htm,60305,20503,false
+DATASUS,HISTORIA.TXT,42265,14960,false
+DATASUS,IMPBORL.DLL,12288,5022,false
+DATASUS,menu.r,2813,916,false
+DATASUS,modelo.rx,301,157,false
+DATASUS,msxsl.exe,24896,13599,false
+DATASUS,sql2.gif,20466,20040,false
+DATASUS,TabWin.ini,317,208,false
+DATASUS,TABWIN32.CNT,8660,2642,false
+DATASUS,Tabwin32.GID,37615,5056,false
+DATASUS,Tabwin32.hlp,4021986,817480,false
+DATASUS,TabWin415.exe,1927680,873340,false
+IBGE,POPTRN23.dbf,3469,1139,false
+IBGE,POPTRO23.dbf,1169,426,false
+IBGE,POPTRR23.dbf,429,191,false
+IBGE,POPTRS23.dbf,10069,3182,false
+IBGE,POPTSC23.dbf,6029,1970,false
+IBGE,POPTSE23.dbf,1629,579,false
+IBGE,POPTSP23.dbf,13029,4301,false
+IBGE,POPTTO23.dbf,2909,958,false
+IBGE,POPTAC23.dbf,569,238,false
+IBGE,POPTAL23.dbf,2169,744,false
+IBGE,POPTAM23.dbf,1369,498,false
+IBGE,POPTAP23.dbf,449,199,false
+IBGE,POPTBA23.dbf,8469,2758,false
+IBGE,POPTBR23.dbf,111529,35291,false
+IBGE,POPTCE23.dbf,3809,1276,false
+IBGE,POPTDF23.dbf,150,83,false
+IBGE,POPTES23.dbf,1689,605,false
+IBGE,POPTGO23.dbf,5049,1654,false
+IBGE,POPTMA23.dbf,4469,1472,false
+IBGE,POPTMG23.dbf,17189,5422,false
+IBGE,POPTMS23.dbf,1709,609,false
+IBGE,POPTMT23.dbf,2949,988,false
+IBGE,POPTPA23.dbf,3009,1037,false
+IBGE,POPTPB23.dbf,4589,1479,false
+IBGE,POPTPE23.dbf,3829,1303,false
+IBGE,POPTPI23.dbf,4609,1455,false
+IBGE,POPTPR23.dbf,8109,2629,false
+IBGE,POPTRJ23.dbf,1969,711,false
+Base Territorial,tb_uf.csv,3236,927,false
+Base Territorial,tb_terrcid_layout.txt,161,124,false
+Base Territorial,tb_terrcid.xml,30023,3348,false
+Base Territorial,tb_terrcid.txt,14208,3085,false
+Base Territorial,tb_terrcid.dbf,14517,3177,false
+Base Territorial,tb_terrcid.csv,9298,2962,false
+Base Territorial,tb_regsaud_layout.txt,189,133,false
+Base Territorial,tb_regsaud.xml,112719,12283,false
+Base Territorial,tb_regsaud.txt,33496,10389,false
+Base Territorial,tb_regsaud.dbf,80844,11792,false
+Base Territorial,tb_regsaud.csv,34125,10502,false
+Base Territorial,tb_regmetr_layout.txt,213,144,false
+Base Territorial,tb_regmetr.xml,32895,2590,false
+Base Territorial,tb_regmetr.txt,11008,2148,false
+Base Territorial,tb_regmetr.dbf,18270,2374,false
+Base Territorial,tb_regmetr.csv,11008,2148,false
+Base Territorial,tb_regiao_layout.txt,186,129,false
+Base Territorial,tb_regiao.xml,1369,301,false
+Base Territorial,tb_regiao.txt,353,189,false
+Base Territorial,tb_regiao.dbf,550,244,false
+Base Territorial,tb_regiao.csv,353,189,false
+Base Territorial,tb_pndr_layout.txt,158,121,false
+Base Territorial,tb_pndr.xml,8429,891,false
+Base Territorial,tb_pndr.txt,4032,747,false
+Base Territorial,tb_pndr.dbf,4184,827,false
+Base Territorial,tb_pndr.csv,2793,742,false
+Base Territorial,tb_municip_layout.txt,728,340,false
+Base Territorial,tb_municip.xml,4352329,329454,false
+Base Territorial,tb_municip.txt,722850,266201,false
+Base Territorial,tb_municip.dbf,1151527,292414,false
+Base Territorial,tb_municip.csv,722850,266214,false
+Base Territorial,tb_mis.xml,12097,414,false
+Base Territorial,tb_mis.txt,6026,314,false
+Base Territorial,tb_mis.dbf,5939,349,false
+Base Territorial,tb_mis.csv,6241,325,false
+Base Territorial,tb_micibge_layout.txt,189,133,false
+Base Territorial,tb_micibge.xml,135419,14550,false
+Base Territorial,tb_micibge.txt,36132,12209,false
+Base Territorial,tb_micibge.dbf,65050,13672,false
+Base Territorial,tb_micibge.csv,36439,12350,false
+Base Territorial,tb_macsaud_layout.txt,189,134,false
+Base Territorial,tb_macsaud.xml,38990,3249,false
+Base Territorial,tb_macsaud.txt,10423,2477,false
+Base Territorial,tb_macsaud.dbf,20050,2929,false
+Base Territorial,tb_macsaud.csv,10533,2512,false
+Base Territorial,tb_dsei_layout.txt,130,103,false
+Base Territorial,tb_dsei.xml,5672,1181,false
+Base Territorial,tb_dsei.txt,3230,1001,false
+Base Territorial,tb_dsei.dbf,3358,1076,false
+Base Territorial,tb_dsei.csv,2114,993,false
+Base Territorial,tb_divadmant.dbf,31546,5671,false
+Base Territorial,tb_divadm_layout.txt,188,133,false
+Base Territorial,tb_divadm.xml,59209,6055,false
+Base Territorial,tb_divadm.txt,31581,5570,false
+Base Territorial,tb_divadm.dbf,31546,5671,false
+Base Territorial,tb_divadm.csv,18427,5017,false
+Base Territorial,rl_regsaud_macsaud_layout.txt,78,69,false
+Base Territorial,rl_regsaud_macsaud.xml,37906,1667,false
+Base Territorial,rl_regsaud_macsaud.txt,5303,1169,false
+Base Territorial,rl_regsaud_macsaud.dbf,4498,1154,false
+Base Territorial,rl_regsaud_macsaud.csv,5310,1178,false
+Base Territorial,rl_municip_terrcid_layout.txt,78,72,false
+Base Territorial,rl_municip_terrcid.xml,159252,6763,false
+Base Territorial,rl_municip_terrcid.txt,62249,14504,false
+Base Territorial,rl_municip_terrcid.dbf,18608,5010,false
+Base Territorial,rl_municip_terrcid.csv,29643,5332,false
+Base Territorial,rl_municip_regsaud_layout.txt,79,73,false
+Base Territorial,rl_municip_regsaud.xml,490402,19946,false
+Base Territorial,rl_municip_regsaud.txt,78031,15636,false
+Base Territorial,rl_municip_regsaud.dbf,66962,15372,false
+Base Territorial,rl_municip_regsaud.csv,78031,15637,false
+Base Territorial,rl_municip_regmetr_layout.txt,79,73,false
+Base Territorial,rl_municip_regmetr.xml,475726,17212,false
+Base Territorial,rl_municip_regmetr.txt,72770,13552,false
+Base Territorial,rl_municip_regmetr.dbf,61654,12978,false
+Base Territorial,rl_municip_regmetr.csv,72770,13553,false
+Base Territorial,rl_municip_pndr_layout.txt,75,69,false
+Base Territorial,rl_municip_pndr.xml,93186,3837,false
+Base Territorial,rl_municip_pndr.txt,62249,12789,false
+Base Territorial,rl_municip_pndr.dbf,11738,2844,false
+Base Territorial,rl_municip_pndr.csv,18648,2986,false
+Base Territorial,rl_municip_micibge_layout.txt,79,71,false
+Base Territorial,rl_municip_micibge.xml,492602,19505,false
+Base Territorial,rl_municip_micibge.txt,78381,15463,false
+Base Territorial,rl_municip_micibge.dbf,67262,15257,false
+Base Territorial,rl_municip_micibge.csv,78381,15462,false
+Base Territorial,rl_municip_macsaud_layout.txt,79,72,false
+Base Territorial,rl_municip_macsaud.xml,487005,18556,false
+Base Territorial,rl_municip_macsaud.txt,72784,14705,false
+Base Territorial,rl_municip_macsaud.dbf,61665,14479,false
+Base Territorial,rl_municip_macsaud.csv,72784,14704,false
+Base Territorial,rl_municip_dsei_layout.txt,75,69,false
+Base Territorial,rl_municip_dsei.xml,18466,1040,false
+Base Territorial,rl_municip_dsei.txt,2530,686,false
+Base Territorial,rl_municip_dsei.dbf,2398,743,false
+Base Territorial,rl_municip_dsei.csv,3704,758,false
+Base Territorial,rl_municip_divadm_layout.txt,82,74,false
+Base Territorial,rl_municip_divadm.xml,480996,20115,false
+Base Territorial,rl_municip_divadm.txt,67896,16004,false
+Base Territorial,rl_municip_divadm.dbf,62336,15699,false
+Base Territorial,rl_municip_divadm.csv,96186,16335,false
+Base Territorial,tb_uf_layout.txt,268,170,false
+Base Territorial,tb_uf.xml,7537,1071,false
+Base Territorial,tb_uf.txt,1454,804,false
+Base Territorial,tb_uf.dbf,3277,936,false

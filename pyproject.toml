@@ -114,6 +114,7 @@ pythonpath = ["src"]
 python_files = ["test_*.py", "bench_*.py"]
 asyncio_mode = "auto"
 markers = [
+    "rust_dbf: requires the optional native DBF extension",
     "integration: tests that hit external resources or real lake",
     "e2e: full-stack end-to-end tests (slow, manual/cron)",
     "perf: performance benchmarks",

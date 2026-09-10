@@ -5,6 +5,21 @@ into a DuckLake-backed lakehouse.
 
 **Status:** Pre-1.0. API may change between minor versions.
 
+## Optional Rust DBF reader
+
+The base package uses Python for DBF decoding. An optional native reader lives in
+[`native/omnisus-db-dbf`](native/omnisus-db-dbf/README.md) and shares the same Arrow
+staging and integrity checks. Install its locally built wheel, then select it:
+
+```bash
+pip install --only-binary=:all: path/to/omnisus_db_dbf-<version>-<platform>.whl
+export OMNISUS_DBF_BACKEND=rust
+```
+
+Use `python` to return to dbfread2 or `auto` to fall back for an absent extension
+or unsupported DBF metadata. Corrupt files and errors during parsing always fail.
+No published native package version is required by the base installation.
+
 ## Install
 
 ```bash
@@ -35,27 +50,22 @@ odb.browse("/dissemin/publicos/SINAN")       # any FTP path, decoded or not
 
 See [docs](https://raphaelfh.github.io/omnisus-db) for details.
 
-## Interactive API notebook
+## Notebooks: learning path
 
-For analysis using complete SIM/Roraima files (2022 and 2023), with a reusable local
-lake, quality checks, filters, aggregations and transactions:
+Start with the [notebook guide](notebooks/README.md):
 
-```bash
-uv run --locked --extra notebooks marimo edit notebooks/api_dados_reais.py
-```
-
-For a complete real-data flow, open the [DATASUS inventory notebook](notebooks/inventario_dados_reais.py):
-query the live file listing, select files by state/year, download into DuckLake,
-inspect records, and export CSV/Parquet. See [execution instructions](notebooks/README.md).
-
-```bash
-uv run --locked --extra notebooks marimo edit notebooks/inventario_dados_reais.py
-```
-
-The [marimo walkthrough](notebooks/README.md) covers planning, synthetic ingestion,
-SQL/Polars, transactions, rollback, results and optional real imports:
+| Order | Notebook | Purpose |
+| --- | --- | --- |
+| 1 | [DATASUS panorama](notebooks/panorama_datasus.py) | Real samples from all 18 portal categories; explore tables, fields and provenance |
+| 2 | [Inventory and selection](notebooks/inventario_dados_reais.py) | Discover files and import a selected scope into DuckLake |
+| 3 | [SIM analysis](notebooks/api_dados_reais.py) | Query complete SIM/Roraima files, check quality and create aggregates |
+| 4 | [API scenarios](notebooks/api_cenarios.py) | Learn transactions, rollback and library behavior |
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/api_cenarios.py
+uv run --locked --extra notebooks marimo edit notebooks/panorama_datasus.py
 ```
+
+The panorama reuses the latest local archive and downloads a new one on request.
+See the [data map and full column inventory](reports/2026-09-10-mapa-datasus/README.md).
+One sample per portal category does not cover every subtype, year or state.

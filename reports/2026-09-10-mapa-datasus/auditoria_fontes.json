@@ -1,0 +1,485 @@
+{
+  "consulta_utc": "2026-09-10T17:22:28.044109+00:00",
+  "documentos": [
+    {
+      "categoria": "IBGE",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/Pop_Residente_TCU_ate_2023.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/IBGE/Pop_Residente_TCU_ate_2023.pdf",
+      "bytes": 567614,
+      "sha256": "ae71f4736dcebed703ac4b50b7b1b496d4dded1c3f726e57005ec5f216b6d817"
+    },
+    {
+      "categoria": "Base Territorial",
+      "url": "ftp://ftp.datasus.gov.br/territorio/doc/bases_territoriais.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/Base_Territorial/bases_territoriais.pdf",
+      "bytes": 707421,
+      "sha256": "98a2c740720bf6fb5be6db01d8c80452de9d8735058cca675714ea34cf5f2e34"
+    },
+    {
+      "categoria": "CIHA",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/CIHA/201101_/Doc/Layout_Arquivos_CIHA.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/CIHA/Layout_Arquivos_CIHA.pdf",
+      "bytes": 10577,
+      "sha256": "c326559e8d8d75afc3c115fa33f29efc1d74621064d53bb4cde129e4f88b9f1a"
+    },
+    {
+      "categoria": "CNES",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/doc/IT_CNES_1706.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/CNES/IT_CNES_1706.pdf",
+      "bytes": 743162,
+      "sha256": "71af7438a8cd77ed3fd7af03f7594b94aecf7eaa71082e28fa85c23c5524a1bb"
+    },
+    {
+      "categoria": "ESUSNOTIFICA",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/ESUSNOTIFICA/DOCS/Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/ESUSNOTIFICA/Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf",
+      "bytes": 676245,
+      "sha256": "5b081513ff3d2b85679a0f5436393a14eec27258b6cd0eeda04ca166324be9e6"
+    },
+    {
+      "categoria": "PCE",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/PCE/DOCS/DIC_DADOS_SISPCE_PCE-DG.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/PCE/DIC_DADOS_SISPCE_PCE-DG.pdf",
+      "bytes": 157191,
+      "sha256": "9f83353e4e10e35c23aff26c888851985545086b3263930f0029c46b931dcf45"
+    },
+    {
+      "categoria": "PO",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/PAINEL_ONCOLOGIA/DOC/Dicionario_Painel_Oncologia.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/PO/Dicionario_Painel_Oncologia.pdf",
+      "bytes": 148313,
+      "sha256": "5503556badd2c7b03ed669fc26622ca8e29c2e6342ac0bbab69e49718ecc309e"
+    },
+    {
+      "categoria": "RESP",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/RESP/DOCS/DIC_DADOS_RESP.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/RESP/DIC_DADOS_RESP.pdf",
+      "bytes": 350057,
+      "sha256": "c6e3fda1713d9932b6b3cca4a4838882ef66de30b356b47a7653cab1d4966ee5"
+    },
+    {
+      "categoria": "SIASUS",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIASUS/200801_/Doc/Informe_Tecnico_SIASUS_2019_07.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SIASUS/Informe_Tecnico_SIASUS_2019_07.pdf",
+      "bytes": 1103131,
+      "sha256": "70fe69dbd4cf0827452e3c265d8d83ebeabe145f63a7e054e57c7848d070c8dc"
+    },
+    {
+      "categoria": "SIHSUS",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Doc/IT_SIHSUS_1603.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SIHSUS/IT_SIHSUS_1603.pdf",
+      "bytes": 57465,
+      "sha256": "1e89d5f2cc41420385d7e30ba5541a387912ab3a0efb167d39def74502076220"
+    },
+    {
+      "categoria": "SIM",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_do_SIM_2025.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SIM/Estrutura_do_SIM_2025.pdf",
+      "bytes": 634146,
+      "sha256": "b4195ac8e0f825a794cb487df93db41601a2f430a708172f494f1251b55eeeb1"
+    },
+    {
+      "categoria": "SINASC",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Estrutura_SINASC_para_CD.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SINASC/Estrutura_SINASC_para_CD.pdf",
+      "bytes": 38999,
+      "sha256": "24e0d4388ea1d5fbe58a328136f1cb464e461985d3ed737210e0ecda5000cb08"
+    },
+    {
+      "categoria": "SINAN",
+      "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Docs_TAB_SINAN.zip",
+      "erro": "Arquivo acima de 30MiB"
+    },
+    {
+      "categoria": "CIH",
+      "diretorio_ftp": "/dissemin/publicos/CIH/200801_201012/Doc",
+      "itens": []
+    },
+    {
+      "categoria": "SISCOLO",
+      "diretorio_ftp": "/dissemin/publicos/SISCAN/SISCOLO4/Doc",
+      "itens": []
+    },
+    {
+      "categoria": "SISMAMA",
+      "diretorio_ftp": "/dissemin/publicos/SISCAN/SISMAMA/Doc",
+      "itens": []
+    },
+    {
+      "categoria": "SISPRENATAL",
+      "diretorio_ftp": "/dissemin/publicos/SISPRENATAL/201201_/Doc",
+      "itens": []
+    },
+    {
+      "categoria": "SINAN",
+      "url": "https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SINAN/DIC_DADOS_Chagas_v5.pdf",
+      "bytes": 164735,
+      "sha256": "16c598f86fbfedd8040ebb34ad03c3351ff25c9bf1558354fe86ccb8b4bf8bd1"
+    },
+    {
+      "categoria": "SINAN",
+      "url": "https://portalsinan.saude.gov.br/images/documentos/Agravos/NINDIV/DIC_DADOS_Notificacao_Individual_v5.pdf",
+      "arquivo": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/documentacao-auditoria/SINAN/DIC_DADOS_Notificacao_Individual_v5.pdf",
+      "bytes": 295160,
+      "sha256": "b3e0561c7a2d0a83d717286e07d01ca75b0d4499a38d3b3ba2b602a4fc983004"
+    }
+  ],
+  "portal": {
+    "DATASUS": {
+      "itens": [
+        {
+          "fonte": "DATASUS",
+          "modalidade": "Documentação",
+          "arquivo": "DOCS-TABDOS.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/TABWIN/Doc/DOCS-TABDOS.zip\">DOCS-TABDOS.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/TABWIN/Doc/DOCS-TABDOS.zip"
+        },
+        {
+          "fonte": "DATASUS",
+          "modalidade": "Documentação",
+          "arquivo": "DOCS-TABNET.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/TABNET/DOC/DOCS-TABNET.zip\">DOCS-TABNET.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/TABNET/DOC/DOCS-TABNET.zip"
+        },
+        {
+          "fonte": "DATASUS",
+          "modalidade": "Documentação",
+          "arquivo": "Docs-TABWIN.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/TABWIN/Doc/Docs-TABWIN.zip\">Docs-TABWIN.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/TABWIN/Doc/Docs-TABWIN.zip"
+        }
+      ]
+    },
+    "IBGE": {
+      "itens": [
+        {
+          "fonte": "IBGE",
+          "modalidade": "Documentação",
+          "arquivo": "NT-POPULACAO-RESIDENTE-2000-2024.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/NT-POPULACAO-RESIDENTE-2000-2024.pdf\">NT-POPULACAO-RESIDENTE-2000-2024.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/NT-POPULACAO-RESIDENTE-2000-2024.pdf"
+        },
+        {
+          "fonte": "IBGE",
+          "modalidade": "Documentação",
+          "arquivo": "Pop_Residente_TCU_2024.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/Pop_Residente_TCU_2024.pdf\">Pop_Residente_TCU_2024.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/Pop_Residente_TCU_2024.pdf"
+        },
+        {
+          "fonte": "IBGE",
+          "modalidade": "Documentação",
+          "arquivo": "Pop_Residente_TCU_ate_2023.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/Pop_Residente_TCU_ate_2023.pdf\">Pop_Residente_TCU_ate_2023.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/Pop_Residente_TCU_ate_2023.pdf"
+        },
+        {
+          "fonte": "IBGE",
+          "modalidade": "Documentação",
+          "arquivo": "populacao.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/populacao.pdf\">populacao.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/IBGE/DOC/populacao.pdf"
+        }
+      ]
+    },
+    "Base Territorial": {
+      "itens": [
+        {
+          "fonte": "Base Territorial",
+          "modalidade": "Documentação",
+          "arquivo": "bases_territoriais.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/territorio/doc/bases_territoriais.pdf\">bases_territoriais.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/territorio/doc/bases_territoriais.pdf"
+        },
+        {
+          "fonte": "Base Territorial",
+          "modalidade": "Documentação",
+          "arquivo": "registro_de_alteracoes.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/territorio/doc/registro_de_alteracoes.pdf\">registro_de_alteracoes.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/territorio/doc/registro_de_alteracoes.pdf"
+        }
+      ]
+    },
+    "CIH": {
+      "erro": "The read operation timed out"
+    },
+    "CIHA": {
+      "itens": [
+        {
+          "fonte": "CIHA",
+          "modalidade": "Documentação",
+          "arquivo": "Layout_Arquivos_CIHA.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/CIHA/201101_/Doc/Layout_Arquivos_CIHA.pdf\">Layout_Arquivos_CIHA.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/CIHA/201101_/Doc/Layout_Arquivos_CIHA.pdf"
+        }
+      ]
+    },
+    "CNES": {
+      "itens": [
+        {
+          "fonte": "CNES",
+          "modalidade": "Documentação",
+          "arquivo": "IT_CNES_1706.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/doc/IT_CNES_1706.pdf\">IT_CNES_1706.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/doc/IT_CNES_1706.pdf"
+        }
+      ]
+    },
+    "ESUSNOTIFICA": {
+      "itens": [
+        {
+          "fonte": "ESUSNOTIFICA",
+          "modalidade": "Documentação",
+          "arquivo": "Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/ESUSNOTIFICA/DOCS/Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf\">Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/ESUSNOTIFICA/DOCS/Dicionario_de_Dados_Doenca_de_Chagas_Cronica.pdf"
+        },
+        {
+          "fonte": "ESUSNOTIFICA",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Informativa_Doenca_de_Chagas_Cronica.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/ESUSNOTIFICA/DOCS/Nota_Informativa_Doenca_de_Chagas_Cronica.pdf\">Nota_Informativa_Doenca_de_Chagas_Cronica.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/ESUSNOTIFICA/DOCS/Nota_Informativa_Doenca_de_Chagas_Cronica.pdf"
+        }
+      ]
+    },
+    "PCE": {
+      "itens": [
+        {
+          "fonte": "PCE",
+          "modalidade": "Documentação",
+          "arquivo": "DIC_DADOS_SISPCE_PCE-DG.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/PCE/DOCS/DIC_DADOS_SISPCE_PCE-DG.pdf\">DIC_DADOS_SISPCE_PCE-DG.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/PCE/DOCS/DIC_DADOS_SISPCE_PCE-DG.pdf"
+        }
+      ]
+    },
+    "PO": {
+      "itens": [
+        {
+          "fonte": "PO",
+          "modalidade": "Documentação",
+          "arquivo": "Dicionario_Painel_Oncologia.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/PAINEL_ONCOLOGIA/DOC/Dicionario_Painel_Oncologia.pdf\">Dicionario_Painel_Oncologia.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/PAINEL_ONCOLOGIA/DOC/Dicionario_Painel_Oncologia.pdf"
+        }
+      ]
+    },
+    "RESP": {
+      "itens": [
+        {
+          "fonte": "RESP",
+          "modalidade": "Documentação",
+          "arquivo": "DIC_DADOS_RESP.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/RESP/DOCS/DIC_DADOS_RESP.pdf\">DIC_DADOS_RESP.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/RESP/DOCS/DIC_DADOS_RESP.pdf"
+        }
+      ]
+    },
+    "SIASUS": {
+      "itens": [
+        {
+          "fonte": "SIASUS",
+          "modalidade": "Documentação",
+          "arquivo": "Informe_Tecnico_SIASUS_2019_07.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIASUS/200801_/Doc/Informe_Tecnico_SIASUS_2019_07.pdf\">Informe_Tecnico_SIASUS_2019_07.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIASUS/200801_/Doc/Informe_Tecnico_SIASUS_2019_07.pdf"
+        }
+      ]
+    },
+    "SIHSUS": {
+      "itens": [
+        {
+          "fonte": "SIHSUS",
+          "modalidade": "Documentação",
+          "arquivo": "IT_SIHSUS_1603.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Doc/IT_SIHSUS_1603.pdf\">IT_SIHSUS_1603.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Doc/IT_SIHSUS_1603.pdf"
+        }
+      ]
+    },
+    "SIM": {
+      "itens": [
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Docs-Tabs-CID9.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/Docs-Tabs-CID9.zip\">Docs-Tabs-CID9.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/Docs-Tabs-CID9.zip"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Docs_Tabs_CID10.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Docs_Tabs_CID10.zip\">Docs_Tabs_CID10.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Docs_Tabs_CID10.zip"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Estrutura_SIM_Anterior.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_SIM_Anterior.pdf\">Estrutura_SIM_Anterior.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_SIM_Anterior.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Estrutura_SIM_para_CD.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_SIM_para_CD.pdf\">Estrutura_SIM_para_CD.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_SIM_para_CD.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Estrutura_do_SIM_2025.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_do_SIM_2025.pdf\">Estrutura_do_SIM_2025.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_do_SIM_2025.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "INTRO.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/INTRO.pdf\">INTRO.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/INTRO.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Legislacao_PDF.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Legislacao_PDF.pdf\">Legislacao_PDF.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Legislacao_PDF.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "MORT98.HLP",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/MORT98.HLP\">MORT98.HLP</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/MORT98.HLP"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "MTAB16M.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/MTAB16M.pdf\">MTAB16M.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID9/DOCS/MTAB16M.pdf"
+        },
+        {
+          "fonte": "SIM",
+          "modalidade": "Documentação",
+          "arquivo": "Portaria.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Portaria.pdf\">Portaria.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Portaria.pdf"
+        }
+      ]
+    },
+    "SINAN": {
+      "itens": [
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Docs_TAB_SINAN.zip",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Docs_TAB_SINAN.zip\">Docs_TAB_SINAN.zip</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Docs_TAB_SINAN.zip"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Tecnica_Doenca_de_Creutzfeldt-Jakob(DCJ).pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Doenca_de_Creutzfeldt-Jakob(DCJ).pdf\">Nota_Tecnica_Doenca_de_Creutzfeldt-Jakob(DCJ).pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Doenca_de_Creutzfeldt-Jakob(DCJ).pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Tecnica_Intoxicacao_Exogena.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Intoxicacao_Exogena.pdf\">Nota_Tecnica_Intoxicacao_Exogena.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Intoxicacao_Exogena.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Tecnica_Rotavirus.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Rotavirus.pdf\">Nota_Tecnica_Rotavirus.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Rotavirus.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Tecnica_Surtos_de_DTA.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Surtos_de_DTA.pdf\">Nota_Tecnica_Surtos_de_DTA.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Surtos_de_DTA.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "Nota_Tecnica_Toxoplasmose.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Toxoplasmose.pdf\">Nota_Tecnica_Toxoplasmose.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/Nota_Tecnica_Toxoplasmose.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "POP_III_Instalacao_do_tabulador_TabWin_3.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_III_Instalacao_do_tabulador_TabWin_3.pdf\">POP_III_Instalacao_do_tabulador_TabWin_3.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_III_Instalacao_do_tabulador_TabWin_3.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "POP_II_Descompactacao_expansao_conversao_3.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_II_Descompactacao_expansao_conversao_3.pdf\">POP_II_Descompactacao_expansao_conversao_3.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_II_Descompactacao_expansao_conversao_3.pdf"
+        },
+        {
+          "fonte": "SINAN",
+          "modalidade": "Documentação",
+          "arquivo": "POP_I_Acesso_a_Microdados_5.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_I_Acesso_a_Microdados_5.pdf\">POP_I_Acesso_a_Microdados_5.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DOCS/POP_I_Acesso_a_Microdados_5.pdf"
+        }
+      ]
+    },
+    "SINASC": {
+      "itens": [
+        {
+          "fonte": "SINASC",
+          "modalidade": "Documentação",
+          "arquivo": "Estrutura_SINASC_para_CD.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Estrutura_SINASC_para_CD.pdf\">Estrutura_SINASC_para_CD.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Estrutura_SINASC_para_CD.pdf"
+        },
+        {
+          "fonte": "SINASC",
+          "modalidade": "Documentação",
+          "arquivo": "Legislacao_PDF.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Legislacao_PDF.pdf\">Legislacao_PDF.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Legislacao_PDF.pdf"
+        },
+        {
+          "fonte": "SINASC",
+          "modalidade": "Documentação",
+          "arquivo": "NASC98.HLP",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/ANT/DOCS/NASC98.HLP\">NASC98.HLP</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/ANT/DOCS/NASC98.HLP"
+        },
+        {
+          "fonte": "SINASC",
+          "modalidade": "Documentação",
+          "arquivo": "Portaria.pdf",
+          "link": "<a href=\"ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Portaria.pdf\">Portaria.pdf</a>",
+          "endereco": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Portaria.pdf"
+        }
+      ]
+    },
+    "SISCOLO": {
+      "itens": []
+    },
+    "SISMAMA": {
+      "itens": []
+    },
+    "SISPRENATAL": {
+      "itens": []
+    }
+  }
+}

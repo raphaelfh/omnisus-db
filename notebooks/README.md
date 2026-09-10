@@ -1,5 +1,90 @@
 # API na prática com marimo
 
+## Trilha organizada de estudo
+
+| Ordem | Notebook | Finalidade | Dados |
+| --- | --- | --- | --- |
+| 1 | [Panorama DATASUS](panorama_datasus.py) | Conhecer as **18 categorias** do portal, suas tabelas e colunas | Amostras reais de todas as categorias |
+| 2 | [Inventário e seleção](inventario_dados_reais.py) | Filtrar arquivos e importar um recorte das bases suportadas | Arquivos completos escolhidos no FTP |
+| 3 | [Análise SIM](api_dados_reais.py) | Aprender filtros, qualidade, agregações e consultas | SIM/RR 2022–2023 completos |
+| 4 | [Cenários da API](api_cenarios.py) | Estudar transações, rollback e comportamento da biblioteca | Cenários sintéticos identificados e importações reais opcionais |
+| 5 | [Performance Python/Rust](performance_dbf.py) | Comparar tempo, memória e disco por corpus e etapa | Benchmarks locais versionados, com sete rodadas por backend |
+
+Os nomes existentes foram preservados para manter os comandos e referências.
+Os auxiliares de aquisição, leitura e relatório ficam juntos em
+[`_acervo/`](_acervo/README.md). Downloads e HTMLs ficam em `data/lake/`,
+ignorados pelo Git; relatórios de metadados ficam em `reports/`.
+
+## Panorama das 18 categorias do portal
+
+```bash
+uv sync --locked --extra notebooks
+uv run --locked --extra notebooks marimo edit notebooks/panorama_datasus.py
+```
+
+Ao abrir, o notebook reutiliza a última coleta local e permite explorar categoria,
+tabela, registros, esquema, indicadores da amostra, arquivos originais e documentos.
+Em um checkout novo, clique em **Baixar amostras reais**. O botão prepara uma nova
+coleta sem sobrescrever os dados anteriores. No painel de preparação, escolha
+categorias e máximo de linhas por tabela (200 por padrão).
+
+As categorias são DATASUS/TABWIN, IBGE, Base Territorial, CIH, CIHA, CNES,
+e-SUS Notifica/DCC, PCE, Painel de Oncologia, RESP, SIASUS, SIHSUS, SIM, SINAN,
+SINASC, SISCOLO, SISMAMA e SISPRENATAL. **Uma amostra por categoria não cobre todos
+os subtipos, agravos, anos ou UFs**; os subtipos descritos no portal aparecem
+separadamente no relatório. Aplicativos são inspecionados como pacotes, sem execução.
+
+Cada arquivo escolhido é baixado inteiro (até 64 MiB; até 256 MiB por coleta).
+As amostras têm as primeiras 200 linhas ativas de **cada tabela** dos DBC/DBF/ZIP;
+IBGE e Base Territorial contêm várias tabelas. Os valores ficam em texto bruto
+para preservar códigos e zeros à esquerda. O esquema inclui tipo físico DBF,
+largura, decimais e indicadores calculados apenas na amostra. Campos não recebem
+interpretações clínicas inferidas. Arquivo vazio e erro de leitura são registrados;
+até quatro candidatos podem ser tentados para obter registros reais.
+
+```bash
+# Abrir como aplicativo
+uv run --locked --extra notebooks marimo run notebooks/panorama_datasus.py
+
+# Exportar o acervo local já preparado (sem novos downloads)
+uv run --locked --extra notebooks marimo export html notebooks/panorama_datasus.py \
+  -o /tmp/panorama-datasus.html
+
+# Executar uma nova coleta real das 18 categorias e gerar o HTML
+uv run --locked --extra notebooks marimo export html notebooks/panorama_datasus.py \
+  -o /tmp/panorama-datasus.html -- --preparar true
+```
+
+`--preparar true` é para execução automática, não para uma sessão interativa.
+Falhas permanecem visíveis no manifesto e fazem a exportação automática terminar
+com erro. Aguarde a conclusão: interromper a célula pode não encerrar imediatamente
+a thread de aquisição.
+
+Em `data/lake/panorama-datasus/<execucao>/` ficam:
+
+- Por categoria: consulta ao portal, inventário FTP, original, SHA-256,
+  tentativas, amostras CSV/Parquet e descritores de todas as colunas.
+- `manifesto.json`: proveniência e estado final de todas as categorias.
+- `portal_transferencia.js`: cópia da definição do seletor e subtipos.
+- `mapa/`: relatório Markdown e mapas CSV/JSON de fontes, tabelas, colunas e ZIPs.
+
+O ponteiro `latest.json` só é publicado quando a tentativa termina, mesmo que
+alguma categoria tenha falhado; o notebook apresenta esses estados explicitamente.
+
+Validação em 10/09/2026: **18 categorias**, **65 tabelas**, **1.326 ocorrências de
+colunas**, **9.784 linhas amostradas** e **189 membros ZIP**. São 17 categorias
+tabulares e um pacote de aplicativo. A seleção vazia de SISMAMA/RR foi substituída
+por um arquivo de SP, com as tentativas preservadas.
+
+Veja o [relatório completo e mapa de campos](../reports/2026-09-10-mapa-datasus/README.md).
+Esses números descrevem esta coleta, não uma garantia de cobertura futura.
+
+```bash
+uv run --locked --extra notebooks marimo check --strict notebooks/panorama_datasus.py
+uv run --locked --extra dev pytest tests/unit/notebooks/test_acervo.py -q
+uv run --locked --extra dev ruff check notebooks/_acervo notebooks/panorama_datasus.py
+```
+
 ## Análise da API com dados reais já preparados
 
 O [notebook de análise real](api_dados_reais.py) usa os arquivos completos
@@ -138,3 +223,32 @@ própria; as limitações da implementação atual estão explicadas no notebook
 
 A avaliação anterior está em
 [relatório de documentação](../reports/2026-09-10-avaliacao-documentacao.md).
+
+
+## Performance do leitor DBF: Python e Rust
+
+[`performance_dbf.py`](performance_dbf.py) apresenta o relatório
+[`rust-dbf-performance.json`](../reports/rust-dbf-performance.json) com filtros
+por corpus, etapa e métrica. Os gráficos mostram medianas e rodadas individuais;
+as tabelas permitem baixar os valores. A análise separa DBF → Arrow,
+DBC → Parquet, DBF ampliado → Parquet e publicação em lake novo.
+
+```bash
+uv run --no-sync marimo edit notebooks/performance_dbf.py
+uv run --no-sync marimo run notebooks/performance_dbf.py
+uv run --no-sync marimo export html notebooks/performance_dbf.py -o /tmp/performance-dbf.html
+```
+
+A leitura do relatório não precisa da extensão Rust instalada, não acessa a rede
+e não executa novos benchmarks. O notebook explica como repetir o teste com o
+script existente, gravando um relatório separado. O HTML é uma fotografia dos
+resultados: use `edit` ou `run` para os filtros reativos. Os cálculos e gráficos
+ficam em `_performance_dbf.py`, sem dependências adicionais de visualização.
+
+Validação: seis testes verificam medianas sem aquecimento, separação das etapas,
+rejeição de evidência incompleta/divergente e gráficos com disco igual a zero.
+
+```bash
+uv run --no-sync pytest tests/unit/notebooks/test_performance_dbf.py -q
+uv run --no-sync marimo check --strict notebooks/performance_dbf.py
+```

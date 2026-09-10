@@ -1,0 +1,169 @@
+fonte,sigla_arquivo,desc_arquivo,abrangencia
+SIHSUS,RD,RD - AIH Reduzida,UF
+SIHSUS,RJ,RJ - AIH Rejeitadas,UF
+SIHSUS,SP,SP - Serviços Profissionais,UF
+SIHSUS,ER,ER - AIH Rejeitadas com código de erro,UF
+SIASUS,AB,AB - APAC de Acompanhamento a Cirurgia Bariátrica - A Partir de Jan/2008 até Mar/2013,UF
+SIASUS,ABO,ABO - APAC Acompanhamento Pós Cirurgia Bariátrica - A Partir de Abr/2013,UF
+SIASUS,ACF,ACF - APAC Confeção de Fístula Arteriovenosa - A Partir de Jun/2014,UF
+SIASUS,AD,AD - APAC de Laudos Diversos - A Partir de Jan/2008,UF
+SIASUS,AM,AM - APAC de Medicamentos - A Partir de Jan/2008,UF
+SIASUS,AN,AN - APAC de Nefrologia - A Partir de Jan/2008 até Out/2014,UF
+SIASUS,AQ,AQ - APAC de Quimioterapia - A Partir de Jan/2008,UF
+SIASUS,AR,AR - APAC de Radioterapia - A Partir de Jan/2008,UF
+SIASUS,ATD,ATD - APAC Tratamento Dialítico - A Partir de Jun/2014,UF
+SIASUS,PA,PA - Produção Ambulatorial - A Partir de Jul/1994,UF
+SIASUS,PS,PS - Psicossocial - A Partir de Jan/2013,UF
+SIASUS,SAD,SAD - Atenção Domiciliar - A Partir de Nov/2012,
+SISCOLO,CC,CC - Citopatológico de Colo de Útero - 2006 a 2014,UF
+SISCOLO,HC,HC - Histopatológico de Colo de Útero - 2006 a 2014,UF
+SISMAMA,CM,CM - Citopatológico de Mama - 2006 a 2014,UF
+SISMAMA,HM,HC - Histopatológico de Mama - 2006 a 2014,UF
+SIM,DO,DO - Declarações de Óbito - 1979 a 2026,TT
+SIM,DOREXT,DOREXT - Mortalidade de residentes no exterior - 2013 a 2026,BR
+SIM,DOFET,DOFET - Declarações de Óbitos fetais - 1979 a 2026,BR
+SIM,DOEXT,DOEXT - Declarações de Óbitos por causas externas - 1979 a 2026,BR
+SIM,DOINF,DOINF - Declarações de Óbitos infantis - 1979 a 2026,BR
+SIM,DOMAT,DOMAT - Declarações de Óbitos maternos - 1996 a 2026,BR
+SINASC,DN,DN - Declarações de nascidos vivos 1994 a 2026,TT
+SINASC,DNEX,DNEX - Declarações de nascidos vivos residentes no exterior 2014 a 2026,BR
+SISPRENATAL,PN,PN - Pré-Natal - 2012 a 2014,UF
+CIHA,CIHA,CIHA - Comunicação de Internação Hospitalar e Ambulatorial - A partir de Jan/2011,UF
+CIH,CR,CR - Comunicação de Internação Hospitalar - A partir de Jan/2008,UF
+CNES,LT,LT - Leitos - A partir de Out/2005,UF
+CNES,ST,ST - Estabelecimentos - A partir de Ago/2005,UF
+CNES,DC,DC - Dados Complementares - A partir de Ago/2005,UF
+CNES,EQ,EQ - Equipamentos - A partir de Ago/2005,UF
+CNES,SR,SR - Serviço Especializado - A partir de Ago/2005,UF
+CNES,HB,HB - Habilitação - A partir de Mar/2007,UF
+CNES,PF,PF - Profissional - A partir de Ago/2005,UF
+CNES,EP,EP - Equipes - A partir de Abr/2007,UF
+CNES,RC,RC - Regra Contratual - A partir de Mar/2007,UF
+CNES,IN,IN - Incentivos - A partir de Nov/2007,UF
+CNES,EE,EE - Estabelecimento de Ensino - A partir de Mar/2007,UF
+CNES,EF,EF - Estabelecimento Filantrópico - A partir de Mar/2007,UF
+CNES,GM,GM - Gestão e Metas - A partir de Jun/2007,UF
+SINAN,ANIM,ANIM - Acidente por Animais Peçonhentos,BR
+SINAN,ANTR,ANTR - Atendimento Antirrabico,BR
+SINAN,AIDA,AIDA - AIDS em adultos,BR
+SINAN,AIDC,AIDC - AIDS em crianças,BR
+SINAN,BOTU,BOTU - Botulismo,BR
+SINAN,COLE,COLE - Cólera,BR
+SINAN,COQU,COQU - Coqueluche,BR
+SINAN,DENG,DENG - Dengue,BR
+SINAN,DIFT,DIFT - Difteria,BR
+SINAN,DCRJ,DCRJ - Doença de Creutzfeldt-Jakob (DCJ),BR
+SINAN,CHAG,CHAG - Doença de Chagas Aguda,BR
+SINAN,EXAN,EXAN - Doença exantemáticas,BR
+SINAN,ESQU,ESQU - Esquistossomose,BR
+SINAN,ESPO,ESPO - Esporotricose (Epizootia),BR
+SINAN,CHIK,CHIK - Febre de Chikungunya,BR
+SINAN,FMAC,FMAC - Febre Maculosa,BR
+SINAN,FTIF,FTIF - Febre Tifóide,BR
+SINAN,HANS,HANS - Hanseníase,BR
+SINAN,HANT,HANT - Hantavirose,BR
+SINAN,HEPA,HEPA - Hepatites Virais,BR
+SINAN,HIVA,HIVA - HIV em adultos,BR
+SINAN,HIVC,HIVC - HIV em crianças,BR
+SINAN,HIVE,HIVE - HIV em crianças expostas,BR
+SINAN,HIVG,HIVG - HIV em gestante,BR
+SINAN,INFL,INFL - Influenza Pandêmica,BR
+SINAN,IEXO,IEXO - Intoxicação Exógena,BR
+SINAN,LEIV,LEIV - Leishmaniose Visceral,BR
+SINAN,LTAN,LTAN - Leishmaniose Tegumentar Americana,BR
+SINAN,LEPT,LEPT - Leptospirose,BR
+SINAN,MALA,MALA - Malária,BR
+SINAN,MENI,MENI - Meningite,BR
+SINAN,PFAN,PFAN - Paralisia Flácida Aguda,BR
+SINAN,PEST,PEST - Peste,BR
+SINAN,RAIV,RAIV - Raiva,BR
+SINAN,ROTA,ROTA - Rotavírus,BR
+SINAN,SIFA,SIFA - Sífilis Adquirida,BR
+SINAN,SIFC,SIFC - Sífilis Congênita,BR
+SINAN,SIFG,SIFG - Sífilis em Gestante,BR
+SINAN,SRC,SRC - Síndrome da Rubéola Congênia,BR
+SINAN,SDTA,SDTA - Surto Doenças Transmitidas por Alimentos,BR
+SINAN,TETA,TETA - Tétano Acidental,BR
+SINAN,TETN,TETN - Tétano Neonatal,BR
+SINAN,TOXC,TOXC - Toxoplasmose Congênita,BR
+SINAN,TOXG,TOXG - Toxoplasmose Gestacional,BR
+SINAN,NTRA,NTRA - Notificação de Tracoma,BR
+SINAN,TRAC,TRAC - Inquérito de Tracoma,BR
+SINAN,TUBE,TUBE - Tuberculose,BR
+SINAN,VARC,VARC - Varicela,BR
+SINAN,VIOL,"VIOL - Violência doméstica, sexual e/ou outras violências",BR
+SINAN,ZIKA,ZIKA - Zika Vírus,BR
+SINAN,ACBI,ACBI - Acidente de trabalho com material biológico,BR
+SINAN,ACGR,ACGR - Acidente de trabalho,BR
+SINAN,CANC,CANC - Cancêr relacionado ao trabalho,BR
+SINAN,DERM,DERM - Dermatoses ocupacionais,BR
+SINAN,LERD,LERD - LER/Dort,BR
+SINAN,PAIR,PAIR - Perda auditiva por ruído relacionado ao trabalho,BR
+SINAN,PNEU,PNEU - Pneumoconioses realacionadas ao trabalho,BR
+SINAN,MENT,MENT - Transtornos mentais relacionados ao trabalho,BR
+SINAN_P,ANIM,ANIM - Acidente por Animais Peçonhentos,BR
+SINAN_P,ANTR,ANTR - Atendimento Antirrabico,BR
+SINAN_P,AIDA,AIDA - AIDS em adultos,BR
+SINAN_P,AIDC,AIDC - AIDS em crianças,BR
+SINAN_P,BOTU,BOTU - Botulismo,BR
+SINAN_P,COLE,COLE - Cólera,BR
+SINAN_P,COQU,COQU - Coqueluche,BR
+SINAN_P,DENG,DENG - Dengue,BR
+SINAN_P,DIFT,DIFT - Difteria,BR
+SINAN_P,DCRJ,DCRJ - Doença de Creutzfeldt-Jakob (DCJ),BR
+SINAN_P,CHAG,CHAG - Doença de Chagas Aguda,BR
+SINAN_P,EXAN,EXAN - Doença exantemáticas,BR
+SINAN_P,ESQU,ESQU - Esquistossomose,BR
+SINAN_P,ESPO,ESPO - Esporotricose (Epizootia),BR
+SINAN_P,CHIK,CHIK - Febre de Chikungunya,BR
+SINAN_P,FMAC,FMAC - Febre Maculosa,BR
+SINAN_P,FTIF,FTIF - Febre Tifóide,BR
+SINAN_P,HANS,HANS - Hanseníase,BR
+SINAN_P,HANT,HANT - Hantavirose,BR
+SINAN_P,HEPA,HEPA - Hepatites Virais,BR
+SINAN_P,HIVA,HIVA - HIV em adultos,BR
+SINAN_P,HIVC,HIVC - HIV em crianças,BR
+SINAN_P,HIVE,HIVE - HIV em crianças expostas,BR
+SINAN_P,HIVG,HIVG - HIV em gestantes,BR
+SINAN_P,INFL,INFL - Influenza Pandêmica,BR
+SINAN_P,IEXO,IEXO - Intoxicação Exógena,BR
+SINAN_P,LEIV,LEIV - Leishmaniose Visceral,BR
+SINAN_P,LTAN,LTAN - Leishmaniose Tegumentar Americana,BR
+SINAN_P,LEPT,LEPT - Leptospirose,BR
+SINAN_P,MALA,MALA - Malária,BR
+SINAN_P,MENI,MENI - Meningite,BR
+SINAN_P,PFAN,PFAN - Paralisia Flácida Aguda,BR
+SINAN_P,PEST,PEST - Peste,BR
+SINAN_P,SIFA,SIFA - Sífilis Adquirida,BR
+SINAN_P,SIFC,SIFC - Sífilis Congênita,BR
+SINAN_P,SIFG,SIFG - Sífilis em Gestante,BR
+SINAN_P,SRC,SRC - Síndrome da Rubéola Congênia,BR
+SINAN_P,SDTA,SDTA - Surto Doenças Transmitidas por Alimentos,BR
+SINAN_P,RAIV,RAIV - Raiva,BR
+SINAN_P,ROTA,ROTA - Rotavírus,BR
+SINAN_P,TETA,TETA - Tétano Acidental,BR
+SINAN_P,TETN,TETN - Tétano Neonatal,BR
+SINAN_P,TOXC,TOXC - Toxoplasmose Congênita,BR
+SINAN_P,TOXG,TOXG - Toxoplasmose Gestacional,BR
+SINAN_P,NTRA,NTRA - Notificação de Tracoma,BR
+SINAN_P,TRAC,TRAC - Inquérito de Tracoma,BR
+SINAN_P,TUBE,TUBE - Tuberculose,BR
+SINAN_P,VARC,VARC - Varicela,BR
+SINAN_P,VIOL,"VIOL - Violência doméstica, sexual e/ou outras violências",BR
+SINAN_P,ZIKA,ZIKA - Zika Vírus,BR
+SINAN_P,ACBI,ACBI - Acidente de trabalho com material biológico,BR
+SINAN_P,ACGR,ACGR - Acidente de trabalho,BR
+SINAN_P,CANC,CANC - Cancêr relacionado ao trabalho,BR
+SINAN_P,DERM,DERM - Dermatoses ocupacionais,BR
+SINAN_P,LERD,LERD - LER/Dort,BR
+SINAN_P,PAIR,PAIR - Perda auditiva por ruído relacionado ao trabalho,BR
+SINAN_P,PNEU,PNEU - Pneumoconioses realacionadas ao trabalho,BR
+SINAN_P,MENT,MENT - Transtornos mentais relacionados ao trabalho,BR
+ESUSNOTIFICA,DCCR,DCCR - Doença de Chagas Crônica,BR
+ESUSNOTIFICA_p,DCCR,DCCR - Doença de Chagas Crônica,BR
+RESP,RESP,RESP - Notificações de casos suspeitos de SCZ – desde 2015,UF
+PO,PO,PO - Painel de Oncologia – desde 2013,BR
+PCE,PCE,PCE - Programa de Controle da Esquistossomose,TT
+IBGE,POP,POP - Censo e Estimativas - 1980 até 2012,BR
+IBGE,POPS,POPS - Estimativas por sexo e idade - 2000 até 2025,BR
+IBGE,POPT,POPT - Estimativas TCU - 1992 até 2025,BR

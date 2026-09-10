@@ -1,5 +1,33 @@
 # Release procedure
 
+## Optional native DBF package
+
+`native/omnisus-db-dbf` builds independently of the main Hatchling package. Its
+version has one home in `Cargo.toml`; Maturin exposes that version to Python.
+The pinned toolchain and `Cargo.lock` are committed. Build with:
+
+```bash
+uv build native/omnisus-db-dbf --wheel --out-dir dist/native
+uv build native/omnisus-db-dbf --sdist --out-dir dist/native
+```
+
+The `native.yml` workflow produces tested artifacts on pull requests, main pushes,
+manual dispatch and `dbf-v*` tags. It does not publish packages. It checks native
+wheels on CPython 3.12/3.13 across Linux x86_64, Windows x86_64 and macOS arm64/x86_64,
+plus sdist reconstruction. Every native-only installation must use binary
+dependencies and pass outside the checkout. The existing `datasus-dbc` cp313 wheel
+gap is tracked separately; it must never make native extension checks nonblocking.
+
+Before a native PyPI release, configure its own Trusted Publisher and promote
+the artifacts that passed the complete matrix. Use `dbf-v<version>` for the native
+package; `v<version>` continues to identify the main package. Only after the
+native version is available in the index should the main package add a `rust`
+extra and update `uv.lock`; an unpublished dependency must not break base installs.
+Until then, install the locally built wheel directly. The main wheel stays
+`py3-none-any` and Python decoding remains available.
+
+## Main Python package
+
 Tag and push. Everything else is `release.yml`.
 
 ```bash

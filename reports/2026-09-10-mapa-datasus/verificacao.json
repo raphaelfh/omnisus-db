@@ -1,0 +1,18 @@
+{
+  "categorias": 18,
+  "tabelas": 65,
+  "colunas": 1326,
+  "linhas_amostra": 9784,
+  "membros_zip": 189,
+  "descricoes_subtipos_portal": 168,
+  "sha256_originais_verificados": 18,
+  "csv_parquet_verificados": 65,
+  "manifesto": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/20260910T162322/manifesto.json",
+  "limite_linhas": 200,
+  "testes_unitarios": 11,
+  "categorias_verificadas_na_interface": 18,
+  "marimo_check_strict": "passou",
+  "marimo_export_html": "passou",
+  "ruff": "passou",
+  "html": "/Users/raphael/PycharmProjects/omnisus-db/data/lake/panorama-datasus/20260910T162322/panorama.html"
+}

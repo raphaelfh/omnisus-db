@@ -11,6 +11,12 @@
 
 ### Added
 
+- Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow
+  batches, with exact integer/string semantics and a shared staging writer.
+  `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend; Python remains the
+  default. Unsupported metadata can fall back before parsing, while corrupt data
+  and late failures remain errors. Native wheels have independent build/install
+  checks, fixture parity tests and resource benchmarks.
 - **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**
   `requires-python` was `>=3.13` for no recorded reason — there is no 3.13-only
   syntax in the package and the full suite passes on 3.12 — while `datasus-dbc`
