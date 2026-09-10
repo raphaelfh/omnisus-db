@@ -9,6 +9,11 @@ from typing import TYPE_CHECKING, Self
 import duckdb
 import structlog
 
+from omnisus_db.lake._transactions import (
+    CommitOutcomeUnknown,
+    TransactionReceipt,
+    TransactionStateError,
+)
 from omnisus_db.lake.catalog import CatalogURI, parse_target
 from omnisus_db.lake.connection import close_connection, make_connection
 
@@ -34,6 +39,10 @@ class Lake:
     def __init__(self, *, target: CatalogURI, alias: str = "lake") -> None:
         self._target = target
         self._alias = alias
+        self._in_transaction = False
+        self._unusable = False
+        self._closed = False
+        self._pending_results: list[ImportResult] = []
         self._ensured: set[str] = set()
         """Tables this handle has already created and partitioned. Ensuring a
         table costs a schema read of the staging file; once per run is enough."""
@@ -63,12 +72,28 @@ class Lake:
     def alias(self) -> str:
         return self._alias
 
+    @property
+    def in_transaction(self) -> bool:
+        return self._in_transaction
+
+    @property
+    def is_usable(self) -> bool:
+        return not self._closed and not self._unusable
+
     def connect(self) -> duckdb.DuckDBPyConnection:
-        """Return the underlying DuckDB connection (raw, per spec §11.4)."""
+        if not self.is_usable:
+            raise RuntimeError("Lake handle is unusable; close it and inspect the catalog")
         return self._con
+
+    def _read_snapshot(self) -> int | None:
+        row = self._con.execute(
+            "SELECT id FROM ducklake_last_committed_snapshot(?)", [self._alias]
+        ).fetchone()
+        return None if row is None or row[0] is None else int(row[0])
 
     def tables(self) -> list[str]:
         """List user tables in the lake (excludes ducklake internals)."""
+        self.connect()
         rows = self._con.execute(
             f"""
             SELECT table_name
@@ -92,6 +117,7 @@ class Lake:
         Timestamps come back as strings: DuckDB renders its own TIMESTAMPTZ
         through ``pytz``, which is not a dependency of this package.
         """
+        self.connect()
         rows = self._con.execute(
             f"""
             SELECT snapshot_id, snapshot_time::VARCHAR, changes::VARCHAR
@@ -105,28 +131,76 @@ class Lake:
         ]
 
     @contextlib.contextmanager
-    def transaction(self) -> Iterator[None]:
-        """Group writes into one DuckLake snapshot.
-
-        Verified against this DuckLake build: three INSERTs inside one
-        transaction produce one snapshot; the same three outside produce
-        three. A 648-scope import otherwise leaves 648 snapshots and 648
-        small files behind.
-        """
-        self._con.execute("BEGIN TRANSACTION")
+    def transaction(self) -> Iterator[TransactionReceipt]:
+        self.connect()  # Reject closed or invalidated handles.
+        if self._in_transaction:
+            raise RuntimeError("nested Lake.transaction is not supported")
+        self._columns.clear()
+        self._ensured.clear()
         try:
-            yield
-        except BaseException:
-            self._con.execute("ROLLBACK")
-            raise
-        self._con.execute("COMMIT")
+            before = self._read_snapshot()
+            self._con.execute("BEGIN TRANSACTION")
+        except BaseException as exc:
+            self._unusable = True
+            if not isinstance(exc, Exception):
+                raise
+            raise TransactionStateError("could not begin managed transaction") from exc
+
+        receipt = TransactionReceipt()
+        self._in_transaction = True
+        self._pending_results = []
+        try:
+            try:
+                yield receipt
+            except BaseException as original:
+                try:
+                    self._con.execute("ROLLBACK")
+                except BaseException as rollback_error:
+                    self._unusable = True
+                    original.add_note(f"rollback also failed: {rollback_error}")
+                    if isinstance(original, Exception):
+                        raise TransactionStateError(
+                            "rollback failed; handle unusable"
+                        ) from original
+                raise
+            else:
+                try:
+                    self._con.execute("COMMIT")
+                except BaseException as original:
+                    self._unusable = True
+                    try:
+                        self._con.execute("ROLLBACK")
+                    except BaseException as rollback_error:
+                        original.add_note(f"rollback cleanup also failed: {rollback_error}")
+                    if not isinstance(original, Exception):
+                        raise
+                    raise CommitOutcomeUnknown(
+                        "commit outcome unknown; inspect before retry"
+                    ) from original
+
+                receipt.committed = True
+                try:
+                    after = self._read_snapshot()
+                except Exception:
+                    logger.warning("lake.snapshot_unavailable_after_commit")
+                else:
+                    receipt.snapshot_id = after if after != before else None
+                for result in self._pending_results:
+                    result.snapshot_id = receipt.snapshot_id
+        finally:
+            self._in_transaction = False
+            self._pending_results = []
+            self._columns.clear()
+            self._ensured.clear()
 
     def optimize(self, table: str) -> None:
         """Compact small files (``ducklake_compact_files``)."""
+        self.connect()
         self._con.execute(f"CALL ducklake_compact_files('{self._alias}', '{table}')")
 
     def vacuum(self, *, older_than: str = "30 days") -> None:
         """Remove snapshots older than the given interval."""
+        self.connect()
         self._con.execute(
             f"CALL ducklake_cleanup_old_files('{self._alias}', "
             f"older_than => INTERVAL '{older_than}')"
@@ -137,6 +211,8 @@ class Lake:
 
         Idempotent: re-running replaces the table contents.
         """
+        self.connect()
+
         import io
         import os
         import tempfile
@@ -177,6 +253,7 @@ class Lake:
             - ``cnes_master`` missing → view still works, but ``nome`` is NULL.
               Run ``import_cnes_master()`` to populate names.
         """
+        self.connect()
         tables = set(self.tables())
         if "cnes_st" not in tables:
             return False
@@ -339,8 +416,14 @@ class Lake:
         )
 
     def close(self) -> None:
-        """Detach and close the connection."""
-        close_connection(self._con)
+        if self._closed:
+            return
+        try:
+            close_connection(self._con)
+        finally:
+            self._closed = True
+            self._columns.clear()
+            self._ensured.clear()
 
     def __enter__(self) -> Self:
         return self
