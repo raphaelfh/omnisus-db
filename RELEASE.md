@@ -23,21 +23,48 @@ long-lived token to configure or rotate.
 
 This repository has **no git remote**. Nothing in `.github/workflows/` has ever
 run, `https://raphaelfh.github.io/omnisus-db` does not exist, and the install
-URL in the README 404s.
+URL in `README.md` 404s.
+
+> **Do not push tags on the first push.** A local `v0.1.0` tag exists and points
+> 45 commits back, at code without the inventory, tolerance or performance work.
+> `_version.py` still reads `0.1.0`, so `release.yml`'s tag-vs-version check
+> would *pass* and it would publish that old tree as 0.1.0. Push the branch
+> alone; cut a fresh tag afterwards.
 
 ```bash
+cd ~/PycharmProjects/omnisus-db
+
 gh repo create raphaelfh/omnisus-db --public \
     --description "Python library for ingesting Brazilian public health databases into DuckLake" \
     --source . --remote origin
-git push -u origin main
+
+git push -u origin main        # note: no --tags
 ```
 
-Then, in the repository settings:
+That alone starts `test.yml` and `docs.yml`. Then, before any release:
 
-- **Pages** → build from GitHub Actions (for `docs.yml`).
-- **Environments** → create `pypi`, and register the Trusted Publisher on PyPI
-  (project `omnisus-db`, owner `raphaelfh`, repo `omnisus-db`, workflow
-  `release.yml`, environment `pypi`).
+- **Settings → Pages** → source "GitHub Actions", so `docs.yml` can deploy.
+- **Settings → Environments** → create `pypi`.
+- **PyPI → Publishing** → add a Trusted Publisher: project `omnisus-db`, owner
+  `raphaelfh`, repository `omnisus-db`, workflow `release.yml`, environment
+  `pypi`. No token is created; this is the whole point of OIDC.
+
+### Then cut the next version
+
+The `Unreleased` section of `CHANGELOG.md` contains a **breaking** change —
+`import_dataset` and the named importers now return `ImportReport` rather than
+`list[ImportResult]` — so the next version is `0.2.0`, not `0.1.1`.
+
+Follow "Release procedure" above. Optionally delete the stale local tag first,
+so it cannot be pushed by accident:
+
+```bash
+git tag -d v0.1.0
+```
+
+`README.md` pins its install example to `@v0.1.0`; update it to the new tag
+once one exists, or the documented install gives users code without any of
+this work.
 
 ## The wheel gap, and why the floor is 3.12
 
