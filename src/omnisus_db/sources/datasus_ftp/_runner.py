@@ -167,6 +167,8 @@ async def run_scopes(
     fetch would sit in memory waiting for the consumer, and a national-scale
     scope is hundreds of megabytes.
     """
+    if lake.in_transaction:
+        raise RuntimeError("run_scopes cannot run inside an existing Lake.transaction")
     d = resolve(dataset)
     _require_well_formed(d, scopes)
     if concurrency < 1:

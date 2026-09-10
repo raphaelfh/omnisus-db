@@ -17,7 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
-console = Console(width=120)
+console = Console()
 
 _NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop", "ibge_pop": "ibge_pop"}
 """CLI names of datasets that are not DATASUS-FTP rows (spec §3.4), mapped to
@@ -145,7 +145,6 @@ def import_cmd(
             f"{exc.report.rows:,} confirmed rows, "
             f"{len(exc.report.failed)} failed, "
             f"{len(exc.unresolved)} unresolved; inspect before retry",
-            no_wrap=True,
         )
         raise typer.Exit(1) from exc
 

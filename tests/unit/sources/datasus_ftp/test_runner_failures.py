@@ -272,3 +272,51 @@ async def test_abort_keeps_previously_committed_progress(tmp_path, monkeypatch, 
         assert [outcome.scope for outcome in caught.value.report.ok] == scopes[:1]
         assert caught.value.report.rows > 0
         assert caught.value.unresolved == ((1, scopes[1]), (2, scopes[2]))
+
+
+@pytest.mark.asyncio
+async def test_nested_runner_rejects_without_disturbing_enclosing_transaction(
+    tmp_path, monkeypatch
+):
+    from contextlib import contextmanager
+
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    fetched = []
+
+    async def fetch(**kwargs):
+        fetched.append(kwargs)
+        return b"must not fetch"
+
+    monkeypatch.setattr(_runner, "fetch_dbc_bytes", fetch)
+    baseline = asyncio.all_tasks()
+    with Lake.local(f"ducklake:{tmp_path}/nested.ducklake") as lake:
+        real_transaction = lake.transaction
+        attempts = 0
+
+        @contextmanager
+        def bounded_transaction():
+            nonlocal attempts
+            attempts += 1
+            if attempts > 2:
+                pytest.fail("runner repeatedly attempts nested transaction entry")
+            with real_transaction() as receipt:
+                yield receipt
+
+        with lake.transaction() as receipt:
+            lake.connect().execute("CREATE TABLE lake.caller(i INTEGER)")
+            lake.connect().execute("INSERT INTO lake.caller VALUES (1)")
+            monkeypatch.setattr(lake, "transaction", bounded_transaction)
+            with pytest.raises(RuntimeError, match=r"nested|active|existing"):
+                await run_scopes("sim_do", scopes=[ScopeKey(uf="RR", ano=2023)], lake=lake)
+            assert lake.in_transaction
+            assert lake.is_usable
+            assert not receipt.committed
+            lake.connect().execute("INSERT INTO lake.caller VALUES (2)")
+        assert receipt.committed
+        assert lake.connect().execute("SELECT * FROM lake.caller ORDER BY i").fetchall() == [
+            (1,),
+            (2,),
+        ]
+        assert not fetched
+    assert not (asyncio.all_tasks() - baseline)

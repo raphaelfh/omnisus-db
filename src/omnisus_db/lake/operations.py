@@ -159,6 +159,8 @@ class Lake:
                     self._unusable = True
                     original.add_note(f"rollback also failed: {rollback_error}")
                     if isinstance(original, Exception):
+                        if not isinstance(rollback_error, Exception):
+                            raise rollback_error from original
                         raise TransactionStateError(
                             "rollback failed; handle unusable"
                         ) from original
@@ -172,6 +174,10 @@ class Lake:
                         self._con.execute("ROLLBACK")
                     except BaseException as rollback_error:
                         original.add_note(f"rollback cleanup also failed: {rollback_error}")
+                        if isinstance(original, Exception) and not isinstance(
+                            rollback_error, Exception
+                        ):
+                            raise rollback_error from original
                     if not isinstance(original, Exception):
                         raise
                     raise CommitOutcomeUnknown(

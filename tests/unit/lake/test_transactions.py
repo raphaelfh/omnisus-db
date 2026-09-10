@@ -153,3 +153,37 @@ def test_empty_and_nested_transactions(tmp_path):
     lake.close()
     lake.close()
     assert lake.is_usable is False
+
+
+@pytest.mark.parametrize("phase", ["body", "commit"])
+@pytest.mark.parametrize("signal_type", [asyncio.CancelledError, KeyboardInterrupt, SystemExit])
+def test_first_interruption_during_cleanup_is_preserved(tmp_path, phase, signal_type):
+    with Lake.local(f"ducklake:{tmp_path}/cleanup-first.ducklake") as lake:
+        original = ValueError("original failure")
+        signal = signal_type("cleanup interrupted")
+        faults = {"ROLLBACK": signal}
+        if phase == "commit":
+            faults["COMMIT"] = original
+        lake._con = FaultyConnection(lake.connect(), before=faults)
+        with pytest.raises(signal_type) as caught, lake.transaction():
+            if phase == "body":
+                raise original
+        assert caught.value is signal
+        assert caught.value.__cause__ is original
+        assert not lake.is_usable
+        assert not lake.in_transaction
+        with pytest.raises(RuntimeError, match="unusable"):
+            lake.connect()
+
+
+@pytest.mark.parametrize("signal_type", [asyncio.CancelledError, KeyboardInterrupt, SystemExit])
+def test_commit_interruption_precedes_cleanup_interruption(tmp_path, signal_type):
+    with Lake.local(f"ducklake:{tmp_path}/commit-first.ducklake") as lake:
+        signal = signal_type("commit interrupted")
+        lake._con = FaultyConnection(
+            lake.connect(), before={"COMMIT": signal, "ROLLBACK": CleanupInterrupted()}
+        )
+        with pytest.raises(signal_type) as caught, lake.transaction():
+            pass
+        assert caught.value is signal
+        assert not lake.is_usable

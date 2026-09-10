@@ -283,7 +283,12 @@ def test_import_invalid_dbc_exits_nonzero(monkeypatch, tmp_path: Path) -> None:
     assert "0 rows" in result.stdout
 
 
-def test_import_abort_prints_partial_progress(monkeypatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize("width", [None, 40, 80])
+def test_import_abort_prints_partial_progress(monkeypatch, tmp_path: Path, width) -> None:
+    from rich.console import Console
+
+    if width is not None:
+        monkeypatch.setattr("omnisus_db.cli.main.console", Console(width=width))
     import omnisus_db as odb
 
     def abort(*args: object, **kwargs: object) -> None:
@@ -306,9 +311,12 @@ def test_import_abort_prints_partial_progress(monkeypatch, tmp_path: Path) -> No
         ],
     )
     assert result.exit_code == 1
-    assert "import interrupted" in result.stdout
-    assert "1 unresolved" in result.stdout
-    assert "inspect before retry" in result.stdout
+    output = " ".join(result.stdout.split())
+    assert "import interrupted" in output
+    assert "0 confirmed rows" in output
+    assert "0 failed" in output
+    assert "1 unresolved" in output
+    assert "inspect before retry" in output
     assert "imported" not in result.stdout
 
 
