@@ -71,6 +71,11 @@
 
 ### Changed
 
+- Updated runtime, development and documentation dependency floors and the uv
+  lockfile to the compatible stable releases checked on 2026-09-09, including
+  DuckDB 1.5.5, Polars 1.44.2 and PyArrow 25.0.1. Python 3.12 remains the floor.
+  Ruff now targets that floor and the pre-commit hook uses Ruff 0.16.6, matching
+  the lockfile. The documentation stack stays on MkDocs 1.x.
 - **Imports overlap fetch with parse.** Six fetches now run in flight behind a
   bounded queue while a single consumer parses and sinks; fetch and parse were
   fully serialized, so wall clock was `sum(fetch) + sum(parse+sink)`. Measured
