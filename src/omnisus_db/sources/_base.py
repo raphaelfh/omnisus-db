@@ -85,3 +85,18 @@ class ImportReport:
     @property
     def failed(self) -> tuple[ScopeOutcome, ...]:
         return tuple(o for o in self.outcomes if o.status == "failed")
+
+
+class ImportAbortedError(RuntimeError):
+    """Partial progress is known, but the remaining inputs need inspection."""
+
+    def __init__(
+        self,
+        report: ImportReport,
+        unresolved: tuple[tuple[int, ScopeKey], ...],
+    ) -> None:
+        self.report = report
+        self.unresolved = unresolved
+        super().__init__(
+            f"import aborted: {len(unresolved)} input(s) unresolved; inspect before retry"
+        )

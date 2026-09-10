@@ -14,7 +14,9 @@ import polars as pl
 import structlog
 
 from omnisus_db.lake import Lake
+from omnisus_db.lake._transactions import TransactionStateError
 from omnisus_db.sources._base import (
+    ImportAbortedError,
     ImportReport,
     ImportResult,
     ScopeKey,
@@ -174,16 +176,15 @@ async def run_scopes(
                 await queue.put((index, scope, raw, None))
 
     async def produce_all() -> None:
-        try:
-            await asyncio.gather(*(produce(i, s) for i, s in queued))
-        finally:
-            await queue.put(None)
+        await asyncio.gather(*(produce(i, s) for i, s in queued))
+        await queue.put(None)
 
     producer = asyncio.create_task(produce_all())
     try:
         exhausted = False
         while not exhausted:
             batch: dict[int, ScopeOutcome] = {}
+            writing: set[int] = set()
             try:
                 with lake.transaction():
                     while len(batch) < batch_size:
@@ -196,11 +197,37 @@ async def run_scopes(
                             batch[index] = _outcome_for_error(d, scope, exc)
                             continue
                         assert raw is not None, "raw is set whenever exc is None"
-                        result = ingest_raw(d, scope, raw, lake)
+                        writing.add(index)
+                        batch[index] = ScopeOutcome(
+                            scope=scope,
+                            status="failed",
+                            reason="ingestion did not complete",
+                        )
+                        try:
+                            result = ingest_raw(d, scope, raw, lake)
+                        except TransactionStateError:
+                            batch.pop(index, None)
+                            raise
+                        except Exception as exc:
+                            batch[index] = ScopeOutcome(
+                                scope=scope, status="failed", reason=str(exc)
+                            )
+                            raise
                         batch[index] = ScopeOutcome(scope=scope, status="ok", result=result)
             except Exception as exc:
-                # The batch rolled back, so nothing in it is committed. A scope
-                # is only ``ok`` once its batch commits (spec §5.2).
+                if isinstance(exc, TransactionStateError) or not lake.is_usable:
+                    determined = dict(outcomes)
+                    determined.update(
+                        (i, outcome)
+                        for i, outcome in batch.items()
+                        if outcome.status != "ok" and i not in writing
+                    )
+                    partial = ImportReport(tuple(determined[i] for i in sorted(determined)))
+                    unresolved = tuple(
+                        (i, scope) for i, scope in enumerate(scopes) if i not in determined
+                    )
+                    raise ImportAbortedError(partial, unresolved) from exc
+
                 logger.warning("run_scopes.batch_failed", dataset=d.name, error=str(exc))
                 for index, outcome in batch.items():
                     outcomes[index] = (

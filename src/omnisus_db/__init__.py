@@ -8,6 +8,7 @@ from collections.abc import Callable, Iterable, Sequence
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, Lake
 from omnisus_db.sources._base import (
+    ImportAbortedError,
     ImportReport,
     ImportResult,
     ScopeKey,
@@ -278,6 +279,7 @@ __all__ = [
     "FtpEntry",
     "FtpPathNotFound",
     "FtpUnavailable",
+    "ImportAbortedError",
     "ImportReport",
     "ImportResult",
     "Lake",
