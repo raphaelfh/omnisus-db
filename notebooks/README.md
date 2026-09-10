@@ -9,11 +9,39 @@
 | 3 | [Análise SIM](api_dados_reais.py) | Aprender filtros, qualidade, agregações e consultas | SIM/RR 2022–2023 completos |
 | 4 | [Cenários da API](api_cenarios.py) | Estudar transações, rollback e comportamento da biblioteca | Cenários sintéticos identificados e importações reais opcionais |
 | 5 | [Performance Python/Rust](performance_dbf.py) | Comparar tempo, memória e disco por corpus e etapa | Benchmarks locais versionados, com sete rodadas por backend |
+| 6 | [Metadados pelo terminal](metadados_cli.py) | Executar consultas CLI, inspecionar evidências e consumir JSON por coluna | Dicionário documental SIM/SEXO e inventário real de 1.326 campos |
 
 Os nomes existentes foram preservados para manter os comandos e referências.
 Os auxiliares de aquisição, leitura e relatório ficam juntos em
 [`_acervo/`](_acervo/README.md). Downloads e HTMLs ficam em `data/lake/`,
 ignorados pelo Git; relatórios de metadados ficam em `reports/`.
+
+## Metadados por coluna pelo terminal
+
+```bash
+uv run --locked --extra notebooks marimo edit notebooks/metadados_cli.py
+uv run --locked --extra notebooks marimo export html notebooks/metadados_cli.py \
+  -o /tmp/metadados-cli.html
+```
+
+O notebook executa comandos reais em subprocessos, exibe comandos copiáveis,
+interpreta o JSON retornado e permite explorar categorias/tabelas/colunas.
+Funciona offline usando os arquivos em `docs/dicionario/`; não inicia lake ou
+downloads. O exemplo de campo tem fonte oficial, página e data de checagem,
+enquanto o inventário geral preserva as pendências de validação semântica.
+
+O acesso atual é pelo script experimental da documentação, **não por um comando
+nativo `omnisus-db metadata`**, que ainda não existe:
+
+```bash
+uv run --locked python docs/dicionario/exemplos/consumir.py \
+  --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+```
+
+`--json` valida o contrato e emite apenas JSON no stdout, permitindo pipes e
+redirecionamento. `--arrow` demonstra o transporte Arrow/Parquet separadamente.
+Execute a partir da raiz do checkout com as dependências do projeto instaladas.
+Veja o [contrato e as limitações de consumo](../docs/dicionario/consumo.md).
 
 ## Panorama das 18 categorias do portal
 

@@ -50,7 +50,7 @@ Previously coerced values require an explicit source rebuild to recover.
 PyO3 and Arrow. The main package keeps its pure-Python wheel. Set
 `OMNISUS_DBF_BACKEND=rust` to require native decoding, `python` to use dbfread2,
 or `auto` to use Rust when installed and the DBF metadata is supported. The
-default remains Python until performance and distribution gates are met.
+default is `auto`, so installing the extension enables it automatically.
 
 The native reader supports C/N fields and the DBF layouts covered by the committed
 fixtures. It preserves empty strings, strict encodings and int64 precision.

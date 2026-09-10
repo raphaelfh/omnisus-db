@@ -7,16 +7,17 @@ into a DuckLake-backed lakehouse.
 
 ## Optional Rust DBF reader
 
-The base package uses Python for DBF decoding. An optional native reader lives in
+DBF decoding defaults to `auto`: Rust when installed and supported, otherwise Python.
+An optional native reader lives in
 [`native/omnisus-db-dbf`](native/omnisus-db-dbf/README.md) and shares the same Arrow
-staging and integrity checks. Install its locally built wheel, then select it:
+staging and integrity checks. Install its locally built wheel to enable it automatically:
 
 ```bash
 pip install --only-binary=:all: path/to/omnisus_db_dbf-<version>-<platform>.whl
-export OMNISUS_DBF_BACKEND=rust
 ```
 
-Use `python` to return to dbfread2 or `auto` to fall back for an absent extension
+Set `OMNISUS_DBF_BACKEND=rust` to require Rust or `OMNISUS_DBF_BACKEND=python`
+to force dbfread2. The default `auto` falls back for an absent extension
 or unsupported DBF metadata. Corrupt files and errors during parsing always fail.
 No published native package version is required by the base installation.
 

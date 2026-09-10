@@ -31,6 +31,13 @@ nav:
       - Reprocessing and maintenance: guides/reprocessing-and-maintenance.md
       - Migration from PySUS: guides/migration-from-pysus.md
   - Datasets: datasets.md
+  - Dicionário de dados:
+      - Visão geral: dicionario/index.md
+      - Estrutura: dicionario/estrutura.md
+      - Contrato por coluna: dicionario/contrato.md
+      - Catálogo e fontes: dicionario/catalogo.md
+      - Manutenção: dicionario/manutencao.md
+      - Consumo e integração: dicionario/consumo.md
   - API reference: api.md
   - Architecture: architecture.md
   - Sources:

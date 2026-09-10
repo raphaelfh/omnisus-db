@@ -71,7 +71,7 @@ def open_dbf_batches(
     """
     if batch_rows <= 0:
         raise ValueError("batch_rows must be positive")
-    requested = backend if backend is not None else os.environ.get("OMNISUS_DBF_BACKEND", "python")
+    requested = backend if backend is not None else os.environ.get("OMNISUS_DBF_BACKEND", "auto")
     if requested not in ("python", "rust", "auto"):
         raise ValueError("DBF backend must be python, rust or auto")
     native = None

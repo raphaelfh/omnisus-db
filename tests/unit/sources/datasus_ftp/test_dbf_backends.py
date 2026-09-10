@@ -67,8 +67,9 @@ def missing_module(name):
     raise ModuleNotFoundError("module absent", name=name)
 
 
-@pytest.mark.parametrize("backend", ["auto", "rust"])
+@pytest.mark.parametrize("backend", [None, "auto", "rust"])
 def test_missing_optional_module(monkeypatch, backend):
+    monkeypatch.delenv("OMNISUS_DBF_BACKEND", raising=False)
     module = batches_module()
     monkeypatch.setattr(module, "import_module", missing_module)
     data = make_dbf([("X", "C", 1, 0)], [b" a"])
@@ -121,6 +122,19 @@ def fake_native(open_reader):
         UnsupportedDbfError=UnsupportedDbfError,
         InvalidDbfError=InvalidDbfError,
     )
+
+
+def test_default_uses_native_when_installed(monkeypatch):
+    module = batches_module()
+    monkeypatch.delenv("OMNISUS_DBF_BACKEND", raising=False)
+
+    def reader(*args, **kwargs):
+        yield pa.record_batch({"X": ["native"]})
+
+    monkeypatch.setattr(module, "import_module", lambda _: fake_native(reader))
+    data = make_dbf([("X", "C", 1, 0)], [b" a"])
+    with module.open_dbf_batches(data, encoding="latin-1", batch_rows=1) as stream:
+        assert next(stream).to_pylist() == [{"X": "native"}]
 
 
 def test_only_preflight_unsupported_can_fallback(monkeypatch):

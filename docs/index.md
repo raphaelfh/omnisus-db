@@ -15,6 +15,10 @@ into a [DuckLake](https://ducklake.select)-backed lakehouse.
 
 ## Install
 
+For field descriptions, code mappings, official evidence and review coverage,
+see the [data dictionary design and source catalog](dicionario/index.md).
+The proposed metadata API is documented separately from the current runtime.
+
 These pages describe the current checkout. The historical `v0.1.0` tag predates
 the discovery, reporting and managed transaction APIs documented here.
 Python 3.12 or newer is required.
