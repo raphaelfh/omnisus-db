@@ -61,3 +61,7 @@ Verification:
 - The earlier independent lost-commit probe already verified both the first publication input and its dependent replay are unresolved despite a committed publication being recoverable by run ID.
 
 No further P1/P2 issue identified in these corrections. Platform/OS DNS and not-yet-created sockets may still defer completion; the code waits for the worker rather than claiming arbitrary thread interruption, and the documented limitation is accurate. No national/network resource claim is inferred from the controlled probes.
+
+## Final documentation follow-up — controller record
+
+The independent reviewer checked the new operational guide, architecture, notebook recipes and implementation report. Two material wording corrections were requested and applied: staging Parquet uses Snappy (Zstd belongs to final DuckLake writing), and the amplified benchmark bypasses DBC decompression, so its timings do not describe the complete DBC pipeline. A separate real 3,311-row DBC case exercises decompression. Remaining CNES, IBGE, cloud and replay descriptions were reported consistent with the reviewed code.

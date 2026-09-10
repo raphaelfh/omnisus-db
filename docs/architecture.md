@@ -22,7 +22,7 @@ repository; these working documents are not published to this site.
 bounded concurrent FTP fetches -> one parse/write consumer
   -> datasus_dbc.decompress_bytes -> complete DBF bytes
   -> dbfread2 records -> bounded Arrow batches -> temporary IPC spool
-  -> reconcile batch schemas -> temporary zstd Parquet
+  -> reconcile batch schemas -> temporary Parquet (Snappy)
   -> managed transaction: schema + scope policy + data + manifest -> COMMIT
 ```
 

@@ -110,7 +110,7 @@ O notebook explica a avaliação documental e cobre:
 4. Duplicação por append e exportação do exemplo em Parquet.
 5. Leitura de `ImportReport` e `ImportAbortedError` simulados.
 6. Inventário e importação real opcionais de SIM, SINASC, SIH, CNES e SIA-BI.
-7. Receitas de consulta, enriquecimento CNES e diagnóstico IBGE.
+7. Receitas de consulta, enriquecimento CNES e população IBGE com produto explícito.
 
 As demonstrações sintéticas usam um diretório temporário e fecham as conexões
 antes de removê-lo. Não acessam DATASUS ou IBGE, mas DuckDB pode baixar a extensão

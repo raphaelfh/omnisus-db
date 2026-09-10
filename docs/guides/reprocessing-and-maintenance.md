@@ -99,6 +99,9 @@ The reproducible benchmark is `scripts/benchmark_resources.py`. On the measured
 temporary disk from 61.9 to 112.5 MiB. Row order/hash and schema matched. This is
 one run per mode on repeated fixture records; it does not establish national
 throughput or a universal memory bound. Disk sampling every 5 ms is a lower bound.
+The amplified case feeds repeated DBF records directly and bypasses DBC
+decompression; its elapsed times do not measure the complete DBC pipeline. A
+separate 3,311-row real DBC case exercises decompression in the same benchmark.
 The repository's `reports/benchmark-d6-default.json` records the environment,
 corpus hashes and full results.
 
