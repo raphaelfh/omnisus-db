@@ -9,8 +9,9 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-HERE = Path(__file__).resolve().parent
-SCHEMA = HERE.parent / "schemas/column-metadata.schema.json"
+ROOT = Path(__file__).resolve().parents[2]
+DOCS = ROOT / "docs/dicionario"
+SCHEMA = DOCS / "schemas/column-metadata.schema.json"
 
 
 def canonical_json(value: object) -> bytes:
@@ -88,7 +89,7 @@ def arrow_roundtrip(metadata: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metadata", type=Path, default=HERE / "sim_do.sexo.json")
+    parser.add_argument("--metadata", type=Path, default=DOCS / "exemplos/sim_do.sexo.json")
     output_mode = parser.add_mutually_exclusive_group()
     output_mode.add_argument("--arrow", action="store_true")
     output_mode.add_argument(

@@ -65,7 +65,7 @@ def _(mo):
     em tabelas. Funciona offline com os arquivos versionados do checkout.
 
     A CLI `omnisus-db` ainda não oferece um comando de dicionário semântico.
-    O acesso demonstrado usa o **script experimental da documentação** e comandos
+    O acesso demonstrado usa o **script experimental em `scripts/metadados/`** e comandos
     Python de terminal para consultar os CSVs/JSONs existentes. Não exige um lake
     aberto nem faz downloads. Use o ambiente do projeto com `jsonschema` e `pyarrow`.
 
@@ -80,7 +80,7 @@ def _(mo):
 def _(json, run_python):
     document_result = run_python(
         [
-            "docs/dicionario/exemplos/consumir.py",
+            "scripts/metadados/consultar.py",
             "--metadata",
             "docs/dicionario/exemplos/sim_do.sexo.json",
             "--json",
@@ -99,7 +99,7 @@ def _(document_result, json, metadata, mo, terminal):
             ## 1. Obter JSON validado de um campo
 
             ```bash
-            python docs/dicionario/exemplos/consumir.py \
+            python scripts/metadados/consultar.py \
               --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
             ```
 
@@ -274,7 +274,7 @@ def _(field_selector, fields, json, mo):
 
 @app.cell
 def _(run_python):
-    arrow_result = run_python(["docs/dicionario/exemplos/consumir.py", "--arrow"])
+    arrow_result = run_python(["scripts/metadados/consultar.py", "--arrow"])
     return (arrow_result,)
 
 
@@ -286,7 +286,7 @@ def _(arrow_result, mo, terminal):
             ## 4. Verificar o transporte por coluna
 
             ```bash
-            python docs/dicionario/exemplos/consumir.py --arrow
+            python scripts/metadados/consultar.py --arrow
             ```
 
             O comando valida o exemplo e faz Arrow → Parquet → Arrow em memória,
@@ -296,7 +296,7 @@ def _(arrow_result, mo, terminal):
             Para salvar o JSON em um terminal, escolha o destino desejado:
 
             ```bash
-            python docs/dicionario/exemplos/consumir.py --json > sexo.metadata.json
+            python scripts/metadados/consultar.py --json > sexo.metadata.json
             ```
 
             O redirecionamento acima é uma receita, não é executado pelo notebook.

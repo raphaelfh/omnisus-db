@@ -80,8 +80,8 @@ substituir o valor bruto por um palpite ou descartar códigos desconhecidos.
 Na raiz do repositório:
 
 ```bash
-python docs/dicionario/scripts/atualizar_catalogo.py
-python docs/dicionario/scripts/atualizar_catalogo.py --check-local
+python scripts/metadados/atualizar_catalogo.py
+python scripts/metadados/atualizar_catalogo.py --check-local
 ```
 
 O primeiro comando reconstrói os arquivos documentais a partir da auditoria

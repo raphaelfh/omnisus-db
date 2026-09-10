@@ -32,9 +32,20 @@ docs/dicionario/
   fontes/registro.json         # inventário gerado das evidências baixadas
   schemas/column-metadata.schema.json
   exemplos/sim_do.sexo.json    # exemplo do contrato, fora da produção
-  exemplos/consumir.py         # validação e demonstração Arrow/Parquet
-  scripts/atualizar_catalogo.py
+
+scripts/metadados/
+  consultar.py                # CLI experimental de validação e consumo
+  atualizar_catalogo.py       # geração das projeções da auditoria
+  README.md                   # comandos e dependências
+
+notebooks/
+  metadados_cli.py             # demonstração interativa dos comandos
 ```
+
+Scripts executáveis ficam em `scripts/metadados/`; `docs/dicionario/` contém
+documentação, contratos e exemplos declarativos. Os caminhos internos dos
+scripts são resolvidos a partir do repositório, sem depender do diretório atual.
+As definições de produção continuam em `src/omnisus_db/data/dicionarios/`.
 
 O registro inicial das fontes é uma projeção da auditoria. Não editar seus
 números manualmente: o script preserva URLs e hashes e pode conferir os arquivos

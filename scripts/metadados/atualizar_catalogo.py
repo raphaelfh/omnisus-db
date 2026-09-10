@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs/dicionario"
 # Edição lida na página renderizada; vinculada aos bytes, não ao nome do arquivo.
 KNOWN_EDITIONS = {

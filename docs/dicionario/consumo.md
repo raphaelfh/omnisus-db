@@ -27,7 +27,7 @@ por si só, o contrato de evidência verificada.
 ## Protótipo executável
 
 O [exemplo JSON](exemplos/sim_do.sexo.json) pode ser lido diretamente por qualquer
-consumidor JSON. O [script](exemplos/consumir.py) valida contrato, referências e
+consumidor JSON. O script `scripts/metadados/consultar.py`, no checkout, valida contrato, referências e
 hash das afirmações. Também permite anexar o objeto a uma coluna Arrow e
 conferir o transporte por Parquet, usando uma tabela vazia: não fabrica dados
 de saúde para demonstrar metadados.
@@ -35,9 +35,9 @@ de saúde para demonstrar metadados.
 Na raiz do repositório, em ambiente com `jsonschema` e `pyarrow`:
 
 ```bash
-python docs/dicionario/exemplos/consumir.py
-python docs/dicionario/exemplos/consumir.py --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
-python docs/dicionario/exemplos/consumir.py --arrow
+python scripts/metadados/consultar.py
+python scripts/metadados/consultar.py --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+python scripts/metadados/consultar.py --arrow
 ```
 
 `--json` emite exclusivamente o documento validado no stdout, para consumo por

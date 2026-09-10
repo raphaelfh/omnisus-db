@@ -30,11 +30,11 @@ Funciona offline usando os arquivos em `docs/dicionario/`; não inicia lake ou
 downloads. O exemplo de campo tem fonte oficial, página e data de checagem,
 enquanto o inventário geral preserva as pendências de validação semântica.
 
-O acesso atual é pelo script experimental da documentação, **não por um comando
+O acesso atual é pelo script experimental em `scripts/metadados/`, **não por um comando
 nativo `omnisus-db metadata`**, que ainda não existe:
 
 ```bash
-uv run --locked python docs/dicionario/exemplos/consumir.py \
+uv run --locked python scripts/metadados/consultar.py \
   --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
 ```
 
