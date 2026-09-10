@@ -56,3 +56,21 @@ The direct-call recursion enters the transaction exactly once, pending results a
 ## Concerns
 
 None.
+
+## Round 1 fix
+
+Strengthened `test_ingest_reports_a_real_snapshot_id` in
+`tests/unit/lake/test_ingest_performance.py` to assert that a direct ingest
+creates exactly one new snapshot and that the returned ID matches the latest
+committed history entry. Existing snapshot ID assertions remain intact.
+
+Python and test command:
+
+```text
+python3 --version
+Python 3.14.0
+uv run --locked --extra dev python --version
+Python 3.13.12
+uv run --locked --extra dev pytest tests/unit/lake/test_ingest_performance.py tests/unit/lake/test_transactions.py -m 'not e2e and not perf' -q
+26 passed in 1.61s
+```

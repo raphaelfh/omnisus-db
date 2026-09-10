@@ -142,9 +142,13 @@ def test_ingest_reports_a_real_snapshot_id(tmp_path: Path) -> None:
     `ducklake_snapshots('lake.t')`, which does not bind, inside a bare
     `except Exception` that turned the error into None."""
     with Lake.local(f"ducklake:{tmp_path}/s.ducklake") as lake:
+        before = lake.snapshots()
         result = lake.ingest("t", _frame())
+        after = lake.snapshots()
     assert result.snapshot_id is not None
     assert result.snapshot_id >= 0
+    assert len(after) == len(before) + 1
+    assert result.snapshot_id == after[-1]["snapshot_id"]
 
 
 def test_snapshots_lists_history_instead_of_raising(tmp_path: Path) -> None:
