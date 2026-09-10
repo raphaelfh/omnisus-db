@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Failed DBC scopes are included in import reports. Rolled-back batches no longer
+  leave missing outcomes, and unknown commits abort with inspectable partial progress.
+- Schema caches are cleared at transaction boundaries. Ingestion snapshots are
+  finalized after commit; direct ingestion groups schema and data changes atomically.
+- CNES Master refresh commits records and the derived view together. Duplicate
+  explicit codes are fetched once, and conflicting prepared records are rejected.
+
 ### Added
 
 - **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**

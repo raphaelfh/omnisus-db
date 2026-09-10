@@ -17,7 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
-console = Console()
+console = Console(width=120)
 
 _NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop", "ibge_pop": "ibge_pop"}
 """CLI names of datasets that are not DATASUS-FTP rows (spec §3.4), mapped to
@@ -132,15 +132,26 @@ def import_cmd(
 
     scopes = _plan_scopes(d, plan=plan, years=yrs, ufs=uf_list, months=month_list)
 
-    if d.name == "cnes_st":
-        # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
-        # It takes the planned scopes, so --plan reaches this branch too.
-        report = odb.import_cnes_st(scopes=scopes, target=target)
-    else:
-        report = odb.import_dataset(d, scopes=scopes, target=target)
+    try:
+        if d.name == "cnes_st":
+            # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
+            # It takes the planned scopes, so --plan reaches this branch too.
+            report = odb.import_cnes_st(scopes=scopes, target=target)
+        else:
+            report = odb.import_dataset(d, scopes=scopes, target=target)
+    except odb.ImportAbortedError as exc:
+        console.print(
+            "[red]import interrupted[/red]: "
+            f"{exc.report.rows:,} confirmed rows, "
+            f"{len(exc.report.failed)} failed, "
+            f"{len(exc.unresolved)} unresolved; inspect before retry",
+            no_wrap=True,
+        )
+        raise typer.Exit(1) from exc
 
+    marker = "[red]failed[/red]" if report.failed else "[green]:heavy_check_mark:[/green]"
     console.print(
-        f"[green]:heavy_check_mark:[/green] imported [bold]{report.rows:,}[/bold] rows "
+        f"{marker} imported [bold]{report.rows:,}[/bold] rows "
         f"({len(report.ok)} ok, {len(report.skipped)} skipped, {len(report.failed)} failed)"
     )
     if report.failed:

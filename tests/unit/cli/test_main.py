@@ -260,6 +260,58 @@ def test_a_failed_scope_exits_one(monkeypatch, tmp_path: Path) -> None:
     assert "1 failed" in result.output
 
 
+def test_import_invalid_dbc_exits_nonzero(monkeypatch, tmp_path: Path) -> None:
+    async def fetch(**kwargs: object) -> bytes:
+        return b"invalid dbc"
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fetch)
+    result = runner.invoke(
+        app,
+        [
+            "import",
+            "sim_do",
+            "--year",
+            "2023",
+            "--ufs",
+            "RR",
+            "--target",
+            f"ducklake:{tmp_path}/bad.ducklake",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "1 failed" in result.stdout
+    assert "0 rows" in result.stdout
+
+
+def test_import_abort_prints_partial_progress(monkeypatch, tmp_path: Path) -> None:
+    import omnisus_db as odb
+
+    def abort(*args: object, **kwargs: object) -> None:
+        report = odb.ImportReport(outcomes=())
+        unresolved = ((0, odb.ScopeKey(uf="RR", ano=2023)),)
+        raise odb.ImportAbortedError(report, unresolved)
+
+    monkeypatch.setattr(odb, "import_dataset", abort)
+    result = runner.invoke(
+        app,
+        [
+            "import",
+            "sim_do",
+            "--year",
+            "2023",
+            "--ufs",
+            "RR",
+            "--target",
+            f"ducklake:{tmp_path}/partial.ducklake",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "import interrupted" in result.stdout
+    assert "1 unresolved" in result.stdout
+    assert "inspect before retry" in result.stdout
+    assert "imported" not in result.stdout
+
+
 def test_plan_inventory_imports_only_what_the_server_lists(
     monkeypatch, tmp_path: Path, dbc_fixture
 ) -> None:

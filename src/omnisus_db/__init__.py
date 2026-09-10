@@ -123,9 +123,12 @@ def import_dataset(
     the difference is which function fills ``scopes``.
 
     Returns an :class:`~omnisus_db.sources._base.ImportReport`: a scope
-    DATASUS never published is ``skipped``, a scope that exists but could not
-    be ingested is ``failed``, and neither aborts the run. Inspect
-    ``report.failed``, never the report's truthiness.
+    DATASUS never published is ``skipped``, and a scope that exists but could
+    not be ingested is ``failed``. Ordinary scope failures are reported and
+    later batches continue. A transaction state failure raises
+    ``ImportAbortedError`` with partial progress; inspect before retry. Use
+    one writer per lake and managed ``Lake.transaction`` contexts for writes.
+    Inspect ``report.failed``, never the report's truthiness.
 
     ``concurrency`` bounds fetches in flight; parse and sink stay on a single
     consumer because the lake holds one DuckDB connection. ``batch_size``

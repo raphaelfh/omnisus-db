@@ -107,6 +107,17 @@ def test_default_target_is_exported_from_lake() -> None:
     assert odb.DEFAULT_TARGET is DEFAULT_TARGET
 
 
+def test_import_aborted_error_is_public_and_retains_progress_payload() -> None:
+    report = odb.ImportReport(outcomes=())
+    unresolved = ((0, ScopeKey(uf="RR", ano=2023)),)
+
+    error = odb.ImportAbortedError(report, unresolved)
+
+    assert isinstance(error, RuntimeError)
+    assert error.report is report
+    assert error.unresolved == unresolved
+
+
 _FIXTURE_FOR: dict[str, tuple[str, ScopeKey]] = {
     "sim_do": ("sim_rr_2023_mini", ScopeKey(uf="RR", ano=2023)),
     "sinasc_nv": ("sinasc_rr_2022_mini", ScopeKey(uf="RR", ano=2022)),

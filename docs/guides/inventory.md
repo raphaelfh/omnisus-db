@@ -93,3 +93,44 @@ report.failed        # exist but could not be ingested — worth retrying
 Inspect `report.failed`; never the report's truthiness. `omnisus-db import`
 exits non-zero if and only if something failed, so a skipped scope does not fail
 an orchestrated run.
+
+## Transactions and interrupted imports
+
+Use one writer per lake. Serialize write handles, processes and external SQL
+clients that target the same catalog. This release does not provide a
+cross-process writer lock or distributed retry coordination.
+
+A completed import returns one outcome for every requested input position.
+Repeated input scopes remain repeated append operations. `ok` means committed;
+`failed` means an unsuccessful scope; `skipped` means a documented absence.
+
+If commit acknowledgement or rollback fails, the import raises
+`ImportAbortedError`. Its `report` contains determined outcomes and its
+`unresolved` contains `(input_index, scope)` pairs that need inspection or were
+not processed. Do not retry the whole import automatically: an unacknowledged
+commit may already have written data.
+
+```python
+import omnisus_db as odb
+
+try:
+    report = odb.import_dataset(
+        "sim_do", scopes=[odb.ScopeKey(uf="RR", ano=2023)]
+    )
+except odb.ImportAbortedError as exc:
+    print(exc.report.rows, exc.unresolved)
+    raise
+```
+
+For lower-level writes, use `Lake.transaction()`. An `ImportResult` created
+inside that context has `snapshot_id=None` until commit. Direct `Lake.ingest`
+commits before returning. If snapshot metadata cannot be read after a successful
+commit, the write remains successful and its snapshot stays `None`.
+
+Do not combine managed transactions with raw SQL `BEGIN` or `COMMIT` on
+`Lake.connect()`. After a transaction-state failure, close the handle and inspect
+the catalog before starting a new write.
+
+CNES Master refresh validates records before changing stored values and commits
+the table update and view refresh together. Repeated explicit CNES codes are
+fetched once; progress counts unique codes.
