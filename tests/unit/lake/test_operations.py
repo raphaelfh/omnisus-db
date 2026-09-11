@@ -42,18 +42,18 @@ def test_lake_query_runs_sql(tmp_path: Path) -> None:
     lake.close()
 
 
-def test_lake_cloud_requires_postgres_extras(tmp_path: Path) -> None:
-    """Smoke: cloud factory builds the right target string format.
+def test_lake_cloud_failure_names_the_stage_without_the_dsn(tmp_path: Path) -> None:
+    """A real attach against a closed port: the error says which statement
+    failed and never carries the connection string."""
+    import traceback
 
-    We don't actually connect to PG here; just check that the URI
-    assembly path is exercised. The connection attempt to an invalid
-    PG host should fail.
-    """
-    with pytest.raises(duckdb.Error):
-        Lake.cloud(
-            catalog="postgresql://invalid:invalid@127.0.0.1:1/none",
-            storage=str(tmp_path),
-        )
+    from omnisus_db.lake import CatalogAttachError
+
+    secret = "synthetic-secret"
+    with pytest.raises(CatalogAttachError) as caught:
+        Lake.cloud(catalog=f"postgresql://user:{secret}@127.0.0.1:1/none", storage=str(tmp_path))
+    assert caught.value.stage == "attach"
+    assert secret not in "".join(traceback.format_exception(caught.value))
 
 
 def test_lake_context_manager(tmp_path: Path) -> None:

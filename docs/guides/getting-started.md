@@ -98,6 +98,10 @@ The DuckDB connection needs the appropriate catalog and object-storage
 credentials. The parser extracts exactly one `storage` parameter and preserves
 other PostgreSQL query parameters, including `sslmode`. Percent-encode embedded
 query characters in the storage value, or use `Lake.cloud(catalog=...,
-storage=...)` in Python to pass the values separately.
+storage=...)` in Python to pass the values separately. When the catalog cannot
+be opened, `Lake.cloud`/`Lake.local` raise `CatalogAttachError`: `.stage` tells
+whether the ducklake extension (`install`), the catalog (`attach`) or the
+compression option (`set_option`) failed, and a remote catalog's error never
+includes the connection string.
 Acceptance tests validate local catalogs; cloud concurrency still requires
 external writer coordination. See [reprocessing and maintenance](reprocessing-and-maintenance.md).

@@ -101,8 +101,12 @@ Lake transaction errors are imported from `omnisus_db.lake`. A
 `CommitOutcomeUnknown` means the COMMIT raised and the handle is unusable;
 inspect the catalog before retrying. The FTP runner wraps transaction state
 failures in the top-level `ImportAbortedError` with partial progress.
+`CatalogAttachError` means the catalog could not be opened at all: `.stage`
+says which statement failed, and for a remote catalog the message never
+carries the connection string.
 
 ::: omnisus_db.ImportAbortedError
+::: omnisus_db.CatalogAttachError
 ::: omnisus_db.lake.TransactionStateError
 ::: omnisus_db.lake.CommitOutcomeUnknown
 ::: omnisus_db.FtpPathNotFound

@@ -7,7 +7,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from omnisus_db.lake.connection import make_connection
+from omnisus_db.lake.connection import CatalogAttachError, make_connection
 
 
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite", "duckdb"])
@@ -29,23 +29,45 @@ def test_catalog_backend_selector(scheme, tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql"])
-def test_remote_attach_failure_hides_credentials_and_closes(scheme, tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("failing_statement", "stage"), [(0, "install"), (1, "attach"), (2, "set_option")]
+)
+def test_remote_failure_names_the_stage_and_withholds_credentials(
+    scheme, failing_statement, stage, tmp_path, monkeypatch
+):
+    """DuckDB's error text can echo the connection string, so a remote failure
+    reports which statement failed and the DuckDB error class — never the cause."""
     import traceback
 
     import duckdb
 
     con = Mock()
     secret = "synthetic-secret"
-    con.execute.side_effect = [None, duckdb.Error(f"connection failed: {secret}")]
+    con.execute.side_effect = [None] * failing_statement + [
+        duckdb.IOException(f"connection failed: {secret}")
+    ]
     monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
-    with pytest.raises(duckdb.ConnectionException) as caught:
+    with pytest.raises(CatalogAttachError) as caught:
         make_connection(
             catalog_uri=f"{scheme}://user:{secret}@localhost/test",
             storage_root=str(tmp_path),
         )
+    assert caught.value.stage == stage
+    assert "IOException" in str(caught.value)
+    assert caught.value.__cause__ is None and caught.value.__suppress_context__
     assert secret not in "".join(traceback.format_exception(caught.value))
-    assert caught.value.__suppress_context__
     con.close.assert_called_once()
+
+
+def test_local_failure_keeps_the_duckdb_cause(tmp_path: Path) -> None:
+    """A local catalog path names a file, not a credential: the DuckDB error
+    stays chained so the researcher sees why the file could not be opened."""
+    import duckdb
+
+    with pytest.raises(CatalogAttachError) as caught:
+        make_connection(catalog_uri=f"sqlite:{tmp_path}", storage_root=str(tmp_path / "data"))
+    assert caught.value.stage == "attach"
+    assert isinstance(caught.value.__cause__, duckdb.Error)
 
 
 def test_make_connection_returns_duckdb_with_ducklake_loaded(tmp_path: Path) -> None:

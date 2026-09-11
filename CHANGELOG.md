@@ -81,6 +81,34 @@
   weekly `probe.yml`): validates every registry row's `ftp_dir`, `prefix` and
   `coverage` against the live server — the only tier that catches a wrong row
   or a DATASUS reorganisation.
+- **`sinan_chagas_prelim` — the first national dataset.** SINAN's preliminary
+  acute Chagas files (`CHAGBRYY.dbc`, one file per year for the whole country)
+  do not fit a `(uf, ano)` scope, so `Dataset` gained `geography="national"`,
+  `ScopeKey.uf` may be `None` and the table is partitioned by `_source_ano`.
+  `scopes_for` rejects UF/month filters for national datasets — filter records
+  after import. The final 2000–2022 files live in another directory and are
+  not part of this contract; see `docs/sources/sinan_chagas_prelim.md`.
+- `sources.medicamentos.horus.fetch_stock_page`: one filtered page of the
+  public BNAFAR/Hórus stock API, returned with its exact bytes and provenance.
+  It is an observation, not a publication — no pagination, no lake write — and
+  a page is never evidence of complete dispensing coverage.
+  `docs/sources/medicamentos.md` maps which medicine questions each public
+  source can and cannot answer.
+- `sources.ibge.products.CENSUS_YEARS` and `ESTIMATE_UNAVAILABLE_YEARS`: the
+  census editions the package accepts and the estimate editions it rejects,
+  each stated once and used by `resolve_product`. Consumers were listing census
+  years through a private mapping and copying the rejected years by hand.
+- `ImportPolicy` and `resolve` are listed in `omnisus_db.__all__` (both were
+  already importable from the top level).
+- `CatalogAttachError`, raised by `Lake.local`/`Lake.cloud` when the catalog
+  cannot be opened. `.stage` names the statement that failed — `install` (the
+  ducklake extension), `attach` or `set_option` — and the message names the
+  DuckDB error class. For a remote catalog the DuckDB error is not chained,
+  because its text can echo the connection string; for a local one it is, so
+  the file-level reason stays visible. Replaces the `duckdb.ConnectionException`
+  the remote path raised and the raw DuckDB exception the local path leaked —
+  two contracts, neither saying which statement failed. Exported from
+  `omnisus_db` and `omnisus_db.lake`.
 
 ### Changed
 
@@ -115,6 +143,9 @@
 - `sources.datasus_ftp.inventory` was a filename codec; it is now the actual
   inventory. The codec moved to `sources.datasus_ftp.filenames` with
   identical signatures, plus a non-raising `decode()`.
+- `ScopeKey.uf` is `str | None`. `None` is a national source, and `str(scope)`
+  renders it as `national_<ano>`. Code that assumed a two-letter UF on every
+  scope must handle the national case.
 
 ### Removed
 
@@ -193,6 +224,14 @@
   `--depth 0` previously surfaced a raw traceback; an unbounded depth could
   sequentially LIST an entire DATASUS subtree against the shared public
   server (spec I7).
+- **PostgreSQL catalogs could not be attached.** DuckLake needs the `postgres:`
+  backend selector before the URI (`ducklake:postgres:postgresql://…`); without
+  it every `Lake.cloud()` and every `ducklake:postgresql://…` target failed —
+  and the failure was reported as "check connection settings", pointing at
+  credentials for a bug that involved none. The selector is added for the
+  `postgres`/`postgresql` schemes only; local catalogs are unchanged. Verified
+  against PostgreSQL 17 with DuckDB 1.5.5
+  (`reports/evidence/2026-09-10/postgres-selector/`).
 
 `get_config` is kept as a compatibility wrapper over `resolve`.
 

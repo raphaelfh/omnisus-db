@@ -193,6 +193,14 @@ def test_policy_type_and_dataset_resolver_are_exported() -> None:
     assert odb.resolve("sim").name == "sim_do"
 
 
+def test_catalog_attach_error_is_exported() -> None:
+    from omnisus_db.lake import CatalogAttachError
+
+    assert "CatalogAttachError" in odb.__all__
+    assert odb.CatalogAttachError is CatalogAttachError
+    assert issubclass(CatalogAttachError, RuntimeError)
+
+
 def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     """Discovery is decoupled from the lake — it works before `init` (spec §4.4)."""
     import omnisus_db as odb

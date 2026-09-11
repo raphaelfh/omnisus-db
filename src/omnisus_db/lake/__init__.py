@@ -2,6 +2,13 @@
 
 from omnisus_db.lake._transactions import CommitOutcomeUnknown, TransactionStateError
 from omnisus_db.lake.catalog import DEFAULT_TARGET
+from omnisus_db.lake.connection import CatalogAttachError
 from omnisus_db.lake.operations import Lake
 
-__all__ = ["DEFAULT_TARGET", "CommitOutcomeUnknown", "Lake", "TransactionStateError"]
+__all__ = [
+    "DEFAULT_TARGET",
+    "CatalogAttachError",
+    "CommitOutcomeUnknown",
+    "Lake",
+    "TransactionStateError",
+]
