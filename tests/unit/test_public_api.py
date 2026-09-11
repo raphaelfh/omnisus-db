@@ -208,6 +208,37 @@ def test_lake_reader_is_exported() -> None:
     assert odb.LakeReader is LakeReader
 
 
+def test_products_state_what_each_importer_family_supports() -> None:
+    """The Omnisus app rebuilt this catalog by hand, treating ibge_pop and
+    cnes_master as special cases. One frozen record per family says it here."""
+    from dataclasses import FrozenInstanceError
+    from typing import get_args
+
+    products = {p.name: p for p in odb.products()}
+    assert set(products) == set(REGISTRY) | {"ibge_pop", "cnes_master"}
+    assert [d.name for d in odb.datasets()] == list(REGISTRY)
+    for dataset in odb.datasets():
+        product = products[dataset.name]
+        assert product.dataset is dataset
+        if dataset.geography == "national":
+            assert product.scope_fields == ("ano",)
+        else:
+            assert product.scope_fields == (
+                ("uf", "ano", "mes") if dataset.monthly else ("uf", "ano")
+            )
+        assert product.policies == get_args(odb.ImportPolicy)
+        assert (product.reconcile_by, product.inventory) == ("run_id", True)
+    assert products["ibge_pop"] == odb.Product(
+        "ibge_pop", None, ("product", "ano"), ("append",), "publication_id", False
+    )
+    assert products["cnes_master"] == odb.Product(
+        "cnes_master", None, (), ("append",), "rerun", False
+    )
+    with pytest.raises(FrozenInstanceError):
+        products["ibge_pop"].inventory = True  # type: ignore[misc]
+    assert {"Product", "datasets", "products"} <= set(odb.__all__)
+
+
 def test_deletion_result_is_exported() -> None:
     from omnisus_db.lake.publication import DeletionResult
 

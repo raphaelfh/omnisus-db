@@ -116,8 +116,18 @@ a deprecated physical cleanup alias; it does not expire snapshots.
 
 ## Registry
 
+`datasets()` lists every curated FTP dataset; `products()` adds the two
+importer families outside the registry (`ibge_pop`, `cnes_master`) and states,
+per family, the scope fields, accepted policies, how an interrupted run is
+reconciled and whether `available()` applies. Year rules for IBGE remain in
+`omnisus_db.sources.ibge.products` (`CENSUS_YEARS`, `ESTIMATE_UNAVAILABLE_YEARS`);
+an estimate is importable only as its latest edition, so there is no floor year.
+
 ::: omnisus_db.Dataset
 ::: omnisus_db.resolve
+::: omnisus_db.datasets
+::: omnisus_db.products
+::: omnisus_db.Product
 
 ## Errors
 

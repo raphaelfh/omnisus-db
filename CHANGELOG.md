@@ -126,6 +126,14 @@
   rows deleted and publications retired, so unmanaged rows are visible when
   the two disagree. The Omnisus app answered 501 on scoped deletion for lack
   of exactly this.
+- **`datasets()` and `products()` — the catalog, stated once.** `datasets()`
+  is the public face of the registry; `products()` returns one frozen `Product`
+  per importer family — the FTP datasets, `ibge_pop` and `cnes_master` — with
+  its scope fields, accepted policies, reconciliation key (`run_id`,
+  `publication_id` or rerun) and whether `available()` applies. Consumers were
+  reaching `REGISTRY` through an internal path and hard-coding the two
+  special cases, including a "first estimate year" the package never declared:
+  an IBGE estimate is importable only as its latest edition.
 
 ### Changed
 

@@ -8,6 +8,7 @@ from collections.abc import Callable, Iterable, Sequence
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake, LakeReader
 from omnisus_db.lake.publication import DeletionResult, ImportPolicy
+from omnisus_db.products import Product, datasets, products
 from omnisus_db.sources._base import (
     ImportAbortedError,
     ImportReport,
@@ -350,11 +351,13 @@ __all__ = [
     "ImportResult",
     "Lake",
     "LakeReader",
+    "Product",
     "ScopeKey",
     "ScopeOutcome",
     "__version__",
     "available",
     "browse",
+    "datasets",
     "import_cnes_master",
     "import_cnes_st",
     "import_dataset",
@@ -362,6 +365,7 @@ __all__ = [
     "import_sih",
     "import_sim",
     "import_sinasc",
+    "products",
     "resolve",
     "scopes_for",
 ]
