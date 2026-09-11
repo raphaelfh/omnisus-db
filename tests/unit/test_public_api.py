@@ -185,6 +185,14 @@ def test_available_and_browse_are_exported() -> None:
         assert hasattr(odb, name), name
 
 
+def test_policy_type_and_dataset_resolver_are_exported() -> None:
+    from typing import get_args
+
+    assert {"ImportPolicy", "resolve"} <= set(odb.__all__)
+    assert get_args(odb.ImportPolicy) == ("append", "skip_same", "error_if_exists", "replace")
+    assert odb.resolve("sim").name == "sim_do"
+
+
 def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     """Discovery is decoupled from the lake — it works before `init` (spec §4.4)."""
     import omnisus_db as odb

@@ -14,6 +14,8 @@ _CENSUS_REFERENCE_SOURCES = {
 }
 # Census editions with a verified municipal population product, ascending.
 CENSUS_YEARS: tuple[int, ...] = tuple(sorted(_CENSUS_REFERENCE_SOURCES))
+# Years without an estimate edition; census years are never substituted.
+ESTIMATE_UNAVAILABLE_YEARS: tuple[int, ...] = (2007, 2010, 2022, 2023)
 
 
 @dataclass(frozen=True)
@@ -31,7 +33,7 @@ def resolve_product(product: str, year: int) -> PopulationProduct:
     if type(year) is not int or not 1900 <= year <= 9999:
         raise ValueError("year must be an explicit four-digit integer")
     if product == "estimate":
-        if year in (2007, 2010, 2022, 2023):
+        if year in ESTIMATE_UNAVAILABLE_YEARS:
             raise ValueError(f"estimate unavailable for {year}; no automatic census substitution")
         return PopulationProduct(
             "estimate",

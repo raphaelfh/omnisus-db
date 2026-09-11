@@ -333,6 +333,7 @@ __all__ = [
     "FtpPathNotFound",
     "FtpUnavailable",
     "ImportAbortedError",
+    "ImportPolicy",
     "ImportReport",
     "ImportResult",
     "Lake",
@@ -348,5 +349,6 @@ __all__ = [
     "import_sih",
     "import_sim",
     "import_sinasc",
+    "resolve",
     "scopes_for",
 ]
