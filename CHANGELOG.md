@@ -118,7 +118,10 @@
   `connect()`, `tables()`, `snapshots()`, `publications()` and `attempts()`,
   and nothing that writes; DuckLake refuses writes on the connection itself.
   Until now the only way to query was `Lake.local()` — a writer that takes the
-  lock — which is what the Omnisus app and the notebooks were doing.
+  lock — which is what the Omnisus app and the notebooks were doing. The
+  reader accepts every target the writer accepts, SQLite or PostgreSQL; the
+  package does not impose PostgreSQL for shared reading, by decision — a
+  PostgreSQL-only read profile is an application's own policy.
 - **`Lake.delete_scope(table, scope)` — removal coherent with the manifest.**
   Deletes one source scope by the predicate `publish_scope` uses and retires
   every publication within it in the same transaction; a yearly scope on a
