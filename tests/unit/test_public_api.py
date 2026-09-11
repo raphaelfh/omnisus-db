@@ -208,6 +208,13 @@ def test_lake_reader_is_exported() -> None:
     assert odb.LakeReader is LakeReader
 
 
+def test_deletion_result_is_exported() -> None:
+    from omnisus_db.lake.publication import DeletionResult
+
+    assert "DeletionResult" in odb.__all__
+    assert odb.DeletionResult is DeletionResult
+
+
 def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     """Discovery is decoupled from the lake — it works before `init` (spec §4.4)."""
     import omnisus_db as odb

@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake, LakeReader
-from omnisus_db.lake.publication import ImportPolicy
+from omnisus_db.lake.publication import DeletionResult, ImportPolicy
 from omnisus_db.sources._base import (
     ImportAbortedError,
     ImportReport,
@@ -330,6 +330,7 @@ __all__ = [
     "DEFAULT_TARGET",
     "CatalogAttachError",
     "Dataset",
+    "DeletionResult",
     "FtpEntry",
     "FtpPathNotFound",
     "FtpUnavailable",

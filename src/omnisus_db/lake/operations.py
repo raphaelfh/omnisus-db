@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
     import polars as pl
 
-    from omnisus_db.sources._base import ImportResult
+    from omnisus_db.lake.publication import DeletionResult
+    from omnisus_db.sources._base import ImportResult, ScopeKey
 
 logger = structlog.get_logger(__name__)
 
@@ -441,6 +442,12 @@ class Lake(Session):
         from omnisus_db.lake.publication import publish_scope
 
         return publish_scope(self, table, staging, **kwargs)
+
+    def delete_scope(self, table: str, scope: ScopeKey) -> DeletionResult:
+        """Delete one source scope and retire its publications in one transaction."""
+        from omnisus_db.lake.publication import delete_scope
+
+        return delete_scope(self, table, scope)
 
     def close(self) -> None:
         try:

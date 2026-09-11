@@ -3,6 +3,7 @@
 import json
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -24,6 +25,24 @@ MANIFEST = "_omnisus_publications"
 def validate_policy(policy: str) -> None:
     if policy not in POLICIES:
         raise ValueError(f"policy must be one of {POLICIES}")
+
+
+@dataclass(frozen=True)
+class DeletionResult:
+    """What :func:`delete_scope` removed: data rows, and the manifest rows retired with them."""
+
+    rows_deleted: int
+    publications_retired: int
+
+
+def _validate_scope(scope: ScopeKey) -> None:
+    if (
+        (scope.uf is not None and not re.fullmatch("[A-Z]{2}", scope.uf))
+        or not 1900 <= scope.ano <= 2200
+        or (scope.mes is not None and not 1 <= scope.mes <= 12)
+        or (scope.uf is None and scope.mes is not None)
+    ):
+        raise ValueError("invalid source scope")
 
 
 def _ensure_manifest(lake: "Lake") -> str:
@@ -113,13 +132,7 @@ def publish_scope(
     validate_policy(policy)
     if not re.fullmatch("[0-9a-f]{64}", source_sha256) or not parser_version:
         raise ValueError("publication requires source SHA-256 and parser version")
-    if (
-        (scope.uf is not None and not re.fullmatch("[A-Z]{2}", scope.uf))
-        or not 1900 <= scope.ano <= 2200
-        or (scope.mes is not None and not 1 <= scope.mes <= 12)
-        or (scope.uf is None and scope.mes is not None)
-    ):
-        raise ValueError("invalid source scope")
+    _validate_scope(scope)
     if table.startswith("_omnisus_"):
         raise ValueError("reserved publication table name")
     staging = Path(staging)
@@ -211,6 +224,59 @@ def publish_scope(
     )
     result.run_id, result.batch_id, result.publication_id = run_id, batch_id, publication_id
     return result
+
+
+def delete_scope(lake: "Lake", table: str, scope: ScopeKey) -> DeletionResult:
+    """Delete one source scope and retire every publication within it, atomically.
+
+    Rows are matched by the predicate :func:`publish_scope` uses, so a yearly
+    scope on a monthly table removes all its months, and each month's manifest
+    row is retired (``active = false``). Rows that never had a manifest are
+    deleted as well; ``rows_deleted`` above the retired publications' row sum
+    is the caller's signal that unmanaged rows were present. Runs inside the
+    caller's managed transaction when one is active, else opens one.
+    """
+    _validate_scope(scope)
+    if table.startswith("_omnisus_"):
+        raise ValueError("reserved publication table name")
+    if not lake.in_transaction:
+        with lake.transaction():
+            return delete_scope(lake, table, scope)
+    if table not in lake.tables():
+        raise ValueError(f"unknown table: {table!r}")
+    national_table = "_source_ano" in lake._table_columns(table)
+    if national_table != (scope.uf is None):
+        raise ValueError("incompatible national/state publication scope")
+    con = lake.connect()
+    fields = scope_fields(scope)
+    predicate, args = _predicate(fields)
+    data = qualified(lake.alias, table)
+    counted = con.execute(f"SELECT count(*) FROM {data} WHERE {predicate}", args).fetchone()
+    assert counted is not None
+    con.execute(f"DELETE FROM {data} WHERE {predicate}", args)
+    retired = 0
+    if MANIFEST in lake.tables():
+        manifest = qualified(lake.alias, MANIFEST)
+        active = con.execute(
+            f"SELECT publication_id, scope_json FROM {manifest} WHERE dataset = ? AND active",
+            [table],
+        ).fetchall()
+        within = [
+            publication_id
+            for publication_id, scope_json in active
+            if _contains(json.loads(scope_json), fields)
+        ]
+        for publication_id in within:
+            con.execute(
+                f"UPDATE {manifest} SET active = false WHERE publication_id = ?", [publication_id]
+            )
+        retired = len(within)
+    return DeletionResult(rows_deleted=int(counted[0]), publications_retired=retired)
+
+
+def _contains(dimensions: object, fields: Mapping[str, object]) -> bool:
+    """Whether a manifest row's scope lies within the requested fields."""
+    return isinstance(dimensions, dict) and all(dimensions.get(k) == v for k, v in fields.items())
 
 
 def record_failed_attempts(lake: "Lake", report) -> None:

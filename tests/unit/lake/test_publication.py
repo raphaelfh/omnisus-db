@@ -39,13 +39,15 @@ def test_same_process_handle_and_symlink_are_locked(tmp_path):
         Lake.local(f"ducklake:{alias}/p.ducklake")
 
 
-def _publish(lake, tmp_path, uf="SP", value=1, policy="append", digest=None, run_id="run-1"):
-    path = tmp_path / f"{uf}-{value}.parquet"
-    pl.DataFrame({"ano": [2024], "mes": [1], "uf": [uf], "v": [value]}).write_parquet(path)
+def _publish(
+    lake, tmp_path, uf="SP", value=1, policy="append", digest=None, run_id="run-1", mes=1
+):
+    path = tmp_path / f"{uf}-{value}-{mes}.parquet"
+    pl.DataFrame({"ano": [2024], "mes": [mes], "uf": [uf], "v": [value]}).write_parquet(path)
     return lake.publish_scope(
         "t",
         path,
-        scope=ScopeKey(uf=uf, ano=2024, mes=1),
+        scope=ScopeKey(uf=uf, ano=2024, mes=mes),
         source_sha256=digest or hashlib.sha256(str(value).encode()).hexdigest(),
         parser_version="parser-v1",
         policy=policy,
@@ -174,13 +176,112 @@ def test_scope_from_fields_rejects_shapes_this_version_never_writes():
     assert scope_from_fields({"ano": "2024", "uf": "SP"}) is None
 
 
+def test_delete_scope_removes_every_month_and_retires_their_publications(tmp_path):
+    """A yearly scope on a monthly table covers all its months; the neighbouring
+    UF and its publication are untouched."""
+    from omnisus_db import DeletionResult
+
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        _publish(lake, tmp_path)
+        _publish(lake, tmp_path, value=2, mes=2)
+        _publish(lake, tmp_path, uf="RJ", value=3)
+
+        result = lake.delete_scope("t", ScopeKey(uf="SP", ano=2024))
+
+        assert result == DeletionResult(rows_deleted=2, publications_retired=2)
+        assert lake.connect().execute("SELECT uf, v FROM lake.t").fetchall() == [("RJ", 3)]
+        assert {r["scope"]: r["active"] for r in lake.publications()} == {
+            ScopeKey(uf="SP", ano=2024, mes=1): False,
+            ScopeKey(uf="SP", ano=2024, mes=2): False,
+            ScopeKey(uf="RJ", ano=2024, mes=1): True,
+        }
+
+
+def test_delete_scope_deletes_unmanaged_rows_without_retirements(tmp_path):
+    from omnisus_db import DeletionResult
+
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        lake.ingest("t", pl.DataFrame({"ano": [2024], "mes": [1], "uf": ["SP"], "v": [9]}).lazy())
+
+        result = lake.delete_scope("t", ScopeKey(uf="SP", ano=2024, mes=1))
+
+        assert result == DeletionResult(rows_deleted=1, publications_retired=0)
+        assert lake.connect().execute("SELECT count(*) FROM lake.t").fetchone() == (0,)
+
+
+def test_delete_scope_rejects_unknown_table_and_wrong_geography(tmp_path):
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        _publish(lake, tmp_path)
+        with pytest.raises(ValueError, match="unknown table"):
+            lake.delete_scope("nope", ScopeKey(uf="SP", ano=2024))
+        with pytest.raises(ValueError, match="national/state"):
+            lake.delete_scope("t", ScopeKey(uf=None, ano=2024))
+        with pytest.raises(ValueError, match="reserved"):
+            lake.delete_scope("_omnisus_publications", ScopeKey(uf="SP", ano=2024))
+        assert lake.connect().execute("SELECT count(*) FROM lake.t").fetchone() == (1,)
+
+
+def test_delete_scope_rolls_back_with_the_callers_transaction(tmp_path):
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        _publish(lake, tmp_path)
+        with pytest.raises(RuntimeError), lake.transaction():
+            lake.delete_scope("t", ScopeKey(uf="SP", ano=2024, mes=1))
+            raise RuntimeError("abort")
+        assert lake.connect().execute("SELECT v FROM lake.t").fetchall() == [(1,)]
+        assert [r["active"] for r in lake.publications()] == [True]
+
+
+def test_delete_scope_on_a_national_table(tmp_path):
+    from omnisus_db import DeletionResult
+
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        _publish_national(lake, tmp_path, ano=2023)
+        _publish_national(lake, tmp_path, ano=2024, value=2)
+
+        result = lake.delete_scope("n", ScopeKey(uf=None, ano=2023))
+
+        assert result == DeletionResult(rows_deleted=1, publications_retired=1)
+        assert lake.connect().execute("SELECT _source_ano FROM lake.n").fetchall() == [(2024,)]
+
+
+def _publish_yearly(lake, tmp_path, uf="SP", value=1):
+    path = tmp_path / f"y-{uf}-{value}.parquet"
+    pl.DataFrame({"ano": [2023], "uf": [uf], "v": [value]}).write_parquet(path)
+    return lake.publish_scope(
+        "y",
+        path,
+        scope=ScopeKey(uf=uf, ano=2023),
+        source_sha256=hashlib.sha256(f"y{uf}{value}".encode()).hexdigest(),
+        parser_version="parser-v1",
+        run_id="yearly",
+        partition_by=("ano", "uf"),
+    )
+
+
+def test_delete_scope_on_a_yearly_table(tmp_path):
+    from omnisus_db import DeletionResult
+
+    with Lake.local(f"ducklake:{tmp_path}/d.ducklake") as lake:
+        _publish_yearly(lake, tmp_path)
+        _publish_yearly(lake, tmp_path, uf="RJ", value=2)
+
+        result = lake.delete_scope("y", ScopeKey(uf="SP", ano=2023))
+
+        assert result == DeletionResult(rows_deleted=1, publications_retired=1)
+        assert lake.connect().execute("SELECT uf FROM lake.y").fetchall() == [("RJ",)]
+        assert {r["scope"]: r["active"] for r in lake.publications(run_id="yearly")} == {
+            ScopeKey(uf="SP", ano=2023): False,
+            ScopeKey(uf="RJ", ano=2023): True,
+        }
+
+
 def test_parser_version_change_is_not_skip_same(tmp_path):
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
         _publish(lake, tmp_path)
         with pytest.raises(ValueError, match="version"):
             lake.publish_scope(
                 "t",
-                tmp_path / "SP-1.parquet",
+                tmp_path / "SP-1-1.parquet",
                 scope=ScopeKey(uf="SP", ano=2024, mes=1),
                 source_sha256=hashlib.sha256(b"1").hexdigest(),
                 parser_version="parser-v2",
