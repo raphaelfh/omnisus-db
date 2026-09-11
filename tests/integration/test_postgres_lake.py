@@ -12,7 +12,7 @@ from uuid import uuid4
 import polars as pl
 import pytest
 
-from omnisus_db import Lake, LakeReader, ScopeKey
+from omnisus_db import DeletionResult, Lake, LakeReader, ScopeKey
 
 pytestmark = pytest.mark.integration
 
@@ -89,3 +89,13 @@ def test_cloud_managed_publication(postgres_catalog, tmp_path, scheme):
         assert reader.connect().execute("SELECT count(*) FROM lake.synthetic").fetchone() == (2,)
     with LakeReader(target, snapshot_id=before[-1]["snapshot_id"]) as reader:
         assert "synthetic" not in reader.tables()
+
+    # Removal keeps data and manifest coherent, and a reader observes both sides.
+    with Lake.cloud(catalog=catalog, storage=storage) as lake:
+        deletion = lake.delete_scope("synthetic", ScopeKey(uf="SP", ano=2024))
+        assert deletion == DeletionResult(rows_deleted=2, publications_retired=1)
+    with LakeReader(target) as reader:
+        assert reader.connect().execute("SELECT count(*) FROM lake.synthetic").fetchone() == (0,)
+        (record,) = reader.publications(run_id="selector-gate")
+        assert record["active"] is False
+        assert record["scope"] == ScopeKey(uf="SP", ano=2024)
