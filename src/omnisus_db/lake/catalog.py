@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import unquote_plus, urlsplit, urlunsplit
+from urllib.parse import unquote_plus, urlsplit
 
 
 @dataclass(frozen=True)
@@ -45,9 +45,14 @@ def parse_target(target: str) -> CatalogURI:
                 kept.append(part)
         if len(storage) != 1 or not storage[0]:
             raise ValueError("postgres target requires exactly one ?storage=<path or s3 uri>")
-        clean_url = urlunsplit(
-            (split.scheme, split.netloc, split.path, "&".join(kept), split.fragment)
-        )
+        # Rebuilt by hand: urlunsplit restores the empty authority of a
+        # ``postgresql:///?host=…`` DSN only for schemes it knows, and libpq
+        # rejects the ``postgresql:/?host=…`` it produced instead.
+        clean_url = body.partition("?")[0]
+        if kept:
+            clean_url += "?" + "&".join(kept)
+        if split.fragment:
+            clean_url += "#" + split.fragment
         return CatalogURI(catalog_uri=clean_url, storage_root=storage[0])
 
     storage_path = Path(body).expanduser().resolve()

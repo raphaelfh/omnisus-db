@@ -201,6 +201,13 @@ def test_catalog_attach_error_is_exported() -> None:
     assert issubclass(CatalogAttachError, RuntimeError)
 
 
+def test_lake_reader_is_exported() -> None:
+    from omnisus_db.lake import LakeReader
+
+    assert "LakeReader" in odb.__all__
+    assert odb.LakeReader is LakeReader
+
+
 def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     """Discovery is decoupled from the lake — it works before `init` (spec §4.4)."""
     import omnisus_db as odb

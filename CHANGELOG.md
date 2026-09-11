@@ -109,8 +109,23 @@
   the remote path raised and the raw DuckDB exception the local path leaked —
   two contracts, neither saying which statement failed. Exported from
   `omnisus_db` and `omnisus_db.lake`.
+- **`LakeReader` — a read-only session.** `LakeReader(target, snapshot_id=None)`
+  attaches an existing catalog `READ_ONLY` with no `DATA_PATH` (the catalog
+  records its own and rejects a different one), never creates a catalog and
+  never sets an option, so it takes no writer lock and never blocks a writer.
+  It reads alongside an import — even mid-transaction — at the last committed
+  snapshot, or pinned to `snapshot_id` for a reproducible session. It offers
+  `connect()`, `tables()`, `snapshots()`, `publications()` and `attempts()`,
+  and nothing that writes; DuckLake refuses writes on the connection itself.
+  Until now the only way to query was `Lake.local()` — a writer that takes the
+  lock — which is what the Omnisus app and the notebooks were doing.
 
 ### Changed
+
+- `Lake` shares its read surface (`connect`, `tables`, `snapshots`,
+  `publications`, `attempts`, `close`) with `LakeReader` through
+  `omnisus_db.lake.session.Session`. Behaviour is unchanged, except that
+  `connect()` on a closed handle now says so instead of "unusable".
 
 - Updated runtime, development and documentation dependency floors and the uv
   lockfile to the compatible stable releases checked on 2026-09-09, including
@@ -232,6 +247,11 @@
   `postgres`/`postgresql` schemes only; local catalogs are unchanged. Verified
   against PostgreSQL 17 with DuckDB 1.5.5
   (`reports/evidence/2026-09-10/postgres-selector/`).
+- **A `postgresql:///?host=…` target lost its `//`.** `parse_target` rebuilt
+  the DSN with `urlunsplit`, which restores an empty authority only for schemes
+  it knows, so every parameter-only libpq URI came back as `postgresql:/?host=…`
+  and the attach failed. The DSN is now rebuilt by hand; only the `storage`
+  parameter is removed.
 
 `get_config` is kept as a compatibility wrapper over `resolve`.
 

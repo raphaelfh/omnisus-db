@@ -34,7 +34,7 @@ def make_connection(
     storage_root: str,
     alias: str = "lake",
 ) -> duckdb.DuckDBPyConnection:
-    """Open a DuckDB connection with ducklake attached.
+    """Open a DuckDB connection with ducklake attached for writing.
 
     Args:
         catalog_uri: ``sqlite:/path/to/catalog.sqlite`` or ``postgresql://...``.
@@ -48,26 +48,75 @@ def make_connection(
         CatalogAttachError: any of the three setup statements failed; the
             connection is closed before raising.
     """
+    remote = _is_remote(catalog_uri)
+    if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
+        Path(storage_root).mkdir(parents=True, exist_ok=True)
+    return _attach(
+        catalog_uri,
+        alias,
+        remote=remote,
+        options=(f"DATA_PATH {quote_literal(storage_root)}",),
+        set_compression=True,
+    )
+
+
+def make_reader_connection(
+    *,
+    catalog_uri: str,
+    alias: str = "lake",
+    snapshot_id: int | None = None,
+) -> duckdb.DuckDBPyConnection:
+    """Open a DuckDB connection with an *existing* ducklake attached read-only.
+
+    No ``DATA_PATH`` is passed — the catalog records its own and rejects a
+    different one — no catalog is created when none exists, and no option is
+    set, so nothing here needs the writer lock. ``snapshot_id`` pins the whole
+    session to one snapshot; without it every statement reads the latest
+    committed one.
+    """
+    options = ["READ_ONLY", "CREATE_IF_NOT_EXISTS false"]
+    if snapshot_id is not None:
+        options.append(f"SNAPSHOT_VERSION {snapshot_id}")
+    return _attach(
+        catalog_uri,
+        alias,
+        remote=_is_remote(catalog_uri),
+        options=tuple(options),
+        set_compression=False,
+    )
+
+
+def _is_remote(catalog_uri: str) -> bool:
+    """Whether the catalog is PostgreSQL-backed; rejects unsupported schemes first."""
     scheme = catalog_uri.split(":", 1)[0].lower()
     if scheme not in SUPPORTED_CATALOG_SCHEMES:
         raise ValueError(f"unsupported catalog scheme: {scheme!r}")
+    return scheme in ("postgres", "postgresql")
 
-    if not storage_root.startswith(("s3://", "gs://", "az://", "azure://")):
-        Path(storage_root).mkdir(parents=True, exist_ok=True)
 
+def _attach(
+    catalog_uri: str,
+    alias: str,
+    *,
+    remote: bool,
+    options: tuple[str, ...],
+    set_compression: bool,
+) -> duckdb.DuckDBPyConnection:
     # DuckLake requires an explicit backend selector before a PostgreSQL URI.
-    remote = scheme in ("postgres", "postgresql")
     metadata_path = "postgres:" + catalog_uri if remote else catalog_uri
     quoted_alias = quote_identifier(alias)
-    statements = (
+    statements = [
         ("install", "INSTALL ducklake; LOAD ducklake;"),
         (
             "attach",
             f"ATTACH {quote_literal('ducklake:' + metadata_path)} AS {quoted_alias} "
-            f"(DATA_PATH {quote_literal(storage_root)})",
+            f"({', '.join(options)})",
         ),
-        ("set_option", f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')"),
-    )
+    ]
+    if set_compression:
+        statements.append(
+            ("set_option", f"CALL {quoted_alias}.set_option('parquet_compression', 'zstd')")
+        )
     con = duckdb.connect(":memory:")
     for stage, sql in statements:
         try:

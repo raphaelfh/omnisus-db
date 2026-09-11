@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Callable, Iterable, Sequence
 
 from omnisus_db._version import __version__
-from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake
+from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake, LakeReader
 from omnisus_db.lake.publication import ImportPolicy
 from omnisus_db.sources._base import (
     ImportAbortedError,
@@ -338,6 +338,7 @@ __all__ = [
     "ImportReport",
     "ImportResult",
     "Lake",
+    "LakeReader",
     "ScopeKey",
     "ScopeOutcome",
     "__version__",

@@ -55,15 +55,16 @@ Or in Python:
 ```python
 import omnisus_db as odb
 
-with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    df = lake.connect().sql(
+with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    df = reader.connect().sql(
         "SELECT count(*) AS obitos FROM lake.sim_do WHERE ano=2023 AND uf='RR'"
     ).pl()
 ```
 
 Every explicit lake target must start with `ducklake:`, for example
-`ducklake:./omnisus.ducklake`. Keep the `Lake` context open while using its
-connection or lazy relations.
+`ducklake:./omnisus.ducklake`. A `LakeReader` takes no writer lock, so it can
+run while an import is in progress; keep its context open while using the
+connection or lazy relations. Open `Lake.local` only to write.
 
 ## 5. Bigger imports
 

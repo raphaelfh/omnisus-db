@@ -12,6 +12,7 @@ from omnisus_db.sources._base import ScopeKey
 
 if TYPE_CHECKING:
     from omnisus_db.lake import Lake
+    from omnisus_db.lake.session import Session
     from omnisus_db.sources._base import ImportResult
 
 ImportPolicy = Literal["append", "skip_same", "error_if_exists", "replace"]
@@ -42,16 +43,16 @@ def _ensure_manifest(lake: "Lake") -> str:
     return manifest
 
 
-def publications(lake: "Lake", *, run_id: str | None = None) -> list[dict]:
-    if MANIFEST not in lake.tables():
+def publications(session: "Session", *, run_id: str | None = None) -> list[dict]:
+    if MANIFEST not in session.tables():
         return []
-    sql = f"SELECT * FROM {qualified(lake.alias, MANIFEST)}"
+    sql = f"SELECT * FROM {qualified(session.alias, MANIFEST)}"
     args = []
     if run_id is not None:
         sql += " WHERE run_id = ?"
         args.append(run_id)
     return (
-        lake.connect()
+        session.connect()
         .execute(sql + " ORDER BY published_at, publication_id", args)
         .to_arrow_table()
         .to_pylist()
@@ -203,16 +204,16 @@ def record_failed_attempts(lake: "Lake", report) -> None:
         lake.connect().executemany(f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)", rows)
 
 
-def attempts(lake: "Lake", *, run_id: str | None = None) -> list[dict]:
-    if "_omnisus_attempts" not in lake.tables():
+def attempts(session: "Session", *, run_id: str | None = None) -> list[dict]:
+    if "_omnisus_attempts" not in session.tables():
         return []
-    sql = f"SELECT * FROM {qualified(lake.alias, '_omnisus_attempts')}"
+    sql = f"SELECT * FROM {qualified(session.alias, '_omnisus_attempts')}"
     params = []
     if run_id is not None:
         sql += " WHERE run_id=?"
         params.append(run_id)
     return (
-        lake.connect()
+        session.connect()
         .execute(sql + " ORDER BY recorded_at, input_index", params)
         .to_arrow_table()
         .to_pylist()

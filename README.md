@@ -36,8 +36,8 @@ import omnisus_db as odb
 # Import only what DATASUS actually publishes
 odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=range(2020, 2025)))
 
-with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    df = lake.connect().sql(
+with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    df = reader.connect().sql(
         "SELECT count(*) AS obitos FROM lake.sim_do WHERE ano = 2024"
     ).pl()
 ```

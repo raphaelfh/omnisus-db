@@ -62,6 +62,22 @@ Local handles enforce a cooperative writer lock for their lifetime.
 Use `Lake.transaction()` for managed writes; raw SQL
 transaction control is outside this contract. Managed transactions cannot nest.
 
+To read, open a `LakeReader` on the same target: it attaches the catalog
+read-only, takes no lock, creates nothing and sets no option, so it runs
+alongside an import. Pass `snapshot_id` to pin the session; without it every
+statement reads the latest committed snapshot.
+
+```python
+import omnisus_db as odb
+
+with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    latest = reader.snapshots()[-1]["snapshot_id"]
+    rows = reader.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()
+
+with odb.LakeReader(odb.DEFAULT_TARGET, snapshot_id=latest) as reader:
+    ...  # every statement here sees exactly that snapshot
+```
+
 ```python
 import omnisus_db as odb
 import polars as pl
@@ -88,6 +104,7 @@ to `dry_run=True`. Each returns a list of result dictionaries. `Lake.vacuum` is
 a deprecated physical cleanup alias; it does not expire snapshots.
 
 ::: omnisus_db.Lake
+::: omnisus_db.LakeReader
 ::: omnisus_db.DEFAULT_TARGET
 
 ## Registry

@@ -26,6 +26,16 @@ def test_parse_target_explicit_postgres() -> None:
     assert parsed.storage_root == "s3://bucket/lake"
 
 
+def test_parse_target_keeps_a_netloc_less_postgres_dsn_intact() -> None:
+    """libpq accepts ``postgresql:///?host=…`` (every parameter in the query).
+    ``urlunsplit`` rewrote it as ``postgresql:/?host=…``, which libpq rejects."""
+    target = "ducklake:postgresql:///?host=h&dbname=d&storage=s3://bucket/lake&sslmode=require"
+    parsed = parse_target(target)
+
+    assert parsed.catalog_uri == "postgresql:///?host=h&dbname=d&sslmode=require"
+    assert parsed.storage_root == "s3://bucket/lake"
+
+
 def test_parse_target_rejects_missing_scheme() -> None:
     with pytest.raises(ValueError, match="must start with 'ducklake:'"):
         parse_target("./omnisus.ducklake")

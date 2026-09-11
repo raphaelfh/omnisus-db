@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING, Self
 
-import duckdb
 import structlog
 
 from omnisus_db.lake._transactions import (
@@ -14,7 +13,8 @@ from omnisus_db.lake._transactions import (
     TransactionStateError,
 )
 from omnisus_db.lake.catalog import CatalogURI, parse_target
-from omnisus_db.lake.connection import close_connection, make_connection
+from omnisus_db.lake.connection import make_connection
+from omnisus_db.lake.session import Session
 from omnisus_db.lake.sql import qualified, quote_identifier, quote_literal
 
 if TYPE_CHECKING:
@@ -27,20 +27,18 @@ if TYPE_CHECKING:
 logger = structlog.get_logger(__name__)
 
 
-class Lake:
-    """Handle on a DuckLake.
+class Lake(Session):
+    """Writer handle on a DuckLake.
 
     Use :meth:`local` with a ``ducklake:`` target or :meth:`cloud` for a
     Postgres-backed catalog. Managed ingestion requires one writer per lake,
-    including when the catalog is hosted in Postgres.
+    including when the catalog is hosted in Postgres. To only read, open a
+    :class:`~omnisus_db.lake.session.LakeReader` instead: it takes no lock.
     """
 
     def __init__(self, *, target: CatalogURI, alias: str = "lake") -> None:
         self._target = target
-        self._alias = alias
         self._in_transaction = False
-        self._unusable = False
-        self._closed = False
         self._pending_results: list[ImportResult] = []
         self._ensured: set[str] = set()
         """Tables this handle has already created and partitioned. Ensuring a
@@ -52,7 +50,7 @@ class Lake:
 
         self._writer_lock = WriterLock(target.catalog_uri)
         try:
-            self._con = make_connection(
+            con = make_connection(
                 catalog_uri=target.catalog_uri,
                 storage_root=target.storage_root,
                 alias=alias,
@@ -60,6 +58,7 @@ class Lake:
         except BaseException:
             self._writer_lock.close()
             raise
+        super().__init__(con, alias)
 
     @classmethod
     def local(cls, target: str) -> Self:
@@ -74,66 +73,14 @@ class Lake:
         return cls(target=CatalogURI(catalog_uri=catalog, storage_root=storage))
 
     @property
-    def alias(self) -> str:
-        return self._alias
-
-    @property
     def in_transaction(self) -> bool:
         return self._in_transaction
-
-    @property
-    def is_usable(self) -> bool:
-        return not self._closed and not self._unusable
-
-    def connect(self) -> duckdb.DuckDBPyConnection:
-        if not self.is_usable:
-            raise RuntimeError("Lake handle is unusable; close it and inspect the catalog")
-        return self._con
 
     def _read_snapshot(self) -> int | None:
         row = self._con.execute(
             "SELECT id FROM ducklake_last_committed_snapshot(?)", [self._alias]
         ).fetchone()
         return None if row is None or row[0] is None else int(row[0])
-
-    def tables(self) -> list[str]:
-        """List user tables in the lake (excludes ducklake internals)."""
-        self.connect()
-        rows = self._con.execute(
-            f"""
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_catalog = {quote_literal(self._alias)}
-            ORDER BY table_name
-            """
-        ).fetchall()
-        return [name for (name,) in rows]
-
-    def snapshots(self) -> list[dict[str, object]]:
-        """Return the catalog's snapshot history, oldest first.
-
-        DuckLake snapshots are catalog-wide, not per-table: ``changes`` names
-        which tables each one touched. The previous signature took a table and
-        queried ``ducklake_snapshots('lake.<table>')``, which does not bind —
-        so this method always raised, and ``ingest`` made the same call inside
-        a bare ``except`` that turned it into ``snapshot_id=None`` on every
-        import ever run.
-
-        Timestamps come back as strings: DuckDB renders its own TIMESTAMPTZ
-        through ``pytz``, which is not a dependency of this package.
-        """
-        self.connect()
-        rows = self._con.execute(
-            f"""
-            SELECT snapshot_id, snapshot_time::VARCHAR, changes::VARCHAR
-            FROM ducklake_snapshots({quote_literal(self._alias)})
-            ORDER BY snapshot_id
-            """
-        ).fetchall()
-        return [
-            {"snapshot_id": int(sid), "snapshot_time": when, "changes": changes}
-            for sid, when, changes in rows
-        ]
 
     @contextlib.contextmanager
     def transaction(self) -> Iterator[TransactionReceipt]:
@@ -495,31 +442,10 @@ class Lake:
 
         return publish_scope(self, table, staging, **kwargs)
 
-    def publications(self, *, run_id: str | None = None) -> list[dict]:
-        """Read durable publication IDs, including after an unknown commit outcome."""
-        from omnisus_db.lake.publication import publications
-
-        return publications(self, run_id=run_id)
-
-    def attempts(self, *, run_id: str | None = None) -> list[dict]:
-        """Read failed attempts recorded after known data rollbacks."""
-        from omnisus_db.lake.publication import attempts
-
-        return attempts(self, run_id=run_id)
-
     def close(self) -> None:
-        if self._closed:
-            return
         try:
-            close_connection(self._con, self._alias)
+            super().close()
         finally:
             self._writer_lock.close()
-            self._closed = True
             self._columns.clear()
             self._ensured.clear()
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *_exc: object) -> None:
-        self.close()

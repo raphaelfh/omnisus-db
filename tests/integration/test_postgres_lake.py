@@ -12,7 +12,7 @@ from uuid import uuid4
 import polars as pl
 import pytest
 
-from omnisus_db import Lake, ScopeKey
+from omnisus_db import Lake, LakeReader, ScopeKey
 
 pytestmark = pytest.mark.integration
 
@@ -80,3 +80,12 @@ def test_cloud_managed_publication(postgres_catalog, tmp_path, scheme):
         assert lake.publish_scope("synthetic", staging, policy="skip_same", **publication) is None
         assert lake.connect().execute("SELECT count(*) FROM lake.synthetic").fetchone() == (2,)
         assert lake.snapshots()[-1]["snapshot_id"] == result.snapshot_id
+
+    # A read-only session sees the same data with no writer lock, DATA_PATH or option
+    # calls, and a pin to the pre-publication snapshot does not see the table at all.
+    target = f"ducklake:{catalog}&storage={storage}"
+    with LakeReader(target) as reader:
+        assert reader.publications(run_id="selector-gate") == records
+        assert reader.connect().execute("SELECT count(*) FROM lake.synthetic").fetchone() == (2,)
+    with LakeReader(target, snapshot_id=before[-1]["snapshot_id"]) as reader:
+        assert "synthetic" not in reader.tables()

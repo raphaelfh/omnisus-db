@@ -7,7 +7,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from omnisus_db.lake.connection import CatalogAttachError, make_connection
+from omnisus_db.lake.connection import (
+    CatalogAttachError,
+    make_connection,
+    make_reader_connection,
+)
 
 
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite", "duckdb"])
@@ -26,6 +30,25 @@ def test_catalog_backend_selector(scheme, tmp_path, monkeypatch):
         f'ATTACH \'ducklake:{backend}{escaped_uri}\' AS "a""b" '
         f"(DATA_PATH '{str(tmp_path).replace(chr(39), chr(39) * 2)}')"
     )
+
+
+@pytest.mark.parametrize("scheme", ["postgres", "postgresql", "sqlite"])
+@pytest.mark.parametrize("snapshot_id", [None, 7])
+def test_reader_attach_is_read_only_and_sets_nothing(scheme, snapshot_id, tmp_path, monkeypatch):
+    """A reader attaches READ_ONLY without DATA_PATH — the catalog knows its own —
+    never creates a catalog, and never runs set_option."""
+    con = Mock()
+    monkeypatch.setattr("omnisus_db.lake.connection.duckdb.connect", lambda _: con)
+    remote = scheme != "sqlite"
+    uri = f"{scheme}://user:pw@localhost/test" if remote else f"sqlite:{tmp_path}/cat"
+    make_reader_connection(catalog_uri=uri, alias="lake", snapshot_id=snapshot_id)
+    pin = f", SNAPSHOT_VERSION {snapshot_id}" if snapshot_id is not None else ""
+    con.execute.assert_any_call(
+        f"ATTACH 'ducklake:{'postgres:' if remote else ''}{uri}' AS \"lake\" "
+        f"(READ_ONLY, CREATE_IF_NOT_EXISTS false{pin})"
+    )
+    statements = [call.args[0] for call in con.execute.call_args_list]
+    assert not any("set_option" in s or "DATA_PATH" in s for s in statements)
 
 
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql"])
