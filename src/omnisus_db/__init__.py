@@ -233,6 +233,11 @@ def import_ibge_pop(
     territorial universe and are unavailable; only the aggregate's latest
     edition is accepted. Census editions supported: 2010 and 2022. Each result
     carries a publication_id linked to the canonical data and source manifest.
+
+    Accepts neither ``run_id`` nor ``policy`` and never appears in
+    ``Lake.publications()``: each edition is its own publication, identified by
+    the returned ``publication_id`` in ``ibge_population_manifest``. Reconcile
+    an interrupted run through that manifest, not by run ID.
     """
     from omnisus_db.sources.ibge.importers.pop import import_pop_year
 
@@ -311,6 +316,11 @@ def import_cnes_master(
     incremental — only CNES codes present in ``cnes_st`` but absent from
     ``cnes_master`` are fetched. Pass ``progress=(done, total) -> None`` to
     stream job progress (e.g. from the backend admin UI).
+
+    This is an idempotent upsert, not a publication: it accepts neither
+    ``run_id`` nor ``policy``, records no manifest row and returns only a
+    count. To reconcile an interrupted run, run it again — ``only_missing``
+    fetches only what is still absent.
     """
     from omnisus_db.sources.cnes.importers.master import (
         import_cnes_master as _impl,

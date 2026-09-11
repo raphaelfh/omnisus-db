@@ -54,6 +54,7 @@ results carry their canonical `publication_id`.
 ::: omnisus_db.sources._base.ScopeOutcome
 ::: omnisus_db.sources._base.ImportResult
 ::: omnisus_db.sources._base.ScopeKey
+::: omnisus_db.DeletionResult
 
 ## The lake
 
@@ -94,9 +95,15 @@ The receipt's `snapshot_id` may remain `None` after a successful commit when no 
 See [Architecture](architecture.md) for rollback and recovery boundaries.
 
 `Lake.publications(run_id=...)` reads the durable source-publication manifest;
+each row carries `scope`, the `ScopeKey` the package wrote (`None` for a shape
+this version does not write), alongside the raw `scope_json`.
 `Lake.attempts(run_id=...)` reads separately recorded known failures.
 `Lake.ingest_parquet` appends a staging file directly. `Lake.publish_scope` adds
 scope validation, source identity and replay policy to that write.
+`Lake.delete_scope(table, scope)` removes one source scope and retires every
+publication within it in the same transaction; a yearly scope on a monthly
+table covers all its months. `import_ibge_pop` and `import_cnes_master` do not
+take part in this manifest — see their docstrings for how each reconciles.
 
 `Lake.optimize(table)` merges adjacent files. `Lake.expire_snapshots` and
 `Lake.cleanup_files` take `older_than` as a timezone-aware datetime and default

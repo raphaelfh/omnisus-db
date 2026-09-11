@@ -51,13 +51,16 @@ succeeded in the catalog despite the missing acknowledgement. After closing the
 unusable handle, reopen the lake and inspect the durable manifest:
 
 ```python
-with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    publications = lake.publications(run_id="sim-rr-2023-review-01")
-    failed_attempts = lake.attempts(run_id="sim-rr-2023-review-01")
+with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    published = {p["scope"] for p in reader.publications(run_id="sim-rr-2023-review-01")}
+    failed_attempts = reader.attempts(run_id="sim-rr-2023-review-01")
 ```
 
-Publications include publication, run and batch IDs, source scope/hash, parser
-version, row count and active status. Superseded manifests remain for inspection.
+Publications include publication, run and batch IDs, the decoded `scope`,
+source hash, parser version, row count and active status. A scope absent from
+`published` did not commit under that run ID, because data and manifest commit
+in one transaction; choose run IDs you never reuse, or that inference is void.
+Superseded manifests remain for inspection.
 The failure table records known failures separately after data rollback at the
 end of a completed run; a crash or unknown transaction outcome can prevent that
 log from being written. Its absence is not evidence of success.
@@ -67,6 +70,40 @@ input positions needing inspection. Repeated input positions are preserved.
 A skip that depends on an uncommitted publication shares that batch's outcome;
 it cannot remain successful after rollback. Reconcile publications before
 retrying an unknown commit, rather than appending the entire run again.
+
+## Remove a scope
+
+`Lake.delete_scope(table, scope)` deletes the rows of one source scope and
+retires every publication within it (`active = false`) in one managed
+transaction, so data and manifest never disagree. A yearly scope on a monthly
+table removes all twelve months and retires each month's publication. Rows that
+never had a publication are removed as well; when `rows_deleted` exceeds the
+retired publications' row sum, unmanaged rows were present.
+
+```python
+with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
+    result = lake.delete_scope("sih_rd", odb.ScopeKey(uf="RR", ano=2023))
+    print(result.rows_deleted, result.publications_retired)
+```
+
+Retired publications stay in the manifest for inspection; they are not
+distinguished from ones superseded by `replace`.
+
+## Migrate a legacy lake
+
+Rows written before publications existed have no manifest and are never
+certified in place. Migrate by rebuilding, so provenance exists from the first
+import:
+
+1. Choose a new target. Do not point it at the old catalog or storage.
+2. Import each dataset with `available()` as the plan and an explicit `run_id`;
+   `policy="skip_same"` makes reruns idempotent.
+3. Verify `publications()` covers every scope you expect, and compare row counts
+   with the old lake where that matters to you.
+4. Switch consumers to the new target string. Keep the old lake read-only
+   until nothing reads it, then delete it.
+
+The old lake is not modified at any step.
 
 ## Coordinate writers and bound downloads
 

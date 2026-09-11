@@ -119,6 +119,13 @@
   and nothing that writes; DuckLake refuses writes on the connection itself.
   Until now the only way to query was `Lake.local()` — a writer that takes the
   lock — which is what the Omnisus app and the notebooks were doing.
+- **`Lake.delete_scope(table, scope)` — removal coherent with the manifest.**
+  Deletes one source scope by the predicate `publish_scope` uses and retires
+  every publication within it in the same transaction; a yearly scope on a
+  monthly table covers all its months. Returns a `DeletionResult` with the
+  rows deleted and publications retired, so unmanaged rows are visible when
+  the two disagree. The Omnisus app answered 501 on scoped deletion for lack
+  of exactly this.
 
 ### Changed
 
@@ -126,6 +133,14 @@
   `publications`, `attempts`, `close`) with `LakeReader` through
   `omnisus_db.lake.session.Session`. Behaviour is unchanged, except that
   `connect()` on a closed handle now says so instead of "unusable".
+- `publications()` rows carry `scope`, the `ScopeKey` the package wrote
+  (`None` for a shape this version does not write). Consumers were decoding
+  `scope_json` themselves, including the private `_source_ano` encoding of
+  national scopes.
+- `import_ibge_pop` and `import_cnes_master` now state that they take neither
+  `run_id` nor `policy` and do not appear in `Lake.publications()`; each names
+  its own reconciliation key. Legacy lakes migrate by rebuild, never by
+  in-place adoption — see the reprocessing guide.
 
 - Updated runtime, development and documentation dependency floors and the uv
   lockfile to the compatible stable releases checked on 2026-09-09, including
