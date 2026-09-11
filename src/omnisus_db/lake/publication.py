@@ -2,6 +2,7 @@
 
 import json
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -51,12 +52,48 @@ def publications(session: "Session", *, run_id: str | None = None) -> list[dict]
     if run_id is not None:
         sql += " WHERE run_id = ?"
         args.append(run_id)
-    return (
+    rows = (
         session.connect()
         .execute(sql + " ORDER BY published_at, publication_id", args)
         .to_arrow_table()
         .to_pylist()
     )
+    for row in rows:
+        dimensions = json.loads(row["scope_json"])
+        row["scope"] = scope_from_fields(dimensions) if isinstance(dimensions, dict) else None
+    return rows
+
+
+def scope_fields(scope: ScopeKey) -> dict[str, object]:
+    """The columns that identify ``scope``'s rows: the manifest's scope_json shape."""
+    fields: dict[str, object] = (
+        {"_source_ano": scope.ano} if scope.uf is None else {"ano": scope.ano, "uf": scope.uf}
+    )
+    if scope.mes is not None:
+        fields["mes"] = scope.mes
+    return fields
+
+
+def scope_from_fields(fields: Mapping[str, object]) -> ScopeKey | None:
+    """Inverse of :func:`scope_fields`; ``None`` for a shape this version never writes."""
+    uf, mes = fields.get("uf"), fields.get("mes")
+    national = fields.get("_source_ano")
+    if set(fields) == {"_source_ano"} and isinstance(national, int):
+        return ScopeKey(uf=None, ano=national)
+    ano = fields.get("ano")
+    if (
+        set(fields) - {"mes"} == {"ano", "uf"}
+        and isinstance(ano, int)
+        and isinstance(uf, str)
+        and (mes is None or isinstance(mes, int))
+    ):
+        return ScopeKey(uf=uf, ano=ano, mes=mes)
+    return None
+
+
+def _predicate(fields: Mapping[str, object]) -> tuple[str, list[object]]:
+    sql = " AND ".join(f"{quote_identifier(k)} IS NOT DISTINCT FROM ?" for k in fields)
+    return sql, list(fields.values())
 
 
 def publish_scope(
@@ -103,14 +140,11 @@ def publish_scope(
                 source_uri=source_uri,
             )
     con = lake.connect()
-    fields = {"_source_ano": scope.ano} if scope.uf is None else {"ano": scope.ano, "uf": scope.uf}
-    if scope.mes is not None:
-        fields["mes"] = scope.mes
+    fields = scope_fields(scope)
     columns = dict(lake._staging_columns(str(staging)))
     if not fields.keys() <= columns.keys():
         raise ValueError("staging is missing source scope columns")
-    predicate = " AND ".join(f"{quote_identifier(k)} IS NOT DISTINCT FROM ?" for k in fields)
-    args = list(fields.values())
+    predicate, args = _predicate(fields)
     counts = con.execute(
         f"SELECT count(*), count(*) FILTER (WHERE {predicate}) FROM read_parquet({quote_literal(str(staging))})",
         args,

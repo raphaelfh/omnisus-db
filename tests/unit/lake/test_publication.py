@@ -138,6 +138,42 @@ def test_lost_commit_confirmation_can_be_reconciled(tmp_path):
         assert reopened.connect().execute("SELECT v FROM lake.t").fetchall() == [(1,)]
 
 
+def _publish_national(lake, tmp_path, ano=2023, value=1):
+    path = tmp_path / f"BR-{ano}.parquet"
+    pl.DataFrame({"_source_ano": [ano], "v": [value]}).write_parquet(path)
+    return lake.publish_scope(
+        "n",
+        path,
+        scope=ScopeKey(uf=None, ano=ano),
+        source_sha256=hashlib.sha256(f"BR{ano}".encode()).hexdigest(),
+        parser_version="parser-v1",
+        run_id="national",
+        partition_by=("_source_ano",),
+    )
+
+
+def test_publications_carry_a_decoded_scope(tmp_path):
+    """The app decoded scope_json itself, including our private _source_ano
+    encoding. The package now hands back the ScopeKey it wrote."""
+    with Lake.local(f"ducklake:{tmp_path}/s.ducklake") as lake:
+        _publish(lake, tmp_path)
+        _publish_national(lake, tmp_path)
+        scopes = {r["dataset"]: r["scope"] for r in lake.publications()}
+        assert scopes == {
+            "t": ScopeKey(uf="SP", ano=2024, mes=1),
+            "n": ScopeKey(uf=None, ano=2023),
+        }
+
+
+def test_scope_from_fields_rejects_shapes_this_version_never_writes():
+    from omnisus_db.lake.publication import scope_from_fields
+
+    assert scope_from_fields({"ano": 2024, "uf": "SP"}) == ScopeKey(uf="SP", ano=2024)
+    assert scope_from_fields({"_source_ano": 2023}) == ScopeKey(uf=None, ano=2023)
+    assert scope_from_fields({"product": "estimate", "ano": 2024}) is None
+    assert scope_from_fields({"ano": "2024", "uf": "SP"}) is None
+
+
 def test_parser_version_change_is_not_skip_same(tmp_path):
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
         _publish(lake, tmp_path)
