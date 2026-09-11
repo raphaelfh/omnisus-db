@@ -12,6 +12,8 @@ _CENSUS_REFERENCE_SOURCES = {
     2022: "https://www.ibge.gov.br/Estatisticas/Sociais/Populacao/"
     "22827-censo-demografico-2022.html?edicao=41815",
 }
+# Census editions with a verified municipal population product, ascending.
+CENSUS_YEARS: tuple[int, ...] = tuple(sorted(_CENSUS_REFERENCE_SOURCES))
 
 
 @dataclass(frozen=True)
@@ -40,7 +42,7 @@ def resolve_product(product: str, year: int) -> PopulationProduct:
             "1º de julho do ano calendário, conforme definição oficial do produto; "
             "não é data de publicação ou revisão.",
         )
-    if product == "census" and year in (2010, 2022):
+    if product == "census" and year in CENSUS_YEARS:
         return PopulationProduct(
             "census",
             202 if year == 2010 else 4714,
@@ -52,4 +54,5 @@ def resolve_product(product: str, year: int) -> PopulationProduct:
             "sem atribuição de fuso UTC ou data de coleta.",
             (("2", "0"), ("1", "0")) if year == 2010 else (),
         )
-    raise ValueError("product must be 'estimate' or 'census' (census years: 2010, 2022)")
+    census_years = ", ".join(map(str, CENSUS_YEARS))
+    raise ValueError(f"product must be 'estimate' or 'census' (census years: {census_years})")
