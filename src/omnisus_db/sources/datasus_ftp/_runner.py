@@ -90,9 +90,9 @@ async def import_scope(
 ) -> ImportResult:
     """Fetch + parse + sink one (dataset, scope) into the lake.
 
-    ``dataset`` is a registry key, an alias, or a ``Dataset`` value. The
-    value form is the open door of spec I3: an uncurated dataset with its
-    own ``dictionary`` flows through exactly this path.
+    ``dataset`` is a registry key or a ``Dataset`` value. The value form is
+    the open door of spec I3: an uncurated dataset with its own
+    ``dictionary`` flows through exactly this path.
     """
     d = resolve(dataset)
     _require_well_formed(d, [scope])

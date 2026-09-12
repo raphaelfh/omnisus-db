@@ -1,7 +1,7 @@
 # sinasc_nascidos_vivos
 
 SINASC — Live births. This dataset uses the shared DATASUS-FTP ingestion pipeline.
-See the generated [registry catalog](../datasets.md) for its aliases, cadence,
+See the generated [registry catalog](../datasets.md) for its cadence,
 coverage, partitions and FTP directory.
 
 ```bash

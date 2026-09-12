@@ -25,7 +25,7 @@ print(report.run_id, report.rows, report.failed)
 ```
 
 ```bash
-omnisus-db import sim --year 2023 --ufs RR --policy skip_same --run-id sim-rr-2023-review-01
+omnisus-db import sim_obitos --year 2023 --ufs RR --policy skip_same --run-id sim-rr-2023-review-01
 ```
 
 Source identity combines the compressed DBC SHA-256 with an explicit staging

@@ -70,8 +70,8 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
 def scope_to_filename(dataset: str | Dataset, scope: ScopeKey) -> str:
     """Build the DATASUS DBC filename for a given (dataset, scope).
 
-    Accepts a registry key, an alias, or a ``Dataset`` value (spec §3.3.1),
-    so an ad-hoc dataset can name its files without being registered.
+    Accepts a registry key or a ``Dataset`` value (spec §3.3.1), so an
+    ad-hoc dataset can name its files without being registered.
     """
     d = resolve(dataset)
     if d.geography == "national":

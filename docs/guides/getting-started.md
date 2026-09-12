@@ -31,8 +31,8 @@ This creates `./omnisus.ducklake/` (Parquet storage) and `./omnisus-catalog.sqli
 ## 3. Import some data
 
 ```bash
-omnisus-db inventory sim --refresh
-omnisus-db import sim --plan inventory --year 2023 --ufs RR
+omnisus-db inventory sim_obitos --refresh
+omnisus-db import sim_obitos --plan inventory --year 2023 --ufs RR
 ```
 
 If the listing has no matching scope, choose one it actually lists. Imports
@@ -69,8 +69,8 @@ connection or lazy relations. Open `Lake.local` only to write.
 ## 5. Bigger imports
 
 ```bash
-omnisus-db import sim --plan inventory --years 2020-2024 --ufs SP,RJ,MG
-omnisus-db import sinasc --plan inventory --years 2020-2024
+omnisus-db import sim_obitos --plan inventory --years 2020-2024 --ufs SP,RJ,MG
+omnisus-db import sinasc_nascidos_vivos --plan inventory --years 2020-2024
 ```
 
 A completed FTP import reports every requested position. The CLI exits 1 for
@@ -91,7 +91,7 @@ Commands that operate on a lake accept `--target/-t`; inventory does not use a
 lake. PostgreSQL catalog targets use this form:
 
 ```bash
-omnisus-db import sim --year 2023 --ufs RR \
+omnisus-db import sim_obitos --year 2023 --ufs RR \
   --target "ducklake:postgresql://user:pwd@host/db?storage=s3://bucket/lake"
 ```
 

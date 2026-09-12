@@ -46,7 +46,7 @@ The point of all this. `--plan inventory` asks the server first and imports only
 what it lists:
 
 ```bash
-omnisus-db import sim --plan inventory --years 1996-2024 --ufs RR,AC
+omnisus-db import sim_obitos --plan inventory --years 1996-2024 --ufs RR,AC
 ```
 
 In Python the same thing is composition — no flag, just a different function

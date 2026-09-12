@@ -74,8 +74,8 @@ def _(mo):
 
 @app.cell
 def _(asdict, mo, odb):
-    annual_scopes = odb.scopes_for("sim", years=[2022, 2023], ufs=["RR", "SP"])
-    monthly_scopes = odb.scopes_for("sih", years=[2024], ufs=["RR"], months=[1, 2])
+    annual_scopes = odb.scopes_for("sim_obitos", years=[2022, 2023], ufs=["RR", "SP"])
+    monthly_scopes = odb.scopes_for("sih_aih_reduzida", years=[2024], ufs=["RR"], months=[1, 2])
     mo.vstack(
         [
             mo.md("`scopes_for` monta combinações; a existência no FTP ainda não foi verificada."),

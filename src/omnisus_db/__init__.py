@@ -129,7 +129,7 @@ def import_dataset(
 ) -> ImportReport:
     """Import the given scopes of any DATASUS-FTP dataset into the lake.
 
-    ``dataset`` is a registry key (``"sia_bpa_individualizado"``), an alias (``"sim"``) or a
+    ``dataset`` is a registry key (``"sia_bpa_individualizado"``) or a
     ``Dataset`` value. The loop iterates ``scopes`` and never asks where they
     came from — planning is composition:
 
