@@ -18,7 +18,7 @@ from omnisus_db.sources.datasus_ftp._ftp import (
     TRANSIENT_FTP_ERRORS,
     is_missing,
 )
-from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
+from omnisus_db.sources.datasus_ftp.datasets import Dataset, Release, resolve
 from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
 logger = structlog.get_logger(__name__)
@@ -130,14 +130,19 @@ class FtpUnavailable(Exception):  # noqa: N818
     """The file could not be fetched within the retry budget."""
 
 
-def ftp_path_for(dataset: str | Dataset, scope: ScopeKey) -> tuple[str, str]:
-    """Return (remote_dir, filename) for the given dataset/scope.
+def ftp_path_for(
+    dataset: str | Dataset, scope: ScopeKey, release: Release = "final"
+) -> tuple[str, str]:
+    """Return (remote_dir, filename) for ``scope`` in ``release``.
 
-    Both values derive from the registry row (spec §3.1); there is no
-    separate path map to keep in sync.
+    Pure: the release comes from the caller, who learned it from the listing
+    (``available_releases``). Nothing here tries one directory then another.
     """
     d = resolve(dataset)
-    return d.ftp_dir, scope_to_filename(d, scope)
+    directories = d.directories()
+    if release not in directories:
+        raise ValueError(f"{d.name} has no {release} directory")
+    return directories[release], scope_to_filename(d, scope)
 
 
 def _blocking_fetch(remote_dir: str, filename: str, timeout_seconds: float) -> bytes:
@@ -178,6 +183,7 @@ async def fetch_dbc_bytes(
     *,
     dataset: str | Dataset,
     scope: ScopeKey,
+    release: Release = "final",
     timeout_seconds: float = 120.0,
     max_retries: int = 3,
     backoff_seconds: float = 1.0,
@@ -196,7 +202,7 @@ async def fetch_dbc_bytes(
     permanent made a busy server indistinguishable from an absent dataset.
     """
     d = resolve(dataset)
-    remote_dir, filename = ftp_path_for(d, scope)
+    remote_dir, filename = ftp_path_for(d, scope, release)
     last_exc: BaseException | None = None
     for attempt in range(max_retries):
         try:

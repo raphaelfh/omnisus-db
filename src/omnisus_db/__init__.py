@@ -164,6 +164,11 @@ def import_dataset(
     ``max_inflight_bytes`` reserves space for compressed downloads until consumed
     (default 1 GiB). These are payload limits, not a bound on total process RSS;
     DBC decompression still materializes the complete DBF.
+
+    A row with a preliminary directory (``sim_obitos``, ``sinasc_...``, …) is
+    listed once at the start of the run to learn which scopes currently sit
+    in ``prelim`` versus ``final``; a row with a single directory is never
+    listed. Callers never choose the release themselves.
     """
     d = resolve(dataset)
 

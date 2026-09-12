@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ import pytest
 from omnisus_db.lake import Lake
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp._runner import import_scope
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+from omnisus_db.sources.datasus_ftp.fetch import FtpFileNotFound
 
 
 @pytest.mark.asyncio
@@ -134,3 +137,39 @@ async def test_import_scope_adhoc_without_yaml_fails_fast(monkeypatch, tmp_path)
 
     with Lake.local(f"ducklake:{tmp_path}/x.ducklake") as lake, pytest.raises(FileNotFoundError):
         await import_scope(dataset=ds, scope=ScopeKey(uf="RR", ano=2023), lake=lake)
+
+
+def test_run_scopes_fetches_from_the_listed_release(monkeypatch, tmp_path) -> None:
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    seen: list[tuple[ScopeKey, str]] = []
+
+    async def fake_fetch(*, dataset, scope, release="final", **_):
+        seen.append((scope, release))
+        raise FtpFileNotFound("stop here")  # skipped: the release choice is what we test
+
+    monkeypatch.setattr(_runner, "release_map", lambda d: {ScopeKey(uf="AC", ano=2025): "prelim"})
+    monkeypatch.setattr(_runner, "fetch_dbc_bytes", fake_fetch)
+    with Lake.local(f"ducklake:{tmp_path}/l.ducklake") as lake:
+        asyncio.run(
+            _runner.run_scopes(
+                "sim_obitos",
+                scopes=[ScopeKey(uf="AC", ano=2024), ScopeKey(uf="AC", ano=2025)],
+                lake=lake,
+            )
+        )
+    assert seen == [
+        (ScopeKey(uf="AC", ano=2024), "final"),
+        (ScopeKey(uf="AC", ano=2025), "prelim"),
+    ]
+
+
+def test_release_map_lists_nothing_for_rows_without_prelim_dir(monkeypatch) -> None:
+    from omnisus_db.sources.datasus_ftp import _runner
+
+    monkeypatch.setattr(
+        _runner,
+        "available_releases",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not list")),
+    )
+    assert _runner.release_map(REGISTRY["sia_bpa_individualizado"]) == {}

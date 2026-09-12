@@ -19,9 +19,10 @@ import ftplib
 import io
 from pathlib import Path
 
+import omnisus_db as odb
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp._ftp import FTP_HOST
-from omnisus_db.sources.datasus_ftp.datasets import resolve
+from omnisus_db.sources.datasus_ftp.fetch import ftp_path_for
 from omnisus_db.sources.datasus_ftp.filenames import scope_to_filename
 
 OUT = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "dbc"
@@ -59,7 +60,8 @@ def fetch_via_ftp(dataset: str, scope: ScopeKey) -> bytes:
     filename = scope_to_filename(dataset, scope).upper().replace(".DBC", ".dbc")
     # DATASUS uses uppercase filenames on the server, but uppercase prefix is
     # already in scope_to_filename; ensure casing matches the server convention.
-    ftp_path = resolve(dataset).ftp_dir
+    release = odb.available_releases(dataset).get(scope, "final")
+    ftp_path = ftp_path_for(dataset, scope, release)[0]
     buf = io.BytesIO()
     with ftplib.FTP(FTP_HOST, timeout=FTP_TIMEOUT) as ftp:
         ftp.login()

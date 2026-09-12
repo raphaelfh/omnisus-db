@@ -56,6 +56,7 @@ def _fake_fetch_from(monkeypatch, payload: bytes) -> None:
         return payload
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
 
 def test_import_dataset_reaches_the_sia_family(monkeypatch, tmp_path: Path, dbc_fixture) -> None:

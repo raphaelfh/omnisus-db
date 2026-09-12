@@ -32,7 +32,7 @@ async def test_abnormal_producer_cancels_and_awaits_sibling(tmp_path, monkeypatc
     sibling_started = asyncio.Event()
     sibling_cancelled = asyncio.Event()
 
-    async def fetch(*, dataset, scope):
+    async def fetch(*, dataset, scope, **_kw: object):
         if scope.ano == 2021:
             return b"first"
         sibling_started.set()
@@ -184,7 +184,7 @@ async def test_cancel_with_full_queue_preserves_previous_commit(
 async def test_bad_dbc_is_never_omitted(tmp_path, monkeypatch, dbc_fixture, years):
     raw = dbc_fixture("sim_rr_2023_mini").read_bytes()
 
-    async def fetch(*, dataset, scope):
+    async def fetch(*, dataset, scope, **_kw: object):
         return b"invalid dbc" if scope.ano == 2022 else raw
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fetch)

@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 from omnisus_db.sources.datasus_ftp.fetch import (
     FtpFileNotFound,
     FtpUnavailable,
@@ -31,6 +32,20 @@ def test_ftp_path_for_sih_monthly() -> None:
 def test_ftp_path_for_unknown_dataset() -> None:
     with pytest.raises(ValueError):
         ftp_path_for("bogus", ScopeKey(uf="SP", ano=2024))
+
+
+def test_ftp_path_for_uses_the_release_directory() -> None:
+    d = REGISTRY["sim_obitos"]
+    scope = ScopeKey(uf="SP", ano=2025)
+    assert ftp_path_for(d, scope) == (d.ftp_dir, "DOSP2025.dbc")
+    assert ftp_path_for(d, scope, "prelim") == (d.prelim_dir, "DOSP2025.dbc")
+
+
+def test_ftp_path_for_prelim_on_a_row_without_prelim_dir_is_a_caller_bug() -> None:
+    with pytest.raises(ValueError, match="has no prelim directory"):
+        ftp_path_for(
+            REGISTRY["sia_bpa_individualizado"], ScopeKey(uf="RR", ano=2024, mes=1), "prelim"
+        )
 
 
 @pytest.mark.asyncio

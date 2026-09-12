@@ -27,7 +27,7 @@ from omnisus_db.sources._base import (
     ScopeKey,
     ScopeOutcome,
 )
-from omnisus_db.sources.datasus_ftp.datasets import Dataset, in_coverage, resolve
+from omnisus_db.sources.datasus_ftp.datasets import Dataset, Release, in_coverage, resolve
 from omnisus_db.sources.datasus_ftp.fetch import (
     DEFAULT_MAX_INFLIGHT_BYTES,
     DEFAULT_MAX_PAYLOAD_BYTES,
@@ -35,6 +35,7 @@ from omnisus_db.sources.datasus_ftp.fetch import (
     download_limit,
     fetch_dbc_bytes,
 )
+from omnisus_db.sources.datasus_ftp.inventory import available_releases
 
 logger = structlog.get_logger(__name__)
 
@@ -58,6 +59,14 @@ retry. ``batch_size=1`` restores per-scope atomicity."""
 
 class _ProducerStoppedError(RuntimeError):
     """The producer exited without completing the input stream."""
+
+
+def release_map(d: Dataset) -> dict[ScopeKey, Release]:
+    """Where each published scope currently lives. Rows with a single
+    directory need no listing: everything is ``final``."""
+    if d.prelim_dir is None:
+        return {}
+    return available_releases(d)
 
 
 async def _next_fetched(
@@ -100,8 +109,10 @@ async def import_scope(
         raise ValueError(f"{d.name} is monthly; ScopeKey.mes is required")
 
     logger.info("import_scope.start", dataset=d.name, scope=str(scope))
-    raw = await fetch_dbc_bytes(dataset=d, scope=scope)
-    result = ingest_raw(d, scope, raw, lake)
+    releases = await asyncio.to_thread(release_map, d)
+    release = releases.get(scope, "final")
+    raw = await fetch_dbc_bytes(dataset=d, scope=scope, release=release)
+    result = ingest_raw(d, scope, raw, lake, release=release)
     assert result is not None, "append always publishes"
     logger.info(
         "import_scope.done",
@@ -122,6 +133,7 @@ def ingest_raw(
     policy: ImportPolicy = "append",
     run_id: str | None = None,
     batch_id: str | None = None,
+    release: Release = "final",
 ) -> ImportResult | None:
     """Validate to staging, then publish one source version atomically."""
     from omnisus_db.sources.datasus_ftp.dbf_contract import publication_parser_version
@@ -160,7 +172,9 @@ def ingest_raw(
             run_id=run_id,
             batch_id=batch_id,
             partition_by=d.partition_by,
-            source_uri=f"ftp://ftp.datasus.gov.br{d.ftp_dir}/{scope_to_filename(d, scope)}",
+            source_uri=(
+                f"ftp://ftp.datasus.gov.br{d.directories()[release]}/{scope_to_filename(d, scope)}"
+            ),
         )
 
 
@@ -241,6 +255,8 @@ async def run_scopes(
     if batch_size < 1:
         raise ValueError(f"batch_size must be >= 1; got {batch_size}")
 
+    releases = await asyncio.to_thread(release_map, d)
+
     outcomes: dict[int, ScopeOutcome] = {}
     queued: list[tuple[int, ScopeKey]] = []
     for index, scope in enumerate(scopes):
@@ -275,7 +291,9 @@ async def run_scopes(
             try:
                 try:
                     with download_limit(max_payload_bytes):
-                        raw = await fetch_dbc_bytes(dataset=d, scope=scope)
+                        raw = await fetch_dbc_bytes(
+                            dataset=d, scope=scope, release=releases.get(scope, "final")
+                        )
                     if len(raw) > max_payload_bytes:
                         del raw
                         raise ValueError("download exceeds payload bytes limit")
@@ -335,6 +353,7 @@ async def run_scopes(
                                 policy=policy,
                                 run_id=run_id,
                                 batch_id=batch_id,
+                                release=releases.get(scope, "final"),
                             )
                         except TransactionStateError:
                             batch.pop(index, None)
