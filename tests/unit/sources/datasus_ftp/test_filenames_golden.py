@@ -15,7 +15,7 @@ from hypothesis import strategies as st
 from omnisus_db import ALL_UFS
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
-from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import decode_for, scope_to_filename
 
 # fmt: off
 GOLDEN: list[tuple[str, ScopeKey, str]] = [
@@ -49,8 +49,17 @@ def test_scope_to_filename_golden(dataset: str, scope: ScopeKey, filename: str) 
 
 
 @pytest.mark.parametrize(("dataset", "scope", "filename"), GOLDEN, ids=_IDS)
-def test_parse_filename_golden(dataset: str, scope: ScopeKey, filename: str) -> None:
-    assert parse_filename(filename) == (scope, dataset)
+def test_decode_for_inverts_scope_to_filename(
+    dataset: str, scope: ScopeKey, filename: str
+) -> None:
+    assert decode_for(REGISTRY[dataset], filename) == scope
+
+
+@pytest.mark.parametrize(("dataset", "scope", "filename"), GOLDEN, ids=_IDS)
+def test_no_other_row_claims_the_name(dataset: str, scope: ScopeKey, filename: str) -> None:
+    """ATDRR2401 must decode for the ATD row only, never for AD; ADAC2401 for AD only."""
+    claimants = {name for name, d in REGISTRY.items() if decode_for(d, filename) is not None}
+    assert claimants == {dataset}
 
 
 def test_every_registry_row_has_a_golden_case() -> None:
@@ -62,36 +71,30 @@ def test_monthly_dataset_rejects_scope_without_mes() -> None:
         scope_to_filename("sih_aih_reduzida", ScopeKey(uf="SP", ano=2024))
 
 
-def test_parse_rejects_unknown_prefix() -> None:
-    with pytest.raises(ValueError, match="unknown dataset prefix"):
-        parse_filename("ZZSP2024.dbc")
-
-
 # --- round-trip property over the whole space ------------------------------
 # ano in [1980, 2079] is the range the two-digit-year pivot can round-trip.
 
-_YEARLY = sorted(n for n, d in REGISTRY.items() if not d.monthly and d.geography == "state")
-_MONTHLY = sorted(n for n, d in REGISTRY.items() if d.monthly)
 
-
-@settings(max_examples=300, deadline=None)
+@settings(max_examples=300)
 @given(
-    dataset=st.sampled_from(_YEARLY),
+    dataset=st.sampled_from(sorted(REGISTRY)),
     uf=st.sampled_from(ALL_UFS),
-    ano=st.integers(1980, 2079),
+    ano=st.integers(min_value=1980, max_value=2079),
+    mes=st.integers(min_value=1, max_value=12),
 )
-def test_roundtrip_yearly(dataset: str, uf: str, ano: int) -> None:
-    scope = ScopeKey(uf=uf, ano=ano)
-    assert parse_filename(scope_to_filename(dataset, scope)) == (scope, dataset)
+def test_round_trip_property(dataset: str, uf: str, ano: int, mes: int) -> None:
+    d = REGISTRY[dataset]
+    scope = (
+        ScopeKey(uf=None, ano=ano)
+        if d.geography == "national"
+        else ScopeKey(uf=uf, ano=ano, mes=mes if d.monthly else None)
+    )
+    assert decode_for(d, scope_to_filename(d, scope)) == scope
 
 
-@settings(max_examples=300, deadline=None)
-@given(
-    dataset=st.sampled_from(_MONTHLY),
-    uf=st.sampled_from(ALL_UFS),
-    ano=st.integers(1980, 2079),
-    mes=st.integers(1, 12),
-)
-def test_roundtrip_monthly(dataset: str, uf: str, ano: int, mes: int) -> None:
-    scope = ScopeKey(uf=uf, ano=ano, mes=mes)
-    assert parse_filename(scope_to_filename(dataset, scope)) == (scope, dataset)
+def test_decode_for_rejects_foreign_and_malformed_names() -> None:
+    d = REGISTRY["sim_obitos"]
+    assert decode_for(d, "DNSP2024.dbc") is None
+    assert decode_for(d, "DOSP24.dbc") is None
+    assert decode_for(d, "DOSP2024.DBC") == ScopeKey(uf="SP", ano=2024)
+    assert decode_for(REGISTRY["sih_aih_reduzida"], "RDSP2413.dbc") is None

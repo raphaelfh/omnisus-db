@@ -32,7 +32,7 @@ from omnisus_db.sources.datasus_ftp._ftp import (
     is_missing,
 )
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
-from omnisus_db.sources.datasus_ftp.filenames import decode
+from omnisus_db.sources.datasus_ftp.filenames import decode_for
 
 logger = structlog.get_logger(__name__)
 
@@ -298,11 +298,8 @@ def available(
     listing = list_dir_cached(d.ftp_dir, refresh=refresh)
     scopes: list[ScopeKey] = []
     for entry in listing.files:
-        decoded = decode(entry.name)
-        if decoded is None:
-            continue
-        scope, name = decoded
-        if name != d.name:
+        scope = decode_for(d, entry.name)
+        if scope is None:
             continue
         if wanted is not None and scope.ano not in wanted:
             continue

@@ -26,7 +26,7 @@ from datetime import date
 import pytest
 
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset
-from omnisus_db.sources.datasus_ftp.filenames import decode
+from omnisus_db.sources.datasus_ftp.filenames import decode_for
 from omnisus_db.sources.datasus_ftp.inventory import Listing, list_dir
 
 pytestmark = [pytest.mark.integration, pytest.mark.e2e]
@@ -57,11 +57,7 @@ def test_ftp_dir_exists_and_parses_cleanly(d: Dataset, listings: dict[str, Listi
 @pytest.mark.parametrize("d", ROWS)
 def test_directory_holds_files_with_this_prefix(d: Dataset, listings: dict[str, Listing]) -> None:
     listing = listings[d.ftp_dir]
-    mine = [
-        e
-        for e in listing.files
-        if (decoded := decode(e.name)) is not None and decoded[1] == d.name
-    ]
+    mine = [e for e in listing.files if decode_for(d, e.name) is not None]
     assert mine, (
         f"{d.name}: no file in {d.ftp_dir} decodes to this dataset — "
         f"prefix {d.prefix!r} or ftp_dir is wrong"
@@ -78,11 +74,7 @@ def test_coverage_matches_the_earliest_published_file(
     do not widen the assertion.
     """
     listing = listings[d.ftp_dir]
-    scopes = [
-        decoded[0]
-        for e in listing.files
-        if (decoded := decode(e.name)) is not None and decoded[1] == d.name
-    ]
+    scopes = [scope for e in listing.files if (scope := decode_for(d, e.name)) is not None]
     assert scopes, f"{d.name}: nothing decoded"
     earliest = min((s.ano, s.mes or 1) for s in scopes)
     assert earliest == d.coverage[0], (
@@ -112,11 +104,7 @@ def test_coverage_end_is_not_a_stale_claim(d: Dataset, listings: dict[str, Listi
     request.
     """
     listing = listings[d.ftp_dir]
-    scopes = [
-        decoded[0]
-        for e in listing.files
-        if (decoded := decode(e.name)) is not None and decoded[1] == d.name
-    ]
+    scopes = [scope for e in listing.files if (scope := decode_for(d, e.name)) is not None]
     assert scopes, f"{d.name}: nothing decoded"
     latest = max((s.ano, s.mes or 12) for s in scopes)
 

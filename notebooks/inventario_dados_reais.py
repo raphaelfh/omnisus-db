@@ -21,9 +21,9 @@ def _():
 
     import omnisus_db as odb
     from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
-    from omnisus_db.sources.datasus_ftp.filenames import decode
+    from omnisus_db.sources.datasus_ftp.filenames import decode_for
 
-    return REGISTRY, UTC, Path, asyncio, datetime, decode, json, mo, odb, pl, uuid4
+    return REGISTRY, UTC, Path, asyncio, datetime, decode_for, json, mo, odb, pl, uuid4
 
 
 @app.cell(hide_code=True)
@@ -80,7 +80,7 @@ def _(base, mo):
 
 
 @app.cell
-async def _(REGISTRY, UTC, asyncio, base, consultar, datetime, decode, executar, mo, odb, pl):
+async def _(REGISTRY, UTC, asyncio, base, consultar, datetime, decode_for, executar, mo, odb, pl):
     mo.stop(not (executar or consultar.value), mo.md("Clique em **Consultar inventário**."))
     dataset = REGISTRY[base.value]
     with mo.status.spinner(title="Consultando a listagem real do DATASUS…"):
@@ -95,9 +95,8 @@ async def _(REGISTRY, UTC, asyncio, base, consultar, datetime, decode, executar,
     consulta_utc = datetime.now(UTC).isoformat()
     _rows = []
     for _entry in _entries:
-        _decoded = None if _entry.is_dir else decode(_entry.name)
-        if _decoded is not None and _decoded[1] == dataset.name:
-            _scope = _decoded[0]
+        _scope = None if _entry.is_dir else decode_for(dataset, _entry.name)
+        if _scope is not None:
             _rows.append(
                 {
                     "arquivo": _entry.name,

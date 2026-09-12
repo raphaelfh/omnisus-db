@@ -16,7 +16,7 @@ import polars as pl
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import resolve
 from omnisus_db.sources.datasus_ftp.fetch import ftp_path_for
-from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import decode_for, scope_to_filename
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 from omnisus_db.transforms.dictionaries import load_dicionario
 
@@ -42,8 +42,7 @@ def test_registry_config_is_monthly_with_uf_partition() -> None:
 
 
 def test_inventory_roundtrip() -> None:
-    scope, dataset = parse_filename("BIRR2401.dbc")
-    assert dataset == "sia_bpa_individualizado"
+    scope = decode_for(resolve("sia_bpa_individualizado"), "BIRR2401.dbc")
     assert scope == ScopeKey(uf="RR", ano=2024, mes=1)
     assert scope_to_filename("sia_bpa_individualizado", scope) == "BIRR2401.dbc"
 

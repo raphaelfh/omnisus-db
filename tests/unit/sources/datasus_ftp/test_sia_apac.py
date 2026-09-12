@@ -18,8 +18,8 @@ import polars as pl
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import resolve
-from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, resolve
+from omnisus_db.sources.datasus_ftp.filenames import decode_for, scope_to_filename
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 from omnisus_db.transforms.dictionaries import load_dicionario
 
@@ -52,9 +52,8 @@ FIXTURES = {
         ("RDRR2401.dbc", "sih_aih_reduzida", "RR"),  # regression: SIH untouched
     ],
 )
-def test_parse_filename_disambiguates_prefixes(filename: str, dataset: str, uf: str) -> None:
-    scope, parsed = parse_filename(filename)
-    assert parsed == dataset
+def test_decode_for_disambiguates_prefixes(filename: str, dataset: str, uf: str) -> None:
+    scope = decode_for(REGISTRY[dataset], filename)
     assert scope == ScopeKey(uf=uf, ano=2024, mes=1)
 
 
@@ -62,8 +61,8 @@ def test_parse_filename_disambiguates_prefixes(filename: str, dataset: str, uf: 
 def test_scope_roundtrip(dataset: str) -> None:
     scope = ScopeKey(uf="RR", ano=2024, mes=1)
     filename = scope_to_filename(dataset, scope)
-    back_scope, back_dataset = parse_filename(filename)
-    assert (back_scope, back_dataset) == (scope, dataset)
+    back_scope = decode_for(REGISTRY[dataset], filename)
+    assert back_scope == scope
 
 
 # ---------------------------------------------------------------------------

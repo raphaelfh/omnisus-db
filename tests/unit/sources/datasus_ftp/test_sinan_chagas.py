@@ -6,7 +6,7 @@ import pytest
 import omnisus_db as odb
 from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import resolve
-from omnisus_db.sources.datasus_ftp.filenames import decode, scope_to_filename
+from omnisus_db.sources.datasus_ftp.filenames import decode_for, scope_to_filename
 
 
 def test_national_filename_and_planner():
@@ -14,8 +14,8 @@ def test_national_filename_and_planner():
     scopes = odb.scopes_for(d, years=[2023, 2024])
     assert scopes == [ScopeKey(uf=None, ano=2023), ScopeKey(uf=None, ano=2024)]
     assert scope_to_filename(d, scopes[0]) == "CHAGBR23.dbc"
-    assert decode("CHAGBR23.dbc") == (scopes[0], d.name)
-    assert decode("CHAGSP23.dbc") is None
+    assert decode_for(d, "CHAGBR23.dbc") == scopes[0]
+    assert decode_for(d, "CHAGSP23.dbc") is None
     with pytest.raises(ValueError, match="national"):
         odb.scopes_for(d, years=[2023], ufs=["SP"])
     with pytest.raises(ValueError, match="national"):
