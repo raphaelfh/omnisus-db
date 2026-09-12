@@ -40,15 +40,15 @@ Goals:
 - The researcher can always answer "which of my rows are preliminary?" in SQL
   and "which of my years moved to final?" in one call.
 - Preliminary data is never converted to final silently.
-- Naming convention: new rows use full readable names.
+- Naming convention: every row uses a full readable name (§3.7). No aliases,
+  no compatibility shims: the repository rule is no dead code.
 
 Non-goals (recorded, deferred):
 
 - Unifying the state/national scope columns (`ano`, `uf` injected for state
-  rows; `_source_ano` for national rows). Changing it rebuilds every lake for
-  a naming gain.
-- Renaming the eleven existing rows (`sim_do`, `sia_bi`, …). They are lake
-  table names and app-facing; readable aliases can be added later.
+  rows; `_source_ano` for national rows). The rename already rebuilds every
+  lake, so this could ride along; it is left out because it changes the
+  manifest's `scope_json` shapes the app decodes, and deserves its own design.
 - Adding agravos beyond the pilot. Each is one row + one YAML under this
   structure; the pilot proves the structure.
 
@@ -160,12 +160,40 @@ is dropped; `docs/sources/sinan_chagas.md` states the new rule.
 
 ### 3.7 Naming and catalog
 
-- New rows use full readable names: `sinan_chagas`, `sinan_hanseniase`,
-  `sinan_dengue`. Recorded in the ADR amendment as the convention; historical
-  short names are kept.
-- `sinan_chagas_prelim` → `sinan_chagas`, with `sinan_chagas_prelim` kept as an
-  alias for CLI/API names. Existing Chagas lakes are rebuilt (rebuild-only
-  migration rule); the app handoff is updated.
+Convention (recorded in the ADR amendment): a row name is
+`<sistema>_<conteúdo>` in full Portuguese words, matching DATASUS's own
+description of the file type, never the two-letter file prefix and never a
+publication status. The name is the registry key, the lake table, the YAML
+stem, the CLI name and the docs page. Every existing row is renamed:
+
+| Current | New | DATASUS description (portal, 2026-09-10) |
+|---|---|---|
+| `sim_do` | `sim_obitos` | DO – Declarações de Óbito |
+| `sinasc_nv` | `sinasc_nascidos_vivos` | DN – Declarações de nascidos vivos |
+| `sih_rd` | `sih_aih_reduzida` | RD – AIH Reduzida |
+| `sia_bi` | `sia_bpa_individualizado` | BI – BPA Individualizado (not in the captured list; DATASUS wording) |
+| `sia_am` | `sia_apac_medicamentos` | AM – APAC de Medicamentos |
+| `sia_aq` | `sia_apac_quimioterapia` | AQ – APAC de Quimioterapia |
+| `sia_atd` | `sia_apac_tratamento_dialitico` | ATD – APAC Tratamento Dialítico |
+| `sia_ad` | `sia_apac_laudos_diversos` | AD – APAC de Laudos Diversos |
+| `sia_abo` | `sia_apac_cirurgia_bariatrica` | ABO – APAC Acompanhamento Pós Cirurgia Bariátrica |
+| `sia_ps` | `sia_psicossocial` | PS – Psicossocial |
+| `cnes_st` | `cnes_estabelecimentos` | ST – Estabelecimentos |
+| `sinan_chagas_prelim` | `sinan_chagas` | CHAG – Doença de Chagas Aguda |
+
+Consequences:
+
+- `ALIASES`, `Dataset.aliases`, `get_config()` and the CLI's alias choices are
+  deleted, with their tests. `import_cnes_st` becomes
+  `import_cnes_estabelecimentos`; `_NON_FTP` CLI names follow the same rule
+  (`ibge_pop` → `ibge_populacao`).
+- Lake tables carry the new names. There is no adoption of old tables
+  (rebuild-only migration rule): a lake built before this change is rebuilt
+  into a new target. The CHANGELOG states this and the app handoff is updated
+  with the name table.
+- YAML stems, `docs/sources/*.md`, fixture file names, notebooks and guides are
+  renamed in the same change; `x-source-prefix` in the YAML keeps the DATASUS
+  prefix, which is where the short code now lives.
 - `products()` keeps one entry per row; `Product` gains nothing.
 - `docs/datasets.md` (generated) gains a "Preliminary directory" column.
 - Tier 3 probe: one LIST per distinct directory across all rows; "holds files
@@ -207,13 +235,15 @@ layout, e2e test importing one final and one preliminary year and then
 `staging.py`, `lake/publication.py` (`publications()` release key), new
 `outdated` in `omnisus_db/__init__.py`, `cli/main.py` (inventory column),
 `products.py` (none), `sources/sinan/chagas.py` (removed),
-`data/dicionarios/sinan_chagas.yaml` (renamed + `x-identity`), new
-`sinan_hanseniase.yaml`, `scripts/gen_datasets_doc.py`,
-`scripts/build_fixtures.py`, `tests/…`, `docs/datasets.md`,
-`docs/sources/sinan_chagas.md`, new `docs/sources/sinan_hanseniase.md`,
-`docs/decisions/0002-registry-as-catalog.md` (amendment),
-`docs/architecture.md`, `reports/2026-09-11-handoff-omnisus-app.md` (note),
-`CHANGELOG`.
+`sources/cnes/importers/st.py` (renamed function), every
+`data/dicionarios/<row>.yaml` (renamed; `sinan_chagas.yaml` also gains
+`x-identity`), new `sinan_hanseniase.yaml`, `scripts/gen_datasets_doc.py`,
+`scripts/build_fixtures.py` (targets and fixture names), `tests/…`
+(including deletion of alias tests), `docs/datasets.md`, every
+`docs/sources/<row>.md`, new `docs/sources/sinan_hanseniase.md`, guides and
+notebooks that name rows, `docs/decisions/0002-registry-as-catalog.md`
+(amendment), `docs/architecture.md`,
+`reports/2026-09-11-handoff-omnisus-app.md` (name table), `CHANGELOG`.
 
 ## 7. Rejected
 
