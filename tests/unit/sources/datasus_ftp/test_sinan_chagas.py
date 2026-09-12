@@ -56,18 +56,28 @@ def test_national_publication_replace_and_rollback(tmp_path):
         assert len(lake.publications()) == 3
 
 
-def test_chagas_validator_rejects_wrong_source(tmp_path):
-    from omnisus_db.sources.sinan.chagas import validate_staging
+def test_identity_rejects_wrong_year_source(tmp_path, monkeypatch):
+    from omnisus_db.sources.datasus_ftp import parse
+    from omnisus_db.sources.datasus_ftp._runner import ingest_raw
+    from tests.support.dbf import make_dbf
 
-    p = tmp_path / "data.parquet"
-    for agravo, year in [("A90", "2023"), ("B571", "2022"), (None, "2023")]:
-        pl.DataFrame({"id_agravo": [agravo], "nu_ano": [year], "sg_uf_not": ["15"]}).write_parquet(
-            p
-        )
-        with pytest.raises(ValueError, match="Chagas"):
-            validate_staging(p, ScopeKey(uf=None, ano=2023))
-    pl.DataFrame({"id_agravo": ["B571"], "nu_ano": ["2023"], "sg_uf_not": ["15"]}).write_parquet(p)
-    validate_staging(p, ScopeKey(uf=None, ano=2023))
+    # Only compression is replaced: real DBF decoding and staging execute.
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    fields = [
+        ("ID_AGRAVO", "C", 4, 0),
+        ("NU_ANO", "C", 4, 0),
+        ("SG_UF_NOT", "C", 2, 0),
+        ("ANO", "C", 4, 0),
+        ("UF", "C", 2, 0),
+    ]
+    wrong_year = make_dbf(fields, [b" B5712022152019PA", b" B5712022332020RJ"])
+    d = resolve("sinan_chagas")
+    scope = ScopeKey(uf=None, ano=2023)
+    with (
+        odb.Lake.local(f"ducklake:{tmp_path}/lake.ducklake") as lake,
+        pytest.raises(ValueError, match="year"),
+    ):
+        ingest_raw(d, scope, wrong_year, lake, policy="skip_same")
 
 
 def test_synthetic_full_pipeline_and_corruption_preserve_publication(tmp_path, monkeypatch):

@@ -35,7 +35,9 @@ from omnisus_db.sources.datasus_ftp.fetch import (
     download_limit,
     fetch_dbc_bytes,
 )
+from omnisus_db.sources.datasus_ftp.identity import validate_identity
 from omnisus_db.sources.datasus_ftp.inventory import available_releases
+from omnisus_db.transforms.dictionaries import load_dicionario
 
 logger = structlog.get_logger(__name__)
 
@@ -154,10 +156,9 @@ def ingest_raw(
             source_ano=scope.ano if d.geography == "national" else None,
             release=release,
         )
-        if d.name == "sinan_chagas":
-            from omnisus_db.sources.sinan.chagas import validate_staging
-
-            validate_staging(staging, scope)
+        validate_identity(
+            staging, load_dicionario(d.dictionary if d.dictionary is not None else d.name), scope
+        )
         dictionary_hash = hashlib.sha256(
             d.dictionary.read_bytes()
             if d.dictionary is not None
