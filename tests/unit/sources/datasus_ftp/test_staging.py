@@ -95,6 +95,27 @@ def test_empty_staging_preserves_partition_schema(monkeypatch, tmp_path):
     assert pl.read_parquet(target)["ano"].dtype == pl.UInt16
 
 
+def test_staging_stamps_source_release(monkeypatch, tmp_path):
+    from tests.support.dbf import make_dbf
+
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    raw = make_dbf([("NU_ANO", "C", 4, 0)], [b" 2025"])
+    out = tmp_path / "s.parquet"
+    dbc_bytes_to_parquet(raw, out, dataset="sinan_chagas", source_ano=2025, release="prelim")
+    frame = pl.read_parquet(out)
+    assert frame["_source_release"].to_list() == ["prelim"]
+    assert frame["_source_ano"].to_list() == [2025]
+
+
+def test_empty_staging_stamps_source_release_column(monkeypatch, tmp_path):
+    records(monkeypatch, [])
+    target = tmp_path / "out.parquet"
+    dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos", ano=2023, uf="RR", release="final")
+    frame = pl.read_parquet(target)
+    assert frame["_source_release"].dtype == pl.Utf8
+    assert list(frame["_source_release"]) == []
+
+
 def test_failed_atomic_replace_preserves_target_and_cleans_spool(monkeypatch, tmp_path):
     from omnisus_db.sources.datasus_ftp import staging
 

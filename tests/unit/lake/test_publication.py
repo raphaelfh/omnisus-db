@@ -167,6 +167,43 @@ def test_publications_carry_a_decoded_scope(tmp_path):
         }
 
 
+def test_publications_expose_release_from_source_uri(tmp_path):
+    with Lake.local(f"ducklake:{tmp_path}/r.ducklake") as lake:
+        p = tmp_path / "d.parquet"
+        pl.DataFrame(
+            {"_source_ano": [2025], "_source_release": ["prelim"], "v": [1]}
+        ).write_parquet(p)
+        lake.publish_scope(
+            "sinan_chagas",
+            p,
+            scope=ScopeKey(uf=None, ano=2025),
+            source_sha256="a" * 64,
+            parser_version="v1",
+            source_uri="ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR25.dbc",
+        )
+        pl.DataFrame(
+            {"_source_ano": [2024], "_source_release": ["final"], "v": [1]}
+        ).write_parquet(p)
+        lake.publish_scope(
+            "sinan_chagas",
+            p,
+            scope=ScopeKey(uf=None, ano=2024),
+            source_sha256="b" * 64,
+            parser_version="v1",
+            source_uri="ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/FINAIS/CHAGBR24.dbc",
+        )
+        pl.DataFrame({"_source_ano": [2023], "v": [1]}).write_parquet(p)
+        lake.publish_scope(
+            "sinan_chagas",
+            p,
+            scope=ScopeKey(uf=None, ano=2023),
+            source_sha256="c" * 64,
+            parser_version="v1",
+        )
+        rows = {r["scope"].ano: r["release"] for r in lake.publications()}
+    assert rows == {2025: "prelim", 2024: "final", 2023: None}
+
+
 def test_scope_from_fields_rejects_shapes_this_version_never_writes():
     from omnisus_db.lake.publication import scope_from_fields
 

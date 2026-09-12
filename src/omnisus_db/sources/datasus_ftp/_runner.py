@@ -152,6 +152,7 @@ def ingest_raw(
             dictionary=d.dictionary,
             mes=scope.mes if d.monthly else None,
             source_ano=scope.ano if d.geography == "national" else None,
+            release=release,
         )
         if d.name == "sinan_chagas":
             from omnisus_db.sources.sinan.chagas import validate_staging

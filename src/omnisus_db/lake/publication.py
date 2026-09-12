@@ -77,9 +77,13 @@ def publications(session: "Session", *, run_id: str | None = None) -> list[dict]
         .to_arrow_table()
         .to_pylist()
     )
+    # Local import: the lake package stays registry-free at module import time.
+    from omnisus_db.sources.datasus_ftp.datasets import release_from_uri
+
     for row in rows:
         dimensions = json.loads(row["scope_json"])
         row["scope"] = scope_from_fields(dimensions) if isinstance(dimensions, dict) else None
+        row["release"] = release_from_uri(row["dataset"], row.get("source_uri"))
     return rows
 
 

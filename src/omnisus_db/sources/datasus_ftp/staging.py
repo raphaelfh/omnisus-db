@@ -15,6 +15,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from omnisus_db.sources.datasus_ftp.datasets import Release
 from omnisus_db.sources.datasus_ftp.dbf_batches import open_dbf_batches
 from omnisus_db.transforms.dictionaries import load_dicionario
 
@@ -58,6 +59,7 @@ def dbc_bytes_to_parquet(
     dictionary: Path | None = None,
     mes: int | None = None,
     source_ano: int | None = None,
+    release: Release | None = None,
 ) -> StagingResult:
     """Validate and stage records atomically; leave existing target intact on error.
 
@@ -86,11 +88,14 @@ def dbc_bytes_to_parquet(
             table = table.rename_columns(lowered)
             if "_source_ano" in lowered:
                 raise ValueError("DBF uses reserved source column _source_ano")
+            if "_source_release" in lowered:
+                raise ValueError("DBF uses reserved source column _source_release")
             for name, value, dtype in [
                 ("ano", ano, pa.uint16()),
                 ("uf", uf, pa.string()),
                 ("mes", mes, pa.uint8()),
                 ("_source_ano", source_ano, pa.uint16()),
+                ("_source_release", release, pa.string()),
             ]:
                 if value is not None:
                     column = pa.array([value] * len(table), type=dtype, safe=True)
@@ -123,6 +128,7 @@ def dbc_bytes_to_parquet(
                 ("uf", uf, pa.string()),
                 ("mes", mes, pa.uint8()),
                 ("_source_ano", source_ano, pa.uint16()),
+                ("_source_release", release, pa.string()),
             ]:
                 if value is not None:
                     index = schema.get_field_index(name)
