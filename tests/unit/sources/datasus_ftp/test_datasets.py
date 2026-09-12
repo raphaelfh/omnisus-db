@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, resolve
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, release_from_uri, resolve
 
 ROWS = {
     "sim_obitos",
@@ -123,3 +123,45 @@ def test_dataset_is_keyword_only() -> None:
             ("ano", "uf"),
             ((2000, 1), None),
         )
+
+
+def test_directories_is_final_only_without_prelim_dir() -> None:
+    assert _adhoc().directories() == {"final": "/dissemin/publicos/X"}
+
+
+def test_directories_lists_prelim_after_final() -> None:
+    d = _adhoc(prelim_dir="/dissemin/publicos/X/PRELIM")
+    assert list(d.directories().items()) == [
+        ("final", "/dissemin/publicos/X"),
+        ("prelim", "/dissemin/publicos/X/PRELIM"),
+    ]
+
+
+def test_rows_with_a_preliminary_directory_declare_it() -> None:
+    assert REGISTRY["sim_obitos"].prelim_dir == "/dissemin/publicos/SIM/PRELIM/DORES"
+    assert REGISTRY["sinasc_nascidos_vivos"].prelim_dir == "/dissemin/publicos/SINASC/PRELIM/DNRES"
+    chagas = REGISTRY["sinan_chagas"]
+    assert chagas.ftp_dir == "/dissemin/publicos/SINAN/DADOS/FINAIS"
+    assert chagas.prelim_dir == "/dissemin/publicos/SINAN/DADOS/PRELIM"
+    assert chagas.coverage[0] == (2000, 1)
+
+
+def test_release_from_uri_recognises_both_directories() -> None:
+    assert (
+        release_from_uri(
+            "sim_obitos",
+            "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/PRELIM/DORES/DOSP2025.dbc",
+        )
+        == "prelim"
+    )
+    assert (
+        release_from_uri(
+            "sim_obitos", "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DORES/DOSP2024.dbc"
+        )
+        == "final"
+    )
+    assert release_from_uri("sim_obitos", None) is None
+    assert release_from_uri("not_a_row", "ftp://ftp.datasus.gov.br/x/y.dbc") is None
+    assert (
+        release_from_uri("sim_obitos", "ftp://ftp.datasus.gov.br/elsewhere/DOSP2024.dbc") is None
+    )

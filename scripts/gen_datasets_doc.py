@@ -56,8 +56,8 @@ interfaces and limitations.
 
 def render() -> str:
     rows = [
-        "| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory | Preliminary directory |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for name in sorted(REGISTRY):
         d = REGISTRY[name]
@@ -65,9 +65,10 @@ def render() -> str:
         first_s = f"{first[0]}-{first[1]:02d}"
         last_s = "ongoing" if last is None else f"{last[0]}-{last[1]:02d}"
         parts = ", ".join(f"`{c}`" for c in d.partition_by) or "—"
+        prelim_s = f"`{d.prelim_dir}`" if d.prelim_dir is not None else "—"
         rows.append(
             f"| `{d.name}` | `{d.prefix}` | {d.cadence} | {parts} | "
-            f"{first_s} → {last_s} | `{d.ftp_dir}` |"
+            f"{first_s} → {last_s} | `{d.ftp_dir}` | {prelim_s} |"
         )
     return HEADER + "\n".join(rows) + "\n" + FOOTER
 

@@ -103,7 +103,7 @@ def test_synthetic_full_pipeline_and_corruption_preserve_publication(tmp_path, m
         publication = lake.publications(run_id="initial")[0]
         assert (
             publication["source_uri"]
-            == "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR23.dbc"
+            == "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/FINAIS/CHAGBR23.dbc"
         )
 
 

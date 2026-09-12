@@ -14,20 +14,20 @@ omnisus-db inventory <name>          # what the server actually publishes
 omnisus-db import <name> --plan inventory --years 2020-2024
 ```
 
-| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory |
-| --- | --- | --- | --- | --- | --- |
-| `cnes_estabelecimentos` | `ST` | monthly | `ano`, `mes` | 2005-08 → ongoing | `/dissemin/publicos/CNES/200508_/Dados/ST` |
-| `sia_apac_cirurgia_bariatrica` | `ABO` | monthly | `ano`, `uf`, `mes` | 2014-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_apac_laudos_diversos` | `AD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_apac_medicamentos` | `AM` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_apac_quimioterapia` | `AQ` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_apac_tratamento_dialitico` | `ATD` | monthly | `ano`, `uf`, `mes` | 2014-08 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_bpa_individualizado` | `BI` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_psicossocial` | `PS` | monthly | `ano`, `uf`, `mes` | 2012-11 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sih_aih_reduzida` | `RD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIHSUS/200801_/Dados` |
-| `sim_obitos` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` |
-| `sinan_chagas` | `CHAG` | yearly | `_source_ano` | 2023-01 → ongoing | `/dissemin/publicos/SINAN/DADOS/PRELIM` |
-| `sinasc_nascidos_vivos` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` |
+| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory | Preliminary directory |
+| --- | --- | --- | --- | --- | --- | --- |
+| `cnes_estabelecimentos` | `ST` | monthly | `ano`, `mes` | 2005-08 → ongoing | `/dissemin/publicos/CNES/200508_/Dados/ST` | — |
+| `sia_apac_cirurgia_bariatrica` | `ABO` | monthly | `ano`, `uf`, `mes` | 2014-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_apac_laudos_diversos` | `AD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_apac_medicamentos` | `AM` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_apac_quimioterapia` | `AQ` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_apac_tratamento_dialitico` | `ATD` | monthly | `ano`, `uf`, `mes` | 2014-08 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_bpa_individualizado` | `BI` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sia_psicossocial` | `PS` | monthly | `ano`, `uf`, `mes` | 2012-11 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` | — |
+| `sih_aih_reduzida` | `RD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIHSUS/200801_/Dados` | — |
+| `sim_obitos` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` | `/dissemin/publicos/SIM/PRELIM/DORES` |
+| `sinan_chagas` | `CHAG` | yearly | `_source_ano` | 2000-01 → ongoing | `/dissemin/publicos/SINAN/DADOS/FINAIS` | `/dissemin/publicos/SINAN/DADOS/PRELIM` |
+| `sinasc_nascidos_vivos` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` | `/dissemin/publicos/SINASC/PRELIM/DNRES` |
 
 Coverage is the registry's declared `(first, last)` window; **ongoing** means
 no end bound, not that every scope inside it is present. A weekly Tier 3

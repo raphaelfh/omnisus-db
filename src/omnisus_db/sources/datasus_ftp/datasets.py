@@ -23,6 +23,10 @@ YM = tuple[int, int]
 
 Cadence = Literal["yearly", "monthly"]
 
+Release = Literal["final", "prelim"]
+"""Which DATASUS directory a file was published in. ``prelim`` files are
+revised and later moved to the final directory under the same name."""
+
 
 @dataclass(frozen=True, kw_only=True)
 class Dataset:
@@ -64,9 +68,21 @@ class Dataset:
     geography: Literal["state", "national"] = "state"
     """Source coverage. National SINAN filenames use PREFIX + BR + YY."""
 
+    prelim_dir: str | None = None
+    """Directory where DATASUS publishes this dataset's preliminary files,
+    when it has one. Same filenames as ``ftp_dir``; a file is in one or the
+    other, never both."""
+
     @property
     def monthly(self) -> bool:
         return self.cadence == "monthly"
+
+    def directories(self) -> dict[Release, str]:
+        """Every directory this row is published in, final first."""
+        dirs: dict[Release, str] = {"final": self.ftp_dir}
+        if self.prelim_dir is not None:
+            dirs["prelim"] = self.prelim_dir
+        return dirs
 
 
 _SIM = "/dissemin/publicos/SIM/CID10/DORES"
@@ -75,14 +91,17 @@ _SIH = "/dissemin/publicos/SIHSUS/200801_/Dados"
 _SIA = "/dissemin/publicos/SIASUS/200801_/Dados"
 _CNES_ST = "/dissemin/publicos/CNES/200508_/Dados/ST"
 
+_SINAN_FINAIS = "/dissemin/publicos/SINAN/DADOS/FINAIS"
+_SINAN_PRELIM = "/dissemin/publicos/SINAN/DADOS/PRELIM"
+
 _YEARLY = ("ano", "uf")
 _MONTHLY = ("ano", "uf", "mes")
 
 # fmt: off
 _ROWS: tuple[Dataset, ...] = (
-    Dataset(name="sinan_chagas",                  prefix="CHAG", ftp_dir="/dissemin/publicos/SINAN/DADOS/PRELIM", cadence="yearly",  partition_by=("_source_ano",), coverage=((2023, 1), None), geography="national"),
-    Dataset(name="sim_obitos",                    prefix="DO",   ftp_dir=_SIM,     cadence="yearly",  partition_by=_YEARLY,  coverage=((1996, 1), None)),
-    Dataset(name="sinasc_nascidos_vivos",         prefix="DN",   ftp_dir=_SINASC,  cadence="yearly",  partition_by=_YEARLY,  coverage=((1996, 1), None)),
+    Dataset(name="sinan_chagas",                  prefix="CHAG", ftp_dir=_SINAN_FINAIS, prelim_dir=_SINAN_PRELIM, cadence="yearly",  partition_by=("_source_ano",), coverage=((2000, 1), None), geography="national"),
+    Dataset(name="sim_obitos",                    prefix="DO",   ftp_dir=_SIM,     prelim_dir="/dissemin/publicos/SIM/PRELIM/DORES",     cadence="yearly",  partition_by=_YEARLY,  coverage=((1996, 1), None)),
+    Dataset(name="sinasc_nascidos_vivos",         prefix="DN",   ftp_dir=_SINASC,  prelim_dir="/dissemin/publicos/SINASC/PRELIM/DNRES",  cadence="yearly",  partition_by=_YEARLY,  coverage=((1996, 1), None)),
     Dataset(name="sih_aih_reduzida",              prefix="RD",   ftp_dir=_SIH,     cadence="monthly", partition_by=_MONTHLY, coverage=((2008, 1), None)),
     Dataset(name="sia_bpa_individualizado",       prefix="BI",   ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY, coverage=((2008, 1), None)),
     Dataset(name="sia_apac_medicamentos",         prefix="AM",   ftp_dir=_SIA,     cadence="monthly", partition_by=_MONTHLY, coverage=((2008, 1), None)),
@@ -129,3 +148,20 @@ def in_coverage(dataset: str | Dataset, scope: ScopeKey) -> bool:
     if ym < first:
         return False
     return not (last is not None and ym > last)
+
+
+_FTP_URI_PREFIX = "ftp://ftp.datasus.gov.br"
+
+
+def release_from_uri(dataset: str, source_uri: str | None) -> Release | None:
+    """Which release a stored ``source_uri`` came from, or ``None`` when the
+    dataset is not registered, the URI is unknown or its directory is not
+    one this row declares."""
+    d = REGISTRY.get(dataset)
+    if d is None or source_uri is None or not source_uri.startswith(_FTP_URI_PREFIX):
+        return None
+    directory = source_uri.removeprefix(_FTP_URI_PREFIX).rsplit("/", 1)[0]
+    for release, path in d.directories().items():
+        if path == directory:
+            return release
+    return None
