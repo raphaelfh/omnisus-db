@@ -1,17 +1,17 @@
 """Small DBF fixtures with independently specified field bytes."""
 
 DBC_CASES = [
-    ("sim_rr_2023_mini", "sim_do"),
-    ("sinasc_rr_2022_mini", "sinasc_nv"),
-    ("sih_rr_2024_01_mini", "sih_rd"),
-    ("cnes_rr_2024_01_mini", "cnes_st"),
-    ("sia_abo_sp_2024_01_mini", "sia_abo"),
-    ("sia_ad_rr_2024_01_mini", "sia_ad"),
-    ("sia_am_rr_2024_01_mini", "sia_am"),
-    ("sia_aq_rr_2024_01_mini", "sia_aq"),
-    ("sia_atd_rr_2024_01_mini", "sia_atd"),
-    ("sia_bi_rr_2024_01_mini", "sia_bi"),
-    ("sia_ps_rr_2024_01_mini", "sia_ps"),
+    ("sim_rr_2023_mini", "sim_obitos"),
+    ("sinasc_rr_2022_mini", "sinasc_nascidos_vivos"),
+    ("sih_rr_2024_01_mini", "sih_aih_reduzida"),
+    ("cnes_rr_2024_01_mini", "cnes_estabelecimentos"),
+    ("sia_abo_sp_2024_01_mini", "sia_apac_cirurgia_bariatrica"),
+    ("sia_ad_rr_2024_01_mini", "sia_apac_laudos_diversos"),
+    ("sia_am_rr_2024_01_mini", "sia_apac_medicamentos"),
+    ("sia_aq_rr_2024_01_mini", "sia_apac_quimioterapia"),
+    ("sia_atd_rr_2024_01_mini", "sia_apac_tratamento_dialitico"),
+    ("sia_bi_rr_2024_01_mini", "sia_bpa_individualizado"),
+    ("sia_ps_rr_2024_01_mini", "sia_psicossocial"),
 ]
 
 

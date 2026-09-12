@@ -26,12 +26,12 @@ async def test_import_scope_sim_uses_fixture(monkeypatch, tmp_path, dbc_fixture)
 
     lake = Lake.local(f"ducklake:{tmp_path}/x.ducklake")
     result = await import_scope(
-        dataset="sim_do",
+        dataset="sim_obitos",
         scope=ScopeKey(uf="RR", ano=2023),
         lake=lake,
     )
     assert result.rows > 0
-    assert "sim_do" in lake.tables()
+    assert "sim_obitos" in lake.tables()
     lake.close()
 
 
@@ -40,32 +40,32 @@ async def test_import_scope_sih_requires_mes(tmp_path) -> None:
     lake = Lake.local(f"ducklake:{tmp_path}/x.ducklake")
     with pytest.raises(ValueError, match="monthly"):
         await import_scope(
-            dataset="sih_rd",
+            dataset="sih_aih_reduzida",
             scope=ScopeKey(uf="SP", ano=2024, mes=None),
             lake=lake,
         )
     lake.close()
 
 
-def test_get_config_returns_partition_by() -> None:
-    from omnisus_db.sources.datasus_ftp.datasets import get_config
+def test_resolve_returns_partition_by() -> None:
+    from omnisus_db.sources.datasus_ftp.datasets import resolve
 
-    cfg = get_config("sim_do")
+    cfg = resolve("sim_obitos")
     assert cfg.partition_by == ("ano", "uf")
     assert cfg.monthly is False
 
-    sih = get_config("sih_rd")
+    sih = resolve("sih_aih_reduzida")
     assert sih.partition_by == ("ano", "uf", "mes")
     assert sih.monthly is True
 
 
-def test_get_config_unknown_raises() -> None:
+def test_resolve_unknown_raises() -> None:
     import pytest as _pt
 
-    from omnisus_db.sources.datasus_ftp.datasets import get_config
+    from omnisus_db.sources.datasus_ftp.datasets import resolve
 
     with _pt.raises(ValueError):
-        get_config("bogus")
+        resolve("bogus")
 
 
 def _custom_sim_yaml(tmp_path: Path) -> Path:
@@ -73,7 +73,7 @@ def _custom_sim_yaml(tmp_path: Path) -> Path:
 
     dest = tmp_path / "sim_custom.yaml"
     dest.write_text(
-        (files("omnisus_db.data.dicionarios") / "sim_do.yaml").read_text(encoding="utf-8"),
+        (files("omnisus_db.data.dicionarios") / "sim_obitos.yaml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     return dest
@@ -134,18 +134,3 @@ async def test_import_scope_adhoc_without_yaml_fails_fast(monkeypatch, tmp_path)
 
     with Lake.local(f"ducklake:{tmp_path}/x.ducklake") as lake, pytest.raises(FileNotFoundError):
         await import_scope(dataset=ds, scope=ScopeKey(uf="RR", ano=2023), lake=lake)
-
-
-@pytest.mark.asyncio
-async def test_import_scope_accepts_an_alias(monkeypatch, tmp_path, dbc_fixture) -> None:
-    fixture_bytes = dbc_fixture("sim_rr_2023_mini").read_bytes()
-
-    async def fake_fetch(*, dataset, scope, **_kw: object) -> bytes:
-        return fixture_bytes
-
-    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
-
-    with Lake.local(f"ducklake:{tmp_path}/x.ducklake") as lake:
-        result = await import_scope(dataset="sim", scope=ScopeKey(uf="RR", ano=2023), lake=lake)
-        assert result.rows > 0
-        assert "sim_do" in lake.tables()

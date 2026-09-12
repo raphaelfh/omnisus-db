@@ -32,15 +32,10 @@ def _patch(monkeypatch: pytest.MonkeyPatch, lines: list[str] | None = None) -> N
 
 def test_inventory_dataset_lists_available_scopes(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch(monkeypatch)
-    result = runner.invoke(app, ["inventory", "sim_do"])
+    result = runner.invoke(app, ["inventory", "sim_obitos"])
     assert result.exit_code == 0, result.output
     assert "AC" in result.output
     assert "1996" in result.output
-
-
-def test_inventory_accepts_an_alias(monkeypatch: pytest.MonkeyPatch) -> None:
-    _patch(monkeypatch)
-    assert runner.invoke(app, ["inventory", "sim"]).exit_code == 0
 
 
 def test_inventory_path_browses_any_directory(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -53,7 +48,7 @@ def test_inventory_path_browses_any_directory(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_inventory_requires_exactly_one_of_dataset_or_path() -> None:
-    both = runner.invoke(app, ["inventory", "sim_do", "--path", "/x"])
+    both = runner.invoke(app, ["inventory", "sim_obitos", "--path", "/x"])
     assert both.exit_code != 0
     neither = runner.invoke(app, ["inventory"])
     assert neither.exit_code != 0

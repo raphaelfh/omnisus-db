@@ -63,12 +63,12 @@ def test_lake_context_manager(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# ensure_aux_cnes_view — derived view over cnes_st
+# ensure_aux_cnes_view — derived view over cnes_estabelecimentos
 # ---------------------------------------------------------------------------
 
 
 def _seed_cnes_st(lake: Lake) -> None:
-    """Seed ``lake.cnes_st`` with two snapshots for the same CNES so that
+    """Seed ``lake.cnes_estabelecimentos`` with two snapshots for the same CNES so that
     the view's ARG_MAX picks the latest tp_unid/codufmun.
 
     Reflects the real DATASUS CNES-ST schema: no name fields — establishment
@@ -77,7 +77,7 @@ def _seed_cnes_st(lake: Lake) -> None:
     con = lake.connect()
     con.execute(
         f"""
-        CREATE TABLE {lake.alias}.cnes_st (
+        CREATE TABLE {lake.alias}.cnes_estabelecimentos (
             cnes VARCHAR,
             tp_unid VARCHAR,
             codufmun VARCHAR,
@@ -88,7 +88,7 @@ def _seed_cnes_st(lake: Lake) -> None:
     )
     con.execute(
         f"""
-        INSERT INTO {lake.alias}.cnes_st VALUES
+        INSERT INTO {lake.alias}.cnes_estabelecimentos VALUES
             ('1234567', '05', '355030', 2024, 1),
             ('1234567', '07', '355030', 2024, 3),
             ('7654321', '02', '354780', 2024, 1)
@@ -133,7 +133,7 @@ def test_ensure_aux_cnes_view_is_idempotent(tmp_path: Path) -> None:
 
 def test_ensure_aux_cnes_view_reflects_new_snapshots(tmp_path: Path) -> None:
     """The view is a thin SQL projection — re-creating the view (or simply
-    re-querying it) must surface rows added to ``cnes_st`` afterwards.
+    re-querying it) must surface rows added to ``cnes_estabelecimentos`` afterwards.
     """
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
         _seed_cnes_st(lake)
@@ -141,9 +141,9 @@ def test_ensure_aux_cnes_view_reflects_new_snapshots(tmp_path: Path) -> None:
 
         con = lake.connect()
         con.execute(
-            f"INSERT INTO {lake.alias}.cnes_st VALUES ('1234567', '15', '355030', 2024, 7)"
+            f"INSERT INTO {lake.alias}.cnes_estabelecimentos VALUES ('1234567', '15', '355030', 2024, 7)"
         )
-        # No need to call ensure_* again — view re-reads cnes_st.
+        # No need to call ensure_* again — view re-reads cnes_estabelecimentos.
         tp_unid = con.execute(
             f"SELECT tp_unid FROM {lake.alias}.aux_cnes WHERE cnes = '1234567'"
         ).fetchone()[0]

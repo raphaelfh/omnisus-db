@@ -10,7 +10,7 @@ from omnisus_db.sources.datasus_ftp.filenames import decode, scope_to_filename
 
 
 def test_national_filename_and_planner():
-    d = resolve("sinan_chagas_prelim")
+    d = resolve("sinan_chagas")
     scopes = odb.scopes_for(d, years=[2023, 2024])
     assert scopes == [ScopeKey(uf=None, ano=2023), ScopeKey(uf=None, ano=2024)]
     assert scope_to_filename(d, scopes[0]) == "CHAGBR23.dbc"
@@ -86,19 +86,19 @@ def test_synthetic_full_pipeline_and_corruption_preserve_publication(tmp_path, m
     ]
     good = make_dbf(fields, [b" B5712023152019PA", b" B5712023332020RJ"])
     wrong = make_dbf(fields, [b" B5712022152019PA"])
-    d = resolve("sinan_chagas_prelim")
+    d = resolve("sinan_chagas")
     scope = ScopeKey(uf=None, ano=2023)
     with odb.Lake.local(f"ducklake:{tmp_path}/lake.ducklake") as lake:
         ingest_raw(d, scope, good, lake, policy="skip_same", run_id="initial")
         assert ingest_raw(d, scope, good, lake, policy="skip_same") is None
-        before = lake.connect().sql("SELECT * FROM lake.sinan_chagas_prelim").pl()
+        before = lake.connect().sql("SELECT * FROM lake.sinan_chagas").pl()
         assert before["ano"].to_list() == ["2019", "2020"]
         assert before["uf"].to_list() == ["PA", "RJ"]
         assert before["_source_ano"].to_list() == [2023, 2023]
         for bad in [wrong, good[:-8]]:
             with pytest.raises((ValueError, parse.DbfIntegrityError)):
                 ingest_raw(d, scope, bad, lake, policy="replace")
-            assert lake.connect().sql("SELECT * FROM lake.sinan_chagas_prelim").pl().equals(before)
+            assert lake.connect().sql("SELECT * FROM lake.sinan_chagas").pl().equals(before)
             assert len(lake.publications()) == 1
         publication = lake.publications(run_id="initial")[0]
         assert (
@@ -129,12 +129,10 @@ def test_national_inventory_and_cli_rejects_state_before_network(monkeypatch):
         "list_dir_cached",
         lambda *a, **kw: inventory.Listing(entries=entries, skipped=0, path="/"),
     )
-    assert odb.available("sinan_chagas_prelim", years=[2023]) == [ScopeKey(uf=None, ano=2023)]
+    assert odb.available("sinan_chagas", years=[2023]) == [ScopeKey(uf=None, ano=2023)]
     for plan in ["product", "inventory"]:
         with pytest.raises(ValueError, match="national"):
-            _plan_scopes(
-                resolve("sinan_chagas_prelim"), plan=plan, years=[2023], ufs=["PA"], months=None
-            )
+            _plan_scopes(resolve("sinan_chagas"), plan=plan, years=[2023], ufs=["PA"], months=None)
 
 
 def test_national_cannot_replace_state_table(tmp_path):

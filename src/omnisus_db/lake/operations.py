@@ -227,7 +227,7 @@ class Lake(Session):
 
     def ensure_aux_cnes_view(self) -> bool:
         """Create or refresh ``aux_cnes`` — one row per CNES, joining
-        ``cnes_st`` (operational, monthly snapshots) with ``cnes_master``
+        ``cnes_estabelecimentos`` (operational, monthly snapshots) with ``cnes_master``
         (names from the API).
 
         Output columns:
@@ -235,19 +235,19 @@ class Lake(Session):
             nome        : establishment name (NULL if cnes_master not loaded)
             tp_unid     : unit type, latest snapshot
             codufmun    : município IBGE, latest snapshot
-            yyyymm_max  : ``ano*100+mes`` of the latest cnes_st snapshot
+            yyyymm_max  : ``ano*100+mes`` of the latest cnes_estabelecimentos snapshot
 
         Behaviour:
-            - ``cnes_st`` missing → no-op, returns ``False``.
+            - ``cnes_estabelecimentos`` missing → no-op, returns ``False``.
             - ``cnes_master`` missing → view still works, but ``nome`` is NULL.
               Run ``import_cnes_master()`` to populate names.
         """
         self.connect()
         tables = set(self.tables())
-        if "cnes_st" not in tables:
+        if "cnes_estabelecimentos" not in tables:
             return False
 
-        operational = qualified(self._alias, "cnes_st")
+        operational = qualified(self._alias, "cnes_estabelecimentos")
         view = qualified(self._alias, "aux_cnes")
         if "cnes_master" in tables:
             nome_select = "m.nome"
@@ -386,7 +386,7 @@ class Lake(Session):
         Raw SQL BEGIN/COMMIT is outside this managed-transaction contract.
 
         Args:
-            table: destination table name (e.g. "sim_do")
+            table: destination table name (e.g. "sim_obitos")
             lazyframe: pl.LazyFrame to materialize and insert
             partition_by: columns to partition the table by, applied once when
                 the table is created. Previously accepted and discarded, which

@@ -7,27 +7,27 @@ Every dataset below is one row in the registry
 row, one `data/dicionarios/<name>.yaml`, and one test fixture — the CLI, the
 Python API, the inventory and this page all follow from it.
 
-Use the name or any alias wherever a dataset is accepted:
+Use the name wherever a dataset is accepted:
 
 ```bash
 omnisus-db inventory <name>          # what the server actually publishes
 omnisus-db import <name> --plan inventory --years 2020-2024
 ```
 
-| Dataset | Aliases | Prefix | Cadence | Partitioned by | Coverage | FTP directory |
-| --- | --- | --- | --- | --- | --- | --- |
-| `cnes_st` | `cnes-st` | `ST` | monthly | `ano`, `mes` | 2005-08 → ongoing | `/dissemin/publicos/CNES/200508_/Dados/ST` |
-| `sia_abo` | — | `ABO` | monthly | `ano`, `uf`, `mes` | 2014-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_ad` | — | `AD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_am` | — | `AM` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_aq` | — | `AQ` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_atd` | — | `ATD` | monthly | `ano`, `uf`, `mes` | 2014-08 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_bi` | — | `BI` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sia_ps` | — | `PS` | monthly | `ano`, `uf`, `mes` | 2012-11 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
-| `sih_rd` | `sih` | `RD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIHSUS/200801_/Dados` |
-| `sim_do` | `sim` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` |
-| `sinan_chagas_prelim` | — | `CHAG` | yearly | `_source_ano` | 2023-01 → ongoing | `/dissemin/publicos/SINAN/DADOS/PRELIM` |
-| `sinasc_nv` | `sinasc` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` |
+| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory |
+| --- | --- | --- | --- | --- | --- |
+| `cnes_estabelecimentos` | `ST` | monthly | `ano`, `mes` | 2005-08 → ongoing | `/dissemin/publicos/CNES/200508_/Dados/ST` |
+| `sia_apac_cirurgia_bariatrica` | `ABO` | monthly | `ano`, `uf`, `mes` | 2014-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_apac_laudos_diversos` | `AD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_apac_medicamentos` | `AM` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_apac_quimioterapia` | `AQ` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_apac_tratamento_dialitico` | `ATD` | monthly | `ano`, `uf`, `mes` | 2014-08 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_bpa_individualizado` | `BI` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sia_psicossocial` | `PS` | monthly | `ano`, `uf`, `mes` | 2012-11 → ongoing | `/dissemin/publicos/SIASUS/200801_/Dados` |
+| `sih_aih_reduzida` | `RD` | monthly | `ano`, `uf`, `mes` | 2008-01 → ongoing | `/dissemin/publicos/SIHSUS/200801_/Dados` |
+| `sim_obitos` | `DO` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SIM/CID10/DORES` |
+| `sinan_chagas` | `CHAG` | yearly | `_source_ano` | 2023-01 → ongoing | `/dissemin/publicos/SINAN/DADOS/PRELIM` |
+| `sinasc_nascidos_vivos` | `DN` | yearly | `ano`, `uf` | 1996-01 → ongoing | `/dissemin/publicos/SINASC/NOV/DNRES` |
 
 Coverage is the registry's declared `(first, last)` window; **ongoing** means
 no end bound, not that every scope inside it is present. A weekly Tier 3
@@ -38,6 +38,6 @@ it is separate from the offline pull-request suite. Use `available()` or
 `inventory --refresh` to inspect listed scopes before a load.
 
 This table covers DATASUS-FTP datasets. The separate
-[IBGE population importer](sources/ibge_pop.md) and
-[CNES Master name refresh](sources/cnes_st.md#establishment-names) have different
+[IBGE population importer](sources/ibge_populacao.md) and
+[CNES Master name refresh](sources/cnes_estabelecimentos.md#establishment-names) have different
 interfaces and limitations.

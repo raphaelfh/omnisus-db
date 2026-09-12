@@ -42,7 +42,7 @@ def test_a_gap_mid_run_is_skipped_and_the_run_continues(tmp_path: Path, dbc_fixt
         side_effect=_fetcher(raw, missing={"DORR2022.dbc"}),
     ):
         report = odb.import_dataset(
-            "sim_do", scopes=scopes, target=f"ducklake:{tmp_path}/t.ducklake"
+            "sim_obitos", scopes=scopes, target=f"ducklake:{tmp_path}/t.ducklake"
         )
 
     assert len(report.outcomes) == 3, "every scope must be accounted for"
@@ -64,7 +64,7 @@ def test_a_missing_scope_is_skipped_never_failed(tmp_path: Path, dbc_fixture) ->
         side_effect=_fetcher(raw, missing={"DORR2023.dbc"}),
     ):
         report = odb.import_dataset(
-            "sim_do",
+            "sim_obitos",
             scopes=[ScopeKey(uf="RR", ano=2023)],
             target=f"ducklake:{tmp_path}/t.ducklake",
         )
@@ -86,7 +86,7 @@ def test_a_transient_failure_is_failed_never_skipped(tmp_path: Path) -> None:
         side_effect=always_throttled,
     ):
         report = odb.import_dataset(
-            "sim_do",
+            "sim_obitos",
             scopes=[ScopeKey(uf="RR", ano=2023)],
             target=f"ducklake:{tmp_path}/t.ducklake",
         )
@@ -96,13 +96,13 @@ def test_a_transient_failure_is_failed_never_skipped(tmp_path: Path) -> None:
 
 
 def test_out_of_coverage_scopes_never_open_a_socket(tmp_path: Path) -> None:
-    """The cheapest filter. sim_do starts in 1996, so 1990 cannot exist — and
+    """The cheapest filter. sim_obitos starts in 1996, so 1990 cannot exist — and
     proving that costs a full connect, login, CWD and PASV if we ask the server."""
     with patch(
         "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
     ) as spy:
         report = odb.import_dataset(
-            "sim_do",
+            "sim_obitos",
             scopes=[ScopeKey(uf="RR", ano=1990), ScopeKey(uf="RR", ano=1991)],
             target=f"ducklake:{tmp_path}/t.ducklake",
         )
@@ -121,7 +121,7 @@ def test_a_monthly_dataset_without_a_month_fails_fast(tmp_path: Path) -> None:
         pytest.raises(ValueError, match="monthly"),
     ):
         odb.import_dataset(
-            "sih_rd",
+            "sih_aih_reduzida",
             scopes=[ScopeKey(uf="RR", ano=2024)],
             target=f"ducklake:{tmp_path}/t.ducklake",
         )
@@ -135,7 +135,7 @@ def test_report_counts_rows_only_from_successful_scopes(tmp_path: Path, dbc_fixt
         side_effect=_fetcher(raw, missing={"DORR2022.dbc"}),
     ):
         report = odb.import_dataset(
-            "sim_do",
+            "sim_obitos",
             scopes=[ScopeKey(uf="RR", ano=2022), ScopeKey(uf="RR", ano=2023)],
             target=f"ducklake:{tmp_path}/t.ducklake",
         )

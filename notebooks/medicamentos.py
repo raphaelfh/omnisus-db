@@ -67,7 +67,7 @@ def _(Path, mo):
     # O caminho vem do pacote para funcionar fora da pasta do repositório.
     import omnisus_db
 
-    _path = Path(omnisus_db.__file__).parent / "data/dicionarios/sia_am.yaml"
+    _path = Path(omnisus_db.__file__).parent / "data/dicionarios/sia_apac_medicamentos.yaml"
     _dictionary = yaml.safe_load(_path.read_text())
     mo.accordion(
         {
@@ -115,7 +115,7 @@ async def _(asdict, asyncio, executar_am, json, medication_root, mo, odb, recort
     (pasta_am / "plano.json").write_text(
         json.dumps(
             {
-                "dataset": "sia_am",
+                "dataset": "sia_apac_medicamentos",
                 "scope": recorte_am,
                 "run_id": run_am,
                 "target": target_am,
@@ -129,7 +129,7 @@ async def _(asdict, asyncio, executar_am, json, medication_root, mo, odb, recort
     try:
         resultado_am = await asyncio.to_thread(
             odb.import_dataset,
-            "sia_am",
+            "sia_apac_medicamentos",
             scopes=[_scope],
             target=target_am,
             policy="skip_same",
@@ -178,7 +178,7 @@ def _(json, mo, odb, pasta_am, resultado_am, run_am, target_am):
             .execute("""
             SELECT ap_pripal AS procedimento_principal, count(*) AS registros_apac,
                    sum(ap_vl_ap) AS valor_aprovado
-            FROM lake.sia_am GROUP BY ap_pripal ORDER BY registros_apac DESC
+            FROM lake.sia_apac_medicamentos GROUP BY ap_pripal ORDER BY registros_apac DESC
         """)
             .pl()
         )

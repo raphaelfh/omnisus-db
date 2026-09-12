@@ -16,7 +16,7 @@ when a scope has already been published through the managed importer:
 import omnisus_db as odb
 
 report = odb.import_dataset(
-    "sim_do",
+    "sim_obitos",
     scopes=[odb.ScopeKey(uf="RR", ano=2023)],
     policy="skip_same",
     run_id="sim-rr-2023-review-01",
@@ -42,7 +42,7 @@ them explicitly in a separate target before switching; a later append cannot
 retroactively certify the old rows. Manifest row counts detect some external
 changes but do not audit arbitrary edits that preserve counts. External SQL
 writes remain outside the managed contract. IBGE has a separate publication
-model described in its [source documentation](../sources/ibge_pop.md).
+model described in its [source documentation](../sources/ibge_populacao.md).
 
 ## Inspect an interrupted run
 
@@ -82,7 +82,7 @@ retired publications' row sum, unmanaged rows were present.
 
 ```python
 with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    result = lake.delete_scope("sih_rd", odb.ScopeKey(uf="RR", ano=2023))
+    result = lake.delete_scope("sih_aih_reduzida", odb.ScopeKey(uf="RR", ano=2023))
     print(result.rows_deleted, result.publications_retired)
 ```
 
@@ -115,7 +115,7 @@ delete it while handles may be running. This protocol also covers maintenance.
 External SQL clients, network filesystems and cloud catalogs require external
 coordination; distributed recovery has not been validated.
 
-`import_dataset` and `import_cnes_st` accept `max_payload_bytes` (default 512 MiB)
+`import_dataset` and `import_cnes_estabelecimentos` accept `max_payload_bytes` (default 512 MiB)
 and `max_inflight_bytes` (default 1 GiB). CLI equivalents are
 `--max-payload-bytes` and `--max-inflight-bytes`, in bytes. The total must cover
 at least one per-file reservation. Space is reserved before downloading and
@@ -156,7 +156,7 @@ from datetime import UTC, datetime
 
 cutoff = datetime(2026, 8, 1, tzinfo=UTC)
 with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    compacted = lake.optimize("sim_do")
+    compacted = lake.optimize("sim_obitos")
     history_preview = lake.expire_snapshots(older_than=cutoff)
     files_preview = lake.cleanup_files(older_than=cutoff)
 ```
@@ -167,7 +167,7 @@ history you need. Cutoffs must include a timezone. Returned dictionaries expose
 DuckLake's operation results.
 
 ```bash
-omnisus-db lake optimize sim_do
+omnisus-db lake optimize sim_obitos
 omnisus-db lake expire-snapshots --before 2026-08-01T00:00:00+00:00 --dry-run
 omnisus-db lake cleanup-files --before 2026-08-01T00:00:00+00:00 --dry-run
 ```

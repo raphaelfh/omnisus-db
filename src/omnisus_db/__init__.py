@@ -129,12 +129,12 @@ def import_dataset(
 ) -> ImportReport:
     """Import the given scopes of any DATASUS-FTP dataset into the lake.
 
-    ``dataset`` is a registry key (``"sia_bi"``), an alias (``"sim"``) or a
+    ``dataset`` is a registry key (``"sia_bpa_individualizado"``), an alias (``"sim"``) or a
     ``Dataset`` value. The loop iterates ``scopes`` and never asks where they
     came from — planning is composition:
 
-        odb.import_dataset("sim_do", scopes=odb.scopes_for("sim_do", years=...))
-        odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=...))
+        odb.import_dataset("sim_obitos", scopes=odb.scopes_for("sim_obitos", years=...))
+        odb.import_dataset("sim_obitos", scopes=odb.available("sim_obitos", years=...))
 
     The first plans blindly and lets tolerance absorb the gaps; the second
     asks the server first and plans only what exists. There is no flag —
@@ -189,9 +189,9 @@ def import_sim(
     ufs: Sequence[str] | None = None,
     target: str = DEFAULT_TARGET,
 ) -> ImportReport:
-    """Import SIM-DO (declarações de óbito). Alias for ``import_dataset("sim_do", ...)``."""
+    """Import SIM-DO (declarações de óbito). Alias for ``import_dataset("sim_obitos", ...)``."""
     return import_dataset(
-        "sim_do", scopes=scopes_for("sim_do", years=years, ufs=ufs), target=target
+        "sim_obitos", scopes=scopes_for("sim_obitos", years=years, ufs=ufs), target=target
     )
 
 
@@ -201,9 +201,11 @@ def import_sinasc(
     ufs: Sequence[str] | None = None,
     target: str = DEFAULT_TARGET,
 ) -> ImportReport:
-    """Import SINASC-NV (nascidos vivos). Alias for ``import_dataset("sinasc_nv", ...)``."""
+    """Import SINASC-NV (nascidos vivos). Alias for ``import_dataset("sinasc_nascidos_vivos", ...)``."""
     return import_dataset(
-        "sinasc_nv", scopes=scopes_for("sinasc_nv", years=years, ufs=ufs), target=target
+        "sinasc_nascidos_vivos",
+        scopes=scopes_for("sinasc_nascidos_vivos", years=years, ufs=ufs),
+        target=target,
     )
 
 
@@ -214,10 +216,10 @@ def import_sih(
     months: Iterable[int] = range(1, 13),
     target: str = DEFAULT_TARGET,
 ) -> ImportReport:
-    """Import SIH-RD (AIH reduzida), monthly. Alias for ``import_dataset("sih_rd", ...)``."""
+    """Import SIH-RD (AIH reduzida), monthly. Alias for ``import_dataset("sih_aih_reduzida", ...)``."""
     return import_dataset(
-        "sih_rd",
-        scopes=scopes_for("sih_rd", years=years, ufs=ufs, months=months),
+        "sih_aih_reduzida",
+        scopes=scopes_for("sih_aih_reduzida", years=years, ufs=ufs, months=months),
         target=target,
     )
 
@@ -255,7 +257,7 @@ def import_ibge_pop(
     return asyncio.run(run())
 
 
-def import_cnes_st(
+def import_cnes_estabelecimentos(
     *,
     years: Iterable[int] | None = None,
     months: Iterable[int] = range(1, 13),
@@ -271,7 +273,7 @@ def import_cnes_st(
 
     This stays a named function rather than a bare alias because the view
     refresh is *behaviour*, and behaviour lives in importers, not in the
-    registry row (spec I2). ``import_dataset("cnes_st", ...)`` loads the
+    registry row (spec I2). ``import_dataset("cnes_estabelecimentos", ...)`` loads the
     table but does not refresh the view; call
     ``Lake.ensure_aux_cnes_view()`` afterwards if you use that path.
 
@@ -283,9 +285,9 @@ def import_cnes_st(
         raise ValueError("provide exactly one of `scopes` or `years`")
     if scopes is None:
         assert years is not None, "the check above guarantees this"
-        scopes = scopes_for("cnes_st", years=years, ufs=ufs, months=months)
+        scopes = scopes_for("cnes_estabelecimentos", years=years, ufs=ufs, months=months)
     report = import_dataset(
-        "cnes_st",
+        "cnes_estabelecimentos",
         scopes=scopes,
         target=target,
         policy=policy,
@@ -314,7 +316,7 @@ def import_cnes_master(
     code to a human-readable name.
 
     With ``codes=None`` and ``only_missing=True`` (defaults), runs are
-    incremental — only CNES codes present in ``cnes_st`` but absent from
+    incremental — only CNES codes present in ``cnes_estabelecimentos`` but absent from
     ``cnes_master`` are fetched. Pass ``progress=(done, total) -> None`` to
     stream job progress (e.g. from the backend admin UI).
 
@@ -358,8 +360,8 @@ __all__ = [
     "available",
     "browse",
     "datasets",
+    "import_cnes_estabelecimentos",
     "import_cnes_master",
-    "import_cnes_st",
     "import_dataset",
     "import_ibge_pop",
     "import_sih",

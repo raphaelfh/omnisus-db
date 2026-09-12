@@ -82,12 +82,12 @@ def _(json, run_python):
         [
             "scripts/metadados/consultar.py",
             "--metadata",
-            "docs/dicionario/exemplos/sim_do.sexo.json",
+            "docs/dicionario/exemplos/sim_obitos.sexo.json",
             "--json",
         ]
     )
     metadata = json.loads(document_result["stdout"])
-    assert metadata["field"]["id"] == "sim_do.sexo"
+    assert metadata["field"]["id"] == "sim_obitos.sexo"
     return document_result, metadata
 
 
@@ -100,7 +100,7 @@ def _(document_result, json, metadata, mo, terminal):
 
             ```bash
             python scripts/metadados/consultar.py \
-              --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+              --metadata docs/dicionario/exemplos/sim_obitos.sexo.json --json
             ```
 
             `stdout` contém apenas JSON. Erros de validação terminam com código
@@ -117,7 +117,7 @@ def _(document_result, json, metadata, mo, terminal):
             terminal(document_result),
             mo.download(
                 data=json.dumps(metadata, ensure_ascii=False, indent=2).encode("utf-8"),
-                filename="sim_do.sexo.metadata.json",
+                filename="sim_obitos.sexo.metadata.json",
                 mimetype="application/json",
                 label="Baixar o metadado JSON completo",
             ),
@@ -135,7 +135,7 @@ def _(json, run_python):
         "ensure_ascii=False, indent=2))"
     )
     evidence_result = run_python(
-        ["-c", evidence_code, "docs/dicionario/exemplos/sim_do.sexo.json"]
+        ["-c", evidence_code, "docs/dicionario/exemplos/sim_obitos.sexo.json"]
     )
     evidence = json.loads(evidence_result["stdout"])
     return evidence, evidence_result

@@ -9,4 +9,4 @@ from omnisus_db.sources.datasus_ftp._runner import import_scope
 
 async def import_st_scope(*, scope: ScopeKey, lake: Lake) -> ImportResult:
     """Import one CNES-ST scope. Thin wrapper around the generic FTP runner."""
-    return await import_scope(dataset="cnes_st", scope=scope, lake=lake)
+    return await import_scope(dataset="cnes_estabelecimentos", scope=scope, lake=lake)

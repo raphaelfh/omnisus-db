@@ -193,7 +193,7 @@ def main() -> None:
         "`AUDITORIA_DICIONARIOS.md` na mesma pasta. Esses relatórios são o retrato histórico",
         "usado nesta projeção; não são regenerados aqui.",
         "",
-        "O [exemplo de contrato](exemplos/sim_do.sexo.json) acrescenta uma checagem pontual",
+        "O [exemplo de contrato](exemplos/sim_obitos.sexo.json) acrescenta uma checagem pontual",
         "do campo SEXO no documento SIM de 2025, com aplicabilidade histórica pendente.",
         "Ele não promove os demais campos a revisados nem muda as contagens da auditoria.",
         "",

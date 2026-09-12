@@ -41,12 +41,12 @@ nav:
   - API reference: api.md
   - Architecture: architecture.md
   - Sources:
-      - SIM-DO: sources/sim_do.md
-      - SINASC-NV: sources/sinasc_nv.md
-      - SIH-RD: sources/sih_rd.md
-      - IBGE-pop: sources/ibge_pop.md
-      - CNES-ST: sources/cnes_st.md
-      - SINAN Chagas preliminar: sources/sinan_chagas_prelim.md
+      - SIM óbitos: sources/sim_obitos.md
+      - SINASC nascidos vivos: sources/sinasc_nascidos_vivos.md
+      - SIH AIH reduzida: sources/sih_aih_reduzida.md
+      - IBGE população: sources/ibge_populacao.md
+      - CNES estabelecimentos: sources/cnes_estabelecimentos.md
+      - SINAN Chagas: sources/sinan_chagas.md
       - Medicamentos e assistência farmacêutica: sources/medicamentos.md
   - Decisions:
       - 0001 Rust DBF: decisions/0001-rust-dbf.md

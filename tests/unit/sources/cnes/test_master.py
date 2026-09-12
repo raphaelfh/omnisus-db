@@ -28,18 +28,18 @@ def _api_response(cnes_int: int, *, nome_fantasia: str, razao: str) -> dict:
 
 
 def _seed_cnes_st(lake: Lake, cnes_codes: list[str]) -> None:
-    """Minimal cnes_st with one row per code so import_cnes_master() finds them."""
+    """Minimal cnes_estabelecimentos with one row per code so import_cnes_master() finds them."""
     con = lake.connect()
     con.execute(
         f"""
-        CREATE TABLE {lake.alias}.cnes_st (
+        CREATE TABLE {lake.alias}.cnes_estabelecimentos (
             cnes VARCHAR, tp_unid VARCHAR, codufmun VARCHAR,
             ano INTEGER, mes INTEGER
         )
         """
     )
     con.executemany(
-        f"INSERT INTO {lake.alias}.cnes_st VALUES (?, '05', '355030', 2024, 1)",
+        f"INSERT INTO {lake.alias}.cnes_estabelecimentos VALUES (?, '05', '355030', 2024, 1)",
         [(c,) for c in cnes_codes],
     )
 
@@ -174,7 +174,7 @@ def test_import_cnes_master_drops_records_with_no_usable_name(tmp_path: Path) ->
 
 
 def test_import_cnes_master_returns_zero_when_cnes_st_missing(tmp_path: Path) -> None:
-    """Without cnes_st (and without explicit codes), there's nothing to fetch."""
+    """Without cnes_estabelecimentos (and without explicit codes), there's nothing to fetch."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     n = import_cnes_master(target=target)
     assert n == 0
@@ -182,7 +182,7 @@ def test_import_cnes_master_returns_zero_when_cnes_st_missing(tmp_path: Path) ->
 
 @respx.mock
 def test_import_cnes_master_accepts_explicit_codes(tmp_path: Path) -> None:
-    """Explicit codes bypasses the cnes_st discovery."""
+    """Explicit codes bypasses the cnes_estabelecimentos discovery."""
     target = f"ducklake:{tmp_path}/x.ducklake"
 
     respx.get(_api_url("7654321")).mock(
@@ -239,10 +239,10 @@ def test_import_cnes_master_only_missing_skips_already_fetched(tmp_path: Path) -
     )
     assert import_cnes_master(target=target) == 2
 
-    # Add a new code to cnes_st; re-run — only the new one should be fetched.
+    # Add a new code to cnes_estabelecimentos; re-run — only the new one should be fetched.
     with Lake.local(target) as lake:
         lake.connect().execute(
-            f"INSERT INTO {lake.alias}.cnes_st VALUES ('3333333', '02', '355030', 2024, 1)"
+            f"INSERT INTO {lake.alias}.cnes_estabelecimentos VALUES ('3333333', '02', '355030', 2024, 1)"
         )
 
     respx.get(_api_url("3333333")).mock(

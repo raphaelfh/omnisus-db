@@ -14,7 +14,7 @@ from __future__ import annotations
 import polars as pl
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import get_config
+from omnisus_db.sources.datasus_ftp.datasets import resolve
 from omnisus_db.sources.datasus_ftp.fetch import ftp_path_for
 from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
@@ -22,12 +22,12 @@ from omnisus_db.transforms.dictionaries import load_dicionario
 
 
 def test_dicionario_loads_with_latin1_encoding() -> None:
-    dic = load_dicionario("sia_bi")
+    dic = load_dicionario("sia_bpa_individualizado")
     assert dic.encoding == "latin-1"
 
 
 def test_dicionario_has_measured_field_count_and_keys() -> None:
-    dic = load_dicionario("sia_bi")
+    dic = load_dicionario("sia_bpa_individualizado")
     names = [f["name"] for f in dic.fields]
     assert len(names) == 36
     # linkage-critical fields
@@ -36,20 +36,22 @@ def test_dicionario_has_measured_field_count_and_keys() -> None:
 
 
 def test_registry_config_is_monthly_with_uf_partition() -> None:
-    cfg = get_config("sia_bi")
+    cfg = resolve("sia_bpa_individualizado")
     assert cfg.monthly is True
     assert cfg.partition_by == ("ano", "uf", "mes")
 
 
 def test_inventory_roundtrip() -> None:
     scope, dataset = parse_filename("BIRR2401.dbc")
-    assert dataset == "sia_bi"
+    assert dataset == "sia_bpa_individualizado"
     assert scope == ScopeKey(uf="RR", ano=2024, mes=1)
-    assert scope_to_filename("sia_bi", scope) == "BIRR2401.dbc"
+    assert scope_to_filename("sia_bpa_individualizado", scope) == "BIRR2401.dbc"
 
 
 def test_ftp_path_points_to_siasus() -> None:
-    remote_dir, filename = ftp_path_for("sia_bi", ScopeKey(uf="RR", ano=2024, mes=1))
+    remote_dir, filename = ftp_path_for(
+        "sia_bpa_individualizado", ScopeKey(uf="RR", ano=2024, mes=1)
+    )
     assert remote_dir == "/dissemin/publicos/SIASUS/200801_/Dados"
     assert filename == "BIRR2401.dbc"
 
@@ -57,7 +59,9 @@ def test_ftp_path_points_to_siasus() -> None:
 def test_parse_real_fixture_preserves_encrypted_cns(dbc_fixture) -> None:
     """Parsing must not crash on cipher bytes and must keep them intact."""
     dbc_path = dbc_fixture("sia_bi_rr_2024_01_mini")
-    lf = dbc_bytes_to_lazyframe(dbc_path.read_bytes(), dataset="sia_bi", ano=2024, uf="RR")
+    lf = dbc_bytes_to_lazyframe(
+        dbc_path.read_bytes(), dataset="sia_bpa_individualizado", ano=2024, uf="RR"
+    )
     assert isinstance(lf, pl.LazyFrame)
     df = lf.collect()
     assert df.height == 12_099  # nrec measured from the DBF header
@@ -71,7 +75,7 @@ def test_parse_real_fixture_preserves_encrypted_cns(dbc_fixture) -> None:
 def test_parse_fixture_decodes_dates_and_partitions(dbc_fixture) -> None:
     dbc_path = dbc_fixture("sia_bi_rr_2024_01_mini")
     df = dbc_bytes_to_lazyframe(
-        dbc_path.read_bytes(), dataset="sia_bi", ano=2024, uf="RR"
+        dbc_path.read_bytes(), dataset="sia_bpa_individualizado", ano=2024, uf="RR"
     ).collect()
     assert df["ano"].unique().to_list() == [2024]
     assert df["uf"].unique().to_list() == ["RR"]

@@ -128,7 +128,7 @@ def test_mixed_families_preserve_existing_output(monkeypatch, tmp_path, batch_ro
     target = tmp_path / "previous.parquet"
     target.write_bytes(b"previous")
     with pytest.raises((TypeError, ValueError)):
-        dbc_bytes_to_parquet(b"ignored", target, dataset="sim_do")
+        dbc_bytes_to_parquet(b"ignored", target, dataset="sim_obitos")
     assert target.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [target]
 
@@ -147,7 +147,7 @@ def test_corruption_never_publishes_partial_file(monkeypatch, tmp_path, corrupt)
     target = tmp_path / "previous.parquet"
     target.write_bytes(b"previous")
     with pytest.raises((parse.DbfIntegrityError, ValueError)):
-        dbc_bytes_to_parquet(b"ignored", target, dataset="sim_do")
+        dbc_bytes_to_parquet(b"ignored", target, dataset="sim_obitos")
     assert target.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [target]
 

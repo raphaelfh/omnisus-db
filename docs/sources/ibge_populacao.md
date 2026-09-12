@@ -61,10 +61,10 @@ codes. HTTP body hashes describe the response content bytes exposed by HTTPX
 Data, manifest and compatibility-view creation commit in one transaction; a
 failed or cancelled write preserves prior publications.
 
-`ibge_pop` is a compatibility view exposing the three former columns. Reading
+`ibge_populacao` is a compatibility view exposing the three former columns. Reading
 `populacao` fails when multiple publications exist for a municipality/year; select
 an explicit `publication_id` from the canonical table instead. The canonical
-table preserves append history without deduplication. Existing legacy `ibge_pop`
+table preserves append history without deduplication. Existing legacy `ibge_populacao`
 tables or unrecognized views cause a migration error and remain untouched.
 These checks do not inventory or certify arbitrary data inserted through raw SQL.
 

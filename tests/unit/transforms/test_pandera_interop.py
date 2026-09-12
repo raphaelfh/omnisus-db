@@ -28,11 +28,11 @@ def _load_schema(dataset: str) -> FrictionlessSchema:
         "aux_uf",
         "aux_municipios",
         "aux_cid10",
-        "sim_do",
-        "sinasc_nv",
-        "sih_rd",
-        "ibge_pop",
-        "cnes_st",
+        "sim_obitos",
+        "sinasc_nascidos_vivos",
+        "sih_aih_reduzida",
+        "ibge_populacao",
+        "cnes_estabelecimentos",
     ],
 )
 def test_frictionless_loads_for_all_dicionarios(dataset: str) -> None:

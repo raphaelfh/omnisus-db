@@ -34,22 +34,22 @@ pip install .
 import omnisus_db as odb
 
 # Import only what DATASUS actually publishes
-odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=range(2020, 2025)))
+odb.import_dataset("sim_obitos", scopes=odb.available("sim_obitos", years=range(2020, 2025)))
 
 with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
     df = reader.connect().sql(
-        "SELECT count(*) AS obitos FROM lake.sim_do WHERE ano = 2024"
+        "SELECT count(*) AS obitos FROM lake.sim_obitos WHERE ano = 2024"
     ).pl()
 ```
 
 Ask the server what exists before importing:
 
 ```python
-odb.available("sim_do")                      # scopes you can import
+odb.available("sim_obitos")                      # scopes you can import
 odb.browse("/dissemin/publicos/SINAN")       # any FTP path, decoded or not
 ```
 
-National preliminary Chagas notifications are available as `sinan_chagas_prelim`.
+National preliminary Chagas notifications are available as `sinan_chagas`.
 Use `available()` and `policy="skip_same"` for repeatable imports; filter record
 geography after acquisition. The [Marimo walkthrough](notebooks/sinan_chagas.py)
 covers discovery, a saved plan, publication, recovery and aggregate analysis.

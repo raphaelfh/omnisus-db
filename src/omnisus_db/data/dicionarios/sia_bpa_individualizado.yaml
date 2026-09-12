@@ -1,4 +1,4 @@
-name: sia_bi
+name: sia_bpa_individualizado
 title: SIASUS — BPA Individualizado (BI)
 profile: tabular-data-resource
 # latin-1 e OBRIGATORIO: o CNS cifrado usa bytes 0x7B-0x84 e 0x81 e

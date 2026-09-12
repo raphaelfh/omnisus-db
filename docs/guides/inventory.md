@@ -14,8 +14,8 @@ registry, so you get back exactly the scopes this package can import.
 ```python
 import omnisus_db as odb
 
-odb.available("sim_do")                      # matching scopes in the cached/fresh listing
-odb.available("sim_do", years=range(2020, 2025))
+odb.available("sim_obitos")                      # matching scopes in the cached/fresh listing
+odb.available("sim_obitos", years=range(2020, 2025))
 ```
 
 Names belonging to other datasets in the same directory are skipped, not raised
@@ -36,7 +36,7 @@ cannot be listed is logged and skipped rather than truncating the walk.
 ## From the command line
 
 ```bash
-omnisus-db inventory sim_do
+omnisus-db inventory sim_obitos
 omnisus-db inventory --path /dissemin/publicos/SINAN --depth 2
 ```
 
@@ -53,14 +53,14 @@ In Python the same thing is composition — no flag, just a different function
 filling `scopes`:
 
 ```python
-odb.import_dataset("sim_do", scopes=odb.available("sim_do", years=range(1996, 2025)))
+odb.import_dataset("sim_obitos", scopes=odb.available("sim_obitos", years=range(1996, 2025)))
 ```
 
 The alternative is to plan blindly and let tolerance absorb the gaps:
 
 ```python
 odb.import_dataset(
-    "sim_do", scopes=odb.scopes_for("sim_do", years=range(2020, 2025), ufs=["RR"])
+    "sim_obitos", scopes=odb.scopes_for("sim_obitos", years=range(2020, 2025), ufs=["RR"])
 )
 ```
 
@@ -86,7 +86,7 @@ A normally completed DATASUS-FTP import returns an `ImportReport`.
 returns an integer count:
 
 ```python
-report = odb.import_dataset("sim_do", scopes=odb.available("sim_do"))
+report = odb.import_dataset("sim_obitos", scopes=odb.available("sim_obitos"))
 
 report.rows          # rows ingested
 report.ok            # scopes imported
@@ -130,7 +130,7 @@ import omnisus_db as odb
 
 try:
     report = odb.import_dataset(
-        "sim_do", scopes=[odb.ScopeKey(uf="RR", ano=2023)]
+        "sim_obitos", scopes=[odb.ScopeKey(uf="RR", ano=2023)]
     )
 except odb.ImportAbortedError as exc:
     print(exc.report.rows, exc.unresolved)

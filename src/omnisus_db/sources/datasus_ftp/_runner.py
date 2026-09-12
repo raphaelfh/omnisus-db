@@ -141,7 +141,7 @@ def ingest_raw(
             mes=scope.mes if d.monthly else None,
             source_ano=scope.ano if d.geography == "national" else None,
         )
-        if d.name == "sinan_chagas_prelim":
+        if d.name == "sinan_chagas":
             from omnisus_db.sources.sinan.chagas import validate_staging
 
             validate_staging(staging, scope)

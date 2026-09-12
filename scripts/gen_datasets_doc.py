@@ -29,7 +29,7 @@ Every dataset below is one row in the registry
 row, one `data/dicionarios/<name>.yaml`, and one test fixture — the CLI, the
 Python API, the inventory and this page all follow from it.
 
-Use the name or any alias wherever a dataset is accepted:
+Use the name wherever a dataset is accepted:
 
 ```bash
 omnisus-db inventory <name>          # what the server actually publishes
@@ -48,26 +48,25 @@ it is separate from the offline pull-request suite. Use `available()` or
 `inventory --refresh` to inspect listed scopes before a load.
 
 This table covers DATASUS-FTP datasets. The separate
-[IBGE population importer](sources/ibge_pop.md) and
-[CNES Master name refresh](sources/cnes_st.md#establishment-names) have different
+[IBGE population importer](sources/ibge_populacao.md) and
+[CNES Master name refresh](sources/cnes_estabelecimentos.md#establishment-names) have different
 interfaces and limitations.
 """
 
 
 def render() -> str:
     rows = [
-        "| Dataset | Aliases | Prefix | Cadence | Partitioned by | Coverage | FTP directory |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Dataset | Prefix | Cadence | Partitioned by | Coverage | FTP directory |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     for name in sorted(REGISTRY):
         d = REGISTRY[name]
         first, last = d.coverage
         first_s = f"{first[0]}-{first[1]:02d}"
         last_s = "ongoing" if last is None else f"{last[0]}-{last[1]:02d}"
-        aliases = ", ".join(f"`{a}`" for a in d.aliases) or "—"
         parts = ", ".join(f"`{c}`" for c in d.partition_by) or "—"
         rows.append(
-            f"| `{d.name}` | {aliases} | `{d.prefix}` | {d.cadence} | {parts} | "
+            f"| `{d.name}` | `{d.prefix}` | {d.cadence} | {parts} | "
             f"{first_s} → {last_s} | `{d.ftp_dir}` |"
         )
     return HEADER + "\n".join(rows) + "\n" + FOOTER

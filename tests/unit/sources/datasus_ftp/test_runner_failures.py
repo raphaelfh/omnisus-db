@@ -60,7 +60,9 @@ async def test_abnormal_producer_cancels_and_awaits_sibling(tmp_path, monkeypatc
         pytest.raises(ImportAbortedError),
     ):
         await asyncio.wait_for(
-            _runner.run_scopes("sim_do", scopes=scopes, lake=lake, concurrency=2, batch_size=1),
+            _runner.run_scopes(
+                "sim_obitos", scopes=scopes, lake=lake, concurrency=2, batch_size=1
+            ),
             timeout=2,
         )
     assert sibling_cancelled.is_set()
@@ -106,7 +108,7 @@ async def test_producer_failure_marks_rolled_back_write_as_determined(
         with pytest.raises(ImportAbortedError) as caught:
             await asyncio.wait_for(
                 _runner.run_scopes(
-                    "sim_do", scopes=scopes, lake=lake, concurrency=1, batch_size=2
+                    "sim_obitos", scopes=scopes, lake=lake, concurrency=1, batch_size=2
                 ),
                 timeout=2,
             )
@@ -118,7 +120,7 @@ async def test_producer_failure_marks_rolled_back_write_as_determined(
             lake.connect()
             .execute(
                 "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema = 'lake' AND table_name = 'sim_do'"
+                "WHERE table_schema = 'lake' AND table_name = 'sim_obitos'"
             )
             .fetchall()
             == []
@@ -160,7 +162,7 @@ async def test_cancel_with_full_queue_preserves_previous_commit(
     baseline = asyncio.all_tasks()
     with Lake.local(f"ducklake:{tmp_path}/cancel.ducklake") as lake:
         task = asyncio.create_task(
-            _runner.run_scopes("sim_do", scopes=scopes, lake=lake, concurrency=1, batch_size=1)
+            _runner.run_scopes("sim_obitos", scopes=scopes, lake=lake, concurrency=1, batch_size=1)
         )
         try:
             await asyncio.wait_for(paused.wait(), timeout=5)
@@ -168,9 +170,9 @@ async def test_cancel_with_full_queue_preserves_previous_commit(
             with pytest.raises(asyncio.CancelledError):
                 await asyncio.wait_for(task, timeout=2)
             assert lake.is_usable
-            assert lake.connect().execute("SELECT DISTINCT ano FROM lake.sim_do").fetchall() == [
-                (2015,)
-            ]
+            assert lake.connect().execute(
+                "SELECT DISTINCT ano FROM lake.sim_obitos"
+            ).fetchall() == [(2015,)]
         finally:
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
@@ -188,7 +190,9 @@ async def test_bad_dbc_is_never_omitted(tmp_path, monkeypatch, dbc_fixture, year
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fetch)
     scopes = [ScopeKey(uf="RR", ano=year) for year in years]
     with Lake.local(f"ducklake:{tmp_path}/mixed.ducklake") as lake:
-        report = await run_scopes("sim_do", scopes=scopes, lake=lake, concurrency=1, batch_size=2)
+        report = await run_scopes(
+            "sim_obitos", scopes=scopes, lake=lake, concurrency=1, batch_size=2
+        )
         assert [outcome.scope for outcome in report.outcomes] == scopes
         expected = ["failed"] if len(years) == 1 else ["failed", "failed", "ok"]
         assert [outcome.status for outcome in report.outcomes] == expected
@@ -197,7 +201,7 @@ async def test_bad_dbc_is_never_omitted(tmp_path, monkeypatch, dbc_fixture, year
         else:
             stored = (
                 lake.connect()
-                .execute("SELECT ano, count(*) FROM lake.sim_do GROUP BY ano")
+                .execute("SELECT ano, count(*) FROM lake.sim_obitos GROUP BY ano")
                 .fetchall()
             )
             assert stored == [(2023, report.rows)]
@@ -214,11 +218,12 @@ async def test_repeated_input_positions_are_preserved(tmp_path, monkeypatch, dbc
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fetch)
     scope = ScopeKey(uf="RR", ano=2023)
     with Lake.local(f"ducklake:{tmp_path}/repeat.ducklake") as lake:
-        report = await run_scopes("sim_do", scopes=[scope, scope], lake=lake)
+        report = await run_scopes("sim_obitos", scopes=[scope, scope], lake=lake)
         assert [outcome.scope for outcome in report.outcomes] == [scope, scope]
         assert len(report.ok) == 2
         assert (
-            lake.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()[0] == report.rows
+            lake.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone()[0]
+            == report.rows
         )
 
 
@@ -237,10 +242,10 @@ async def test_commit_unknown_aborts_without_retry(tmp_path, monkeypatch, dbc_fi
         real = lake.connect()
         lake._con = FaultyConnection(real, after={"COMMIT": RuntimeError("ack lost")})
         with pytest.raises(ImportAbortedError) as caught:
-            await run_scopes("sim_do", scopes=scopes, lake=lake, batch_size=1, concurrency=1)
+            await run_scopes("sim_obitos", scopes=scopes, lake=lake, batch_size=1, concurrency=1)
         assert caught.value.report.rows == 0
         assert caught.value.unresolved == tuple(enumerate(scopes))
-        assert real.execute("SELECT DISTINCT ano FROM lake.sim_do").fetchall() == [(2021,)]
+        assert real.execute("SELECT DISTINCT ano FROM lake.sim_obitos").fetchall() == [(2021,)]
         assert not lake.is_usable
 
 
@@ -268,7 +273,7 @@ async def test_abort_keeps_previously_committed_progress(tmp_path, monkeypatch, 
     with Lake.local(f"ducklake:{tmp_path}/partial.ducklake") as lake:
         lake._con = FailSecondCommit(lake.connect())
         with pytest.raises(ImportAbortedError) as caught:
-            await run_scopes("sim_do", scopes=scopes, lake=lake, batch_size=1, concurrency=1)
+            await run_scopes("sim_obitos", scopes=scopes, lake=lake, batch_size=1, concurrency=1)
         assert [outcome.scope for outcome in caught.value.report.ok] == scopes[:1]
         assert caught.value.report.rows > 0
         assert caught.value.unresolved == ((1, scopes[1]), (2, scopes[2]))
@@ -308,7 +313,7 @@ async def test_nested_runner_rejects_without_disturbing_enclosing_transaction(
             lake.connect().execute("INSERT INTO lake.caller VALUES (1)")
             monkeypatch.setattr(lake, "transaction", bounded_transaction)
             with pytest.raises(RuntimeError, match=r"nested|active|existing"):
-                await run_scopes("sim_do", scopes=[ScopeKey(uf="RR", ano=2023)], lake=lake)
+                await run_scopes("sim_obitos", scopes=[ScopeKey(uf="RR", ano=2023)], lake=lake)
             assert lake.in_transaction
             assert lake.is_usable
             assert not receipt.committed

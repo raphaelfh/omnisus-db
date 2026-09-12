@@ -19,24 +19,24 @@ from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_fi
 
 # fmt: off
 GOLDEN: list[tuple[str, ScopeKey, str]] = [
-    ("sinan_chagas_prelim", ScopeKey(uf=None, ano=2023), "CHAGBR23.dbc"),
-    ("sim_do",    ScopeKey(uf="SP", ano=2024),         "DOSP2024.dbc"),
-    ("sim_do",    ScopeKey(uf="RR", ano=1996),         "DORR1996.dbc"),
-    ("sinasc_nv", ScopeKey(uf="MG", ano=2022),         "DNMG2022.dbc"),
-    ("sih_rd",    ScopeKey(uf="SP", ano=2024, mes=1),  "RDSP2401.dbc"),
-    ("sih_rd",    ScopeKey(uf="AC", ano=2008, mes=12), "RDAC0812.dbc"),
-    ("sia_bi",    ScopeKey(uf="RR", ano=2024, mes=1),  "BIRR2401.dbc"),
-    ("sia_am",    ScopeKey(uf="RR", ano=2024, mes=1),  "AMRR2401.dbc"),
-    ("sia_aq",    ScopeKey(uf="RR", ano=2024, mes=1),  "AQRR2401.dbc"),
-    ("sia_atd",   ScopeKey(uf="RR", ano=2024, mes=1),  "ATDRR2401.dbc"),  # 3-letter: ATD+RR, never AT+DR
-    ("sia_ad",    ScopeKey(uf="AC", ano=2024, mes=1),  "ADAC2401.dbc"),   # AD+AC, never ADA+C
-    ("sia_abo",   ScopeKey(uf="SP", ano=2024, mes=1),  "ABOSP2401.dbc"),  # ABO+SP, never AB+OS
-    ("sia_ps",    ScopeKey(uf="RR", ano=2024, mes=1),  "PSRR2401.dbc"),
-    ("cnes_st",   ScopeKey(uf="RR", ano=2024, mes=1),  "STRR2401.dbc"),
+    ("sinan_chagas", ScopeKey(uf=None, ano=2023), "CHAGBR23.dbc"),
+    ("sim_obitos",    ScopeKey(uf="SP", ano=2024),         "DOSP2024.dbc"),
+    ("sim_obitos",    ScopeKey(uf="RR", ano=1996),         "DORR1996.dbc"),
+    ("sinasc_nascidos_vivos", ScopeKey(uf="MG", ano=2022),         "DNMG2022.dbc"),
+    ("sih_aih_reduzida",    ScopeKey(uf="SP", ano=2024, mes=1),  "RDSP2401.dbc"),
+    ("sih_aih_reduzida",    ScopeKey(uf="AC", ano=2008, mes=12), "RDAC0812.dbc"),
+    ("sia_bpa_individualizado",    ScopeKey(uf="RR", ano=2024, mes=1),  "BIRR2401.dbc"),
+    ("sia_apac_medicamentos",    ScopeKey(uf="RR", ano=2024, mes=1),  "AMRR2401.dbc"),
+    ("sia_apac_quimioterapia",    ScopeKey(uf="RR", ano=2024, mes=1),  "AQRR2401.dbc"),
+    ("sia_apac_tratamento_dialitico",   ScopeKey(uf="RR", ano=2024, mes=1),  "ATDRR2401.dbc"),  # 3-letter: ATD+RR, never AT+DR
+    ("sia_apac_laudos_diversos",    ScopeKey(uf="AC", ano=2024, mes=1),  "ADAC2401.dbc"),   # AD+AC, never ADA+C
+    ("sia_apac_cirurgia_bariatrica",   ScopeKey(uf="SP", ano=2024, mes=1),  "ABOSP2401.dbc"),  # ABO+SP, never AB+OS
+    ("sia_psicossocial",    ScopeKey(uf="RR", ano=2024, mes=1),  "PSRR2401.dbc"),
+    ("cnes_estabelecimentos",   ScopeKey(uf="RR", ano=2024, mes=1),  "STRR2401.dbc"),
     # two-digit-year pivot: yy < 80 -> 20yy, else 19yy
-    ("sih_rd",    ScopeKey(uf="SP", ano=1999, mes=6),  "RDSP9906.dbc"),
-    ("sih_rd",    ScopeKey(uf="SP", ano=1980, mes=6),  "RDSP8006.dbc"),
-    ("sih_rd",    ScopeKey(uf="SP", ano=2079, mes=6),  "RDSP7906.dbc"),
+    ("sih_aih_reduzida",    ScopeKey(uf="SP", ano=1999, mes=6),  "RDSP9906.dbc"),
+    ("sih_aih_reduzida",    ScopeKey(uf="SP", ano=1980, mes=6),  "RDSP8006.dbc"),
+    ("sih_aih_reduzida",    ScopeKey(uf="SP", ano=2079, mes=6),  "RDSP7906.dbc"),
 ]
 # fmt: on
 
@@ -59,7 +59,7 @@ def test_every_registry_row_has_a_golden_case() -> None:
 
 def test_monthly_dataset_rejects_scope_without_mes() -> None:
     with pytest.raises(ValueError, match="requires mes"):
-        scope_to_filename("sih_rd", ScopeKey(uf="SP", ano=2024))
+        scope_to_filename("sih_aih_reduzida", ScopeKey(uf="SP", ano=2024))
 
 
 def test_parse_rejects_unknown_prefix() -> None:

@@ -22,7 +22,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.e2e]
 async def test_fetch_real_sim_rr_2023() -> None:
     """Hits real DATASUS FTP. Requires network."""
     data = await fetch_dbc_bytes(
-        dataset="sim_do",
+        dataset="sim_obitos",
         scope=ScopeKey(uf="RR", ano=2023),
         timeout_seconds=60.0,
     )

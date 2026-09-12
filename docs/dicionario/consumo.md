@@ -7,7 +7,7 @@ O carregador interno já permite consultar as definições existentes:
 ```python
 from omnisus_db.transforms.dictionaries import load_dicionario
 
-dictionary = load_dicionario("sim_do")
+dictionary = load_dicionario("sim_obitos")
 field = dictionary.field_def("sexo")
 print(field.get("description"))  # pode não estar preenchida
 print(field.get("x-decode", {}))
@@ -26,7 +26,7 @@ por si só, o contrato de evidência verificada.
 
 ## Protótipo executável
 
-O [exemplo JSON](exemplos/sim_do.sexo.json) pode ser lido diretamente por qualquer
+O [exemplo JSON](exemplos/sim_obitos.sexo.json) pode ser lido diretamente por qualquer
 consumidor JSON. O script `scripts/metadados/consultar.py`, no checkout, valida contrato, referências e
 hash das afirmações. Também permite anexar o objeto a uma coluna Arrow e
 conferir o transporte por Parquet, usando uma tabela vazia: não fabrica dados
@@ -36,7 +36,7 @@ Na raiz do repositório, em ambiente com `jsonschema` e `pyarrow`:
 
 ```bash
 python scripts/metadados/consultar.py
-python scripts/metadados/consultar.py --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+python scripts/metadados/consultar.py --metadata docs/dicionario/exemplos/sim_obitos.sexo.json --json
 python scripts/metadados/consultar.py --arrow
 ```
 
@@ -54,7 +54,7 @@ import json
 from pathlib import Path
 
 metadata = json.loads(
-    Path("docs/dicionario/exemplos/sim_do.sexo.json").read_text(encoding="utf-8")
+    Path("docs/dicionario/exemplos/sim_obitos.sexo.json").read_text(encoding="utf-8")
 )
 print(metadata["field"]["description"])
 print(metadata["field"]["codes"])

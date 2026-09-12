@@ -46,7 +46,7 @@ nativo `omnisus-db metadata`**, que ainda não existe:
 
 ```bash
 uv run --locked python scripts/metadados/consultar.py \
-  --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+  --metadata docs/dicionario/exemplos/sim_obitos.sexo.json --json
 ```
 
 `--json` valida o contrato e emite apenas JSON no stdout, permitindo pipes e

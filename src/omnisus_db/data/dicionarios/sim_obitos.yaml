@@ -1,4 +1,4 @@
-name: sim_do
+name: sim_obitos
 title: SIM — Declarações de Óbito
 profile: tabular-data-resource
 encoding: cp1252
@@ -162,7 +162,7 @@ schema:
       label: Estabelecimento (CNES)
       description: |
         Código CNES do estabelecimento (7 dígitos). O nome resolve via
-        ``aux_cnes``, que combina ``cnes_st`` (FTP) com ``cnes_master``
+        ``aux_cnes``, que combina ``cnes_estabelecimentos`` (FTP) com ``cnes_master``
         (API). Se ``cnes_master`` ainda não foi populado
         (``import_cnes_master()``), o nome fica nulo no lookup.
       foreignKeys:

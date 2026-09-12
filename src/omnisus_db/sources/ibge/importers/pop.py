@@ -71,25 +71,27 @@ async def import_pop_year(*, year: int, lake: Lake, product: str) -> ImportResul
         existing = con.execute(
             "SELECT table_type FROM information_schema.tables "
             "WHERE table_catalog = ? AND table_schema = ? AND table_name = ?",
-            [lake.alias, "main", "ibge_pop"],
+            [lake.alias, "main", "ibge_populacao"],
         ).fetchone()
         if existing:
             if existing[0] != "VIEW":
-                raise ValueError("legacy ibge_pop table exists; explicit migration required")
+                raise ValueError("legacy ibge_populacao table exists; explicit migration required")
             view = con.execute(
                 "SELECT sql FROM duckdb_views() WHERE database_name = ? "
                 "AND schema_name = ? AND view_name = ?",
-                [lake.alias, "main", "ibge_pop"],
+                [lake.alias, "main", "ibge_populacao"],
             ).fetchone()
             if not view or _VIEW_ERROR not in view[0]:
-                raise ValueError("unrecognized ibge_pop view exists; explicit migration required")
+                raise ValueError(
+                    "unrecognized ibge_populacao view exists; explicit migration required"
+                )
         result = lake.ingest("ibge_population", data, partition_by=("ano",))
         result.publication_id = publication_id
         lake.ingest("ibge_population_manifest", manifest)
         if not existing:
             # Static SQL; names are quoted and all source values travel through ingest.
             con.execute(
-                f"CREATE VIEW {qualified(lake.alias, 'ibge_pop')} AS "
+                f"CREATE VIEW {qualified(lake.alias, 'ibge_populacao')} AS "
                 "SELECT codigo_ibge, ano, CASE WHEN "
                 "count(*) OVER (PARTITION BY codigo_ibge, ano) = 1 "
                 f"THEN populacao ELSE error('{_VIEW_ERROR}') END AS populacao "

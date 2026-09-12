@@ -22,7 +22,7 @@ the list of published scopes should drive the import.
 ```python
 with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
     df = lake.connect().sql(
-        "SELECT * FROM lake.sim_do WHERE ano=2023 AND uf='SP'"
+        "SELECT * FROM lake.sim_obitos WHERE ano=2023 AND uf='SP'"
     ).pl()
 ```
 

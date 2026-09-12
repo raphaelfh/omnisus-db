@@ -17,13 +17,13 @@ from omnisus_db.sources.datasus_ftp.fetch import (
 
 
 def test_ftp_path_for_sim() -> None:
-    path, name = ftp_path_for("sim_do", ScopeKey(uf="SP", ano=2024))
+    path, name = ftp_path_for("sim_obitos", ScopeKey(uf="SP", ano=2024))
     assert path == "/dissemin/publicos/SIM/CID10/DORES"
     assert name == "DOSP2024.dbc"
 
 
 def test_ftp_path_for_sih_monthly() -> None:
-    path, name = ftp_path_for("sih_rd", ScopeKey(uf="SP", ano=2024, mes=1))
+    path, name = ftp_path_for("sih_aih_reduzida", ScopeKey(uf="SP", ano=2024, mes=1))
     assert path == "/dissemin/publicos/SIHSUS/200801_/Dados"
     assert name == "RDSP2401.dbc"
 
@@ -47,7 +47,7 @@ async def test_fetch_dbc_bytes_returns_payload() -> None:
         side_effect=fake_blocking_fetch,
     ):
         data = await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
         )
     assert data == payload
@@ -70,7 +70,7 @@ async def test_fetch_dbc_bytes_retries_on_transient_error() -> None:
         side_effect=fake_blocking_fetch,
     ):
         data = await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
             max_retries=3,
             backoff_seconds=0,
@@ -98,7 +98,7 @@ async def test_a_550_is_terminal_and_typed() -> None:
         pytest.raises(FtpFileNotFound),
     ):
         await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
             max_retries=3,
             backoff_seconds=0,
@@ -129,7 +129,7 @@ async def test_a_530_throttle_is_retried_not_mistaken_for_a_missing_file() -> No
         side_effect=fake_blocking_fetch,
     ):
         data = await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
             max_retries=3,
             backoff_seconds=0,
@@ -153,7 +153,7 @@ async def test_a_530_that_never_clears_is_unavailable_not_not_found() -> None:
         pytest.raises(FtpUnavailable) as exc_info,
     ):
         await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
             max_retries=2,
             backoff_seconds=0,
@@ -174,7 +174,7 @@ async def test_exhausted_retries_raise_unavailable_preserving_the_cause() -> Non
         pytest.raises(FtpUnavailable) as exc_info,
     ):
         await fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="SP", ano=2024),
             max_retries=2,
             backoff_seconds=0,

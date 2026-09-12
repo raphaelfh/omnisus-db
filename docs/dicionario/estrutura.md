@@ -31,7 +31,7 @@ docs/dicionario/
   campos.csv                  # colunas observadas + definições locais pendentes
   fontes/registro.json         # inventário gerado das evidências baixadas
   schemas/column-metadata.schema.json
-  exemplos/sim_do.sexo.json    # exemplo do contrato, fora da produção
+  exemplos/sim_obitos.sexo.json    # exemplo do contrato, fora da produção
 
 scripts/metadados/
   consultar.py                # CLI experimental de validação e consumo
@@ -50,7 +50,7 @@ As definições de produção continuam em `src/omnisus_db/data/dicionarios/`.
 O registro inicial das fontes é uma projeção da auditoria. Não editar seus
 números manualmente: o script preserva URLs e hashes e pode conferir os arquivos
 locais. O exemplo JSON é um caso de referência para o contrato; não deve virar
-uma segunda definição de produção de `sim_do`.
+uma segunda definição de produção de `sim_obitos`.
 
 ## Organização de destino na biblioteca
 
@@ -59,9 +59,9 @@ ainda não são carregados pela biblioteca.
 
 ```text
 src/omnisus_db/data/dicionarios/
-  sim_do.yaml                 # seleção da edição padrão + schema atual
+  sim_obitos.yaml                 # seleção da edição padrão + schema atual
   ...                         # demais produtos existentes
-  editions/sim_do/<versao>.yaml  # edições imutáveis quando houver diferenças
+  editions/sim_obitos/<versao>.yaml  # edições imutáveis quando houver diferenças
   sources/<source-id>.yaml    # uma revisão exata de documento oficial
   codelists/<dominio>/<versao>.yaml # listas grandes ou reutilizadas
   schemas/                    # contratos de autoria e exportação
@@ -86,8 +86,8 @@ usados em vários campos ficam separados e são referenciados por IDs versionado
 | Identidade | Exemplo | Regra |
 | --- | --- | --- |
 | Categoria do portal | `SIM` | Serve para descoberta |
-| Produto/tabela | `sim_do`, origem `SIM/DO/DORES` | Não confundir com outro produto da categoria |
-| Campo | `sim_do.sexo` | Estável dentro do produto, não global por grafia |
+| Produto/tabela | `sim_obitos`, origem `SIM/DO/DORES` | Não confundir com outro produto da categoria |
+| Campo | `sim_obitos.sexo` | Estável dentro do produto, não global por grafia |
 | Nome físico | `SEXO` | Nome no arquivo de origem |
 | Nome exposto | `sexo` | Nome usado pela lib; aliases explícitos |
 | Edição dos metadados | `1.0.0` | Identifica conteúdo congelado, não o ano dos dados |
@@ -97,7 +97,7 @@ usados em vários campos ficam separados e são referenciados por IDs versionado
 IDs de novos produtos devem seguir o registro de datasets quando ele existir.
 No catálogo exploratório, conservar categoria/subtipo/tabela física sem inventar
 que há um importador da biblioteca para todos eles. SINASC/DN no portal, por
-exemplo, corresponde ao dataset `sinasc_nv` já usado pela lib.
+exemplo, corresponde ao dataset `sinasc_nascidos_vivos` já usado pela lib.
 
 ## Camadas de informação
 

@@ -32,7 +32,9 @@ def test_download_size_is_checked_during_receipt(monkeypatch):
     monkeypatch.setattr(fetch.ftplib, "FTP", FTP)
     with pytest.raises(ValueError, match=r"limit|bytes"):
         asyncio.run(
-            fetch.fetch_dbc_bytes(dataset="sim_do", scope=ScopeKey(uf="RR", ano=2023), max_bytes=5)
+            fetch.fetch_dbc_bytes(
+                dataset="sim_obitos", scope=ScopeKey(uf="RR", ano=2023), max_bytes=5
+            )
         )
 
 
@@ -45,7 +47,7 @@ def test_payload_limit_reports_failed_without_publication(monkeypatch, tmp_path,
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake)
     target = f"ducklake:{tmp_path}/limit.ducklake"
     report = import_dataset(
-        "sim_do",
+        "sim_obitos",
         scopes=[ScopeKey(uf="RR", ano=2023)],
         target=target,
         max_payload_bytes=1,
@@ -53,7 +55,7 @@ def test_payload_limit_reports_failed_without_publication(monkeypatch, tmp_path,
     )
     assert len(report.failed) == 1
     with Lake.local(target) as lake:
-        assert "sim_do" not in lake.tables()
+        assert "sim_obitos" not in lake.tables()
 
 
 def test_managed_runner_skip_and_replace(monkeypatch, tmp_path, dbc_fixture):
@@ -65,13 +67,14 @@ def test_managed_runner_skip_and_replace(monkeypatch, tmp_path, dbc_fixture):
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake)
     target = f"ducklake:{tmp_path}/replay.ducklake"
     kw = dict(scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
-    first = import_dataset("sim_do", **kw)
-    second = import_dataset("sim_do", policy="skip_same", **kw)
-    third = import_dataset("sim_do", policy="replace", **kw)
+    first = import_dataset("sim_obitos", **kw)
+    second = import_dataset("sim_obitos", policy="skip_same", **kw)
+    third = import_dataset("sim_obitos", policy="replace", **kw)
     assert len(first.ok) == 1 and len(second.skipped) == 1 and len(third.ok) == 1
     with Lake.local(target) as lake:
         assert (
-            lake.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()[0] == first.rows
+            lake.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone()[0]
+            == first.rows
         )
         assert lake.publications(run_id=first.run_id)
 
@@ -84,7 +87,7 @@ def test_one_reserved_payload_slot_makes_progress(monkeypatch, tmp_path, dbc_fix
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake)
     report = import_dataset(
-        "sim_do",
+        "sim_obitos",
         scopes=[ScopeKey(uf="RR", ano=y) for y in (2021, 2022, 2023)],
         target=f"ducklake:{tmp_path}/one.ducklake",
         concurrency=3,
@@ -104,14 +107,15 @@ def test_failed_managed_attempt_is_durable_after_rollback(monkeypatch, tmp_path,
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake)
     target = f"ducklake:{tmp_path}/attempt.ducklake"
     kw = dict(scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
-    first = import_dataset("sim_do", **kw)
-    failed = import_dataset("sim_do", policy="error_if_exists", run_id="failed-attempt", **kw)
+    first = import_dataset("sim_obitos", **kw)
+    failed = import_dataset("sim_obitos", policy="error_if_exists", run_id="failed-attempt", **kw)
     assert len(failed.failed) == 1
     with Lake.local(target) as lake:
         attempts = lake.attempts(run_id="failed-attempt")
         assert len(attempts) == 1 and attempts[0]["status"] == "failed"
         assert (
-            lake.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()[0] == first.rows
+            lake.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone()[0]
+            == first.rows
         )
 
 
@@ -147,7 +151,9 @@ async def test_cancelled_fetch_closes_ftp_and_joins_worker(monkeypatch):
 
     monkeypatch.setattr(fetch.ftplib, "FTP", FTP)
     task = asyncio.create_task(
-        fetch.fetch_dbc_bytes(dataset="sim_do", scope=ScopeKey(uf="RR", ano=2023), max_bytes=2048)
+        fetch.fetch_dbc_bytes(
+            dataset="sim_obitos", scope=ScopeKey(uf="RR", ano=2023), max_bytes=2048
+        )
     )
     assert await asyncio.to_thread(started.wait, 2)
     task.cancel()
@@ -182,7 +188,7 @@ async def test_cancellation_during_ftp_greeting_keeps_event_loop_responsive(monk
 
     monkeypatch.setattr(fetch.ftplib, "FTP", FTP)
     task = asyncio.create_task(
-        fetch.fetch_dbc_bytes(dataset="sim_do", scope=ScopeKey(uf="RR", ano=2023))
+        fetch.fetch_dbc_bytes(dataset="sim_obitos", scope=ScopeKey(uf="RR", ano=2023))
     )
     assert await asyncio.to_thread(started.wait, 2)
     # The fallback prevents a broken implementation from hanging the suite.
@@ -241,7 +247,7 @@ async def test_failed_download_retry_does_not_retain_buffers(monkeypatch):
     monkeypatch.setattr(fetch.io, "BytesIO", Buffer)
     with pytest.raises(fetch.FtpUnavailable):
         await fetch.fetch_dbc_bytes(
-            dataset="sim_do",
+            dataset="sim_obitos",
             scope=ScopeKey(uf="RR", ano=2023),
             max_bytes=1024,
             max_retries=3,
@@ -263,9 +269,9 @@ def test_skip_depends_on_commit_that_published_source(
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake)
     target = f"ducklake:{tmp_path}/dependency.ducklake"
     if already_committed:
-        import_dataset("sim_do", scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
+        import_dataset("sim_obitos", scopes=[ScopeKey(uf="RR", ano=2023)], target=target)
     report = import_dataset(
-        "sim_do",
+        "sim_obitos",
         scopes=[
             ScopeKey(uf="RR", ano=2023),
             ScopeKey(uf="RR", ano=2023),

@@ -19,7 +19,7 @@ uv run --locked python scripts/metadados/consultar.py --json
 
 # Documento específico
 uv run --locked python scripts/metadados/consultar.py \
-  --metadata docs/dicionario/exemplos/sim_do.sexo.json --json
+  --metadata docs/dicionario/exemplos/sim_obitos.sexo.json --json
 
 # Verificação de transporte por coluna
 uv run --locked python scripts/metadados/consultar.py --arrow

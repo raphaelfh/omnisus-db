@@ -1,4 +1,4 @@
-name: ibge_pop
+name: ibge_populacao
 title: IBGE — Visão de compatibilidade da população municipal
 profile: tabular-data-resource
 encoding: utf-8

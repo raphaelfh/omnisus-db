@@ -41,8 +41,8 @@ from omnisus_db.transforms.dictionaries import load_dicionario
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = [
-    ("sim_rr_2023_mini", "sim_do", 2023, None),
-    ("sih_rr_2024_01_mini", "sih_rd", 2024, 1),
+    ("sim_rr_2023_mini", "sim_obitos", 2023, None),
+    ("sih_rr_2024_01_mini", "sih_aih_reduzida", 2024, 1),
 ]
 PHASES = ("dbf_to_arrow", "parquet", "lake_publication")
 METRICS = ("seconds", "peak_rss_bytes", "peak_temp_disk_bytes_sampled")
@@ -515,7 +515,7 @@ def main():
     )
     parser.add_argument("--phase", choices=PHASES, default="parquet", help=argparse.SUPPRESS)
     parser.add_argument("--input", help=argparse.SUPPRESS)
-    parser.add_argument("--dataset", default="sim_do", help=argparse.SUPPRESS)
+    parser.add_argument("--dataset", default="sim_obitos", help=argparse.SUPPRESS)
     parser.add_argument("--ano", type=int, default=2023, help=argparse.SUPPRESS)
     parser.add_argument("--mes", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--dbf", action="store_true", help=argparse.SUPPRESS)

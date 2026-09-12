@@ -29,18 +29,26 @@ OUT = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "dbc"
 FTP_TIMEOUT = 60
 
 TARGETS: list[tuple[str, ScopeKey, str]] = [
-    ("sinan_chagas_prelim", ScopeKey(uf=None, ano=2023), "sinan_chagas_br_2023.dbc"),
-    ("sim_do", ScopeKey(uf="RR", ano=2023), "sim_rr_2023_mini.dbc"),
-    ("sinasc_nv", ScopeKey(uf="RR", ano=2022), "sinasc_rr_2022_mini.dbc"),
-    ("sih_rd", ScopeKey(uf="RR", ano=2024, mes=1), "sih_rr_2024_01_mini.dbc"),
-    ("sia_bi", ScopeKey(uf="RR", ano=2024, mes=1), "sia_bi_rr_2024_01_mini.dbc"),
-    ("sia_am", ScopeKey(uf="RR", ano=2024, mes=1), "sia_am_rr_2024_01_mini.dbc"),
-    ("sia_aq", ScopeKey(uf="RR", ano=2024, mes=1), "sia_aq_rr_2024_01_mini.dbc"),
-    ("sia_atd", ScopeKey(uf="RR", ano=2024, mes=1), "sia_atd_rr_2024_01_mini.dbc"),
-    ("sia_ad", ScopeKey(uf="RR", ano=2024, mes=1), "sia_ad_rr_2024_01_mini.dbc"),
-    ("sia_ps", ScopeKey(uf="RR", ano=2024, mes=1), "sia_ps_rr_2024_01_mini.dbc"),
-    ("sia_abo", ScopeKey(uf="SP", ano=2024, mes=1), "sia_abo_sp_2024_01_mini.dbc"),
-    ("cnes_st", ScopeKey(uf="RR", ano=2024, mes=1), "cnes_rr_2024_01_mini.dbc"),
+    ("sinan_chagas", ScopeKey(uf=None, ano=2023), "sinan_chagas_br_2023.dbc"),
+    ("sim_obitos", ScopeKey(uf="RR", ano=2023), "sim_rr_2023_mini.dbc"),
+    ("sinasc_nascidos_vivos", ScopeKey(uf="RR", ano=2022), "sinasc_rr_2022_mini.dbc"),
+    ("sih_aih_reduzida", ScopeKey(uf="RR", ano=2024, mes=1), "sih_rr_2024_01_mini.dbc"),
+    ("sia_bpa_individualizado", ScopeKey(uf="RR", ano=2024, mes=1), "sia_bi_rr_2024_01_mini.dbc"),
+    ("sia_apac_medicamentos", ScopeKey(uf="RR", ano=2024, mes=1), "sia_am_rr_2024_01_mini.dbc"),
+    ("sia_apac_quimioterapia", ScopeKey(uf="RR", ano=2024, mes=1), "sia_aq_rr_2024_01_mini.dbc"),
+    (
+        "sia_apac_tratamento_dialitico",
+        ScopeKey(uf="RR", ano=2024, mes=1),
+        "sia_atd_rr_2024_01_mini.dbc",
+    ),
+    ("sia_apac_laudos_diversos", ScopeKey(uf="RR", ano=2024, mes=1), "sia_ad_rr_2024_01_mini.dbc"),
+    ("sia_psicossocial", ScopeKey(uf="RR", ano=2024, mes=1), "sia_ps_rr_2024_01_mini.dbc"),
+    (
+        "sia_apac_cirurgia_bariatrica",
+        ScopeKey(uf="SP", ano=2024, mes=1),
+        "sia_abo_sp_2024_01_mini.dbc",
+    ),
+    ("cnes_estabelecimentos", ScopeKey(uf="RR", ano=2024, mes=1), "cnes_rr_2024_01_mini.dbc"),
 ]
 """One entry per registry row. ``tests/unit/test_public_api.py`` asserts this
 list and its own ``_FIXTURE_FOR`` agree, so neither can drift from the other

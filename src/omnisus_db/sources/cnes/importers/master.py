@@ -7,8 +7,8 @@ upserts them into ``lake.cnes_master``.
 
 Typical workflow:
 
-1. ``import_cnes_st(...)`` populates ``lake.cnes_st`` (operational, FTP).
-2. ``import_cnes_master()`` fetches names for every CNES present in cnes_st
+1. ``import_cnes_estabelecimentos(...)`` populates ``lake.cnes_estabelecimentos`` (operational, FTP).
+2. ``import_cnes_master()`` fetches names for every CNES present in cnes_estabelecimentos
    that isn't yet in cnes_master.
 3. ``aux_cnes`` view auto-refreshes; explorer lookups now resolve names.
 
@@ -40,7 +40,7 @@ async def _fetch_one(client: httpx.AsyncClient, cnes: str) -> dict | None:
 
     The API uses *unpadded* integer paths — passing ``"0123456"`` 404s.
     Strip leading zeros before the request, but keep the canonical 7-digit
-    form in the returned record so it joins cleanly against ``cnes_st``.
+    form in the returned record so it joins cleanly against ``cnes_estabelecimentos``.
     """
     cnes_canonical = cnes.zfill(7)
     cnes_path = cnes_canonical.lstrip("0") or "0"
@@ -95,24 +95,22 @@ async def _fetch_all(
 
 
 def _codes_from_lake(lake: Lake, *, only_missing: bool) -> list[str]:
-    """Pull distinct non-null CNES codes from ``lake.cnes_st``.
+    """Pull distinct non-null CNES codes from ``lake.cnes_estabelecimentos``.
 
     If ``only_missing=True`` and ``cnes_master`` already exists, returns only
     the codes not yet in ``cnes_master`` — making re-runs incremental.
     """
-    if "cnes_st" not in lake.tables():
+    if "cnes_estabelecimentos" not in lake.tables():
         return []
     con = lake.connect()
     if only_missing and "cnes_master" in lake.tables():
         sql = (
-            f"SELECT DISTINCT s.cnes FROM {lake.alias}.cnes_st s "
+            f"SELECT DISTINCT s.cnes FROM {lake.alias}.cnes_estabelecimentos s "
             f"LEFT JOIN {lake.alias}.cnes_master m USING (cnes) "
             f"WHERE s.cnes IS NOT NULL AND s.cnes <> '' AND m.cnes IS NULL"
         )
     else:
-        sql = (
-            f"SELECT DISTINCT cnes FROM {lake.alias}.cnes_st WHERE cnes IS NOT NULL AND cnes <> ''"
-        )
+        sql = f"SELECT DISTINCT cnes FROM {lake.alias}.cnes_estabelecimentos WHERE cnes IS NOT NULL AND cnes <> ''"
     return [r[0] for r in con.execute(sql).fetchall()]
 
 
@@ -181,7 +179,7 @@ def import_cnes_master(
 
     Args:
         codes: explicit list of 7-digit CNES codes. If ``None`` (default),
-            pulls codes from ``lake.cnes_st``.
+            pulls codes from ``lake.cnes_estabelecimentos``.
         target: lake target string (same shape used by every other importer).
         concurrency: max concurrent API requests (default 5 to be polite).
         only_missing: when ``True`` (default), skip codes already in

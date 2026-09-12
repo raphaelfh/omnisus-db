@@ -7,21 +7,21 @@ from typing import Any
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY, Dataset, resolve
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, resolve
 
-ELEVEN = {
-    "sim_do",
-    "sinasc_nv",
-    "sih_rd",
-    "sia_bi",
-    "sia_am",
-    "sia_aq",
-    "sia_atd",
-    "sia_ad",
-    "sia_abo",
-    "sia_ps",
-    "cnes_st",
-    "sinan_chagas_prelim",
+ROWS = {
+    "sim_obitos",
+    "sinasc_nascidos_vivos",
+    "sih_aih_reduzida",
+    "sia_bpa_individualizado",
+    "sia_apac_medicamentos",
+    "sia_apac_quimioterapia",
+    "sia_apac_tratamento_dialitico",
+    "sia_apac_laudos_diversos",
+    "sia_apac_cirurgia_bariatrica",
+    "sia_psicossocial",
+    "cnes_estabelecimentos",
+    "sinan_chagas",
 }
 
 
@@ -38,7 +38,24 @@ def _adhoc(**over: Any) -> Dataset:
 
 
 def test_registry_has_exactly_the_supported_ftp_datasets() -> None:
-    assert set(REGISTRY) == ELEVEN
+    assert set(REGISTRY) == ROWS
+
+
+def test_names_are_full_readable_words() -> None:
+    """Spec §3.7: <sistema>_<conteúdo>, never a two-letter file prefix or a release."""
+    for name, d in REGISTRY.items():
+        _system, _, content = name.partition("_")
+        assert content, name
+        assert content.lower() != d.prefix.lower(), name
+        assert not name.endswith(("_prelim", "_final")), name
+
+
+def test_module_has_no_alias_surface() -> None:
+    import omnisus_db.sources.datasus_ftp.datasets as m
+
+    assert not hasattr(m, "ALIASES")
+    assert not hasattr(m, "get_config")
+    assert "aliases" not in Dataset.__dataclass_fields__
 
 
 def test_registry_keys_equal_row_names() -> None:
@@ -59,20 +76,11 @@ def test_row_is_frozen() -> None:
 
 
 def test_dictionary_defaults_to_none_meaning_packaged_yaml() -> None:
-    assert REGISTRY["sim_do"].dictionary is None
+    assert REGISTRY["sim_obitos"].dictionary is None
 
 
 def test_resolve_by_key_returns_the_registry_object() -> None:
-    assert resolve("sim_do") is REGISTRY["sim_do"]
-
-
-@pytest.mark.parametrize(
-    ("alias", "key"),
-    [("sim", "sim_do"), ("sinasc", "sinasc_nv"), ("sih", "sih_rd"), ("cnes-st", "cnes_st")],
-)
-def test_resolve_by_alias(alias: str, key: str) -> None:
-    assert resolve(alias) is REGISTRY[key]
-    assert ALIASES[alias] == key
+    assert resolve("sim_obitos") is REGISTRY["sim_obitos"]
 
 
 def test_resolve_passes_a_value_through_untouched() -> None:
@@ -83,10 +91,6 @@ def test_resolve_passes_a_value_through_untouched() -> None:
 def test_resolve_unknown_raises_value_error() -> None:
     with pytest.raises(ValueError, match="unknown dataset"):
         resolve("bogus")
-
-
-def test_aliases_do_not_collide_with_registry_keys() -> None:
-    assert not set(ALIASES) & set(REGISTRY)
 
 
 def test_adhoc_dataset_flows_through_codec_and_ftp_path() -> None:

@@ -67,21 +67,21 @@ def test_import_sim_via_cli(monkeypatch, tmp_path, dbc_fixture) -> None:
     target = f"ducklake:{tmp_path}/cli.ducklake"
     result = runner.invoke(
         app,
-        ["import", "sim", "--year", "2023", "--ufs", "RR", "--target", target],
+        ["import", "sim_obitos", "--year", "2023", "--ufs", "RR", "--target", target],
     )
     assert result.exit_code == 0, result.stdout
 
     from omnisus_db.lake import Lake
 
     lake = Lake.local(target)
-    n = lake.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()[0]
+    n = lake.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone()[0]
     assert n > 0
     lake.close()
 
 
 def test_import_requires_year_or_years() -> None:
     """Missing --year/--years should fail with a clear error."""
-    result = runner.invoke(app, ["import", "sim"])
+    result = runner.invoke(app, ["import", "sim_obitos"])
     assert result.exit_code != 0
     assert "year" in result.output.lower()
 
@@ -156,38 +156,54 @@ def test_import_sia_bi_via_cli(monkeypatch, tmp_path: Path, dbc_fixture) -> None
     target = f"ducklake:{tmp_path}/sia.ducklake"
     result = runner.invoke(
         app,
-        ["import", "sia_bi", "--year", "2024", "--months", "1", "--ufs", "RR", "--target", target],
+        [
+            "import",
+            "sia_bpa_individualizado",
+            "--year",
+            "2024",
+            "--months",
+            "1",
+            "--ufs",
+            "RR",
+            "--target",
+            target,
+        ],
     )
     assert result.exit_code == 0, result.output
 
     from omnisus_db.lake import Lake
 
     with Lake.local(target) as lake:
-        assert "sia_bi" in lake.tables()
+        assert "sia_bpa_individualizado" in lake.tables()
 
 
 def test_import_unknown_dataset_lists_the_choices() -> None:
     result = runner.invoke(app, ["import", "bogus", "--year", "2024"])
     assert result.exit_code != 0
     assert "unknown dataset" in result.output
-    assert "sia_bi" in result.output
+    assert "sia_bpa_individualizado" in result.output
 
 
-def test_import_help_lists_registry_names_and_aliases() -> None:
+def test_import_help_lists_registry_names() -> None:
     result = runner.invoke(app, ["import", "--help"])
     assert result.exit_code == 0
-    for name in ("sim", "sia_atd", "cnes-st", "ibge-pop"):
+    for name in (
+        "sim_obitos",
+        "sia_apac_tratamento_dialitico",
+        "cnes_estabelecimentos",
+        "ibge_populacao",
+    ):
         assert name in result.output
 
 
-def test_dataset_choices_cover_registry_aliases_and_non_ftp() -> None:
+def test_dataset_choices_cover_registry_and_non_ftp() -> None:
     import omnisus_db.cli.main as cli_main
     from omnisus_db.cli.main import dataset_choices
-    from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 
     choices = set(dataset_choices())
-    assert choices == set(REGISTRY) | set(ALIASES) | set(cli_main._NON_FTP)
-    assert "ibge-pop" in choices
+    assert choices == set(REGISTRY) | set(cli_main._NON_FTP)
+    assert "ibge_populacao" in choices
 
 
 def test_import_dispatch_fails_loudly_on_non_ftp_entry_without_importer(
@@ -236,7 +252,7 @@ def test_a_skipped_scope_exits_zero(monkeypatch, tmp_path: Path, dbc_fixture) ->
         app,
         [
             "import",
-            "sim",
+            "sim_obitos",
             "--years",
             "2022-2023",
             "--ufs",
@@ -262,7 +278,7 @@ def test_a_failed_scope_exits_one(monkeypatch, tmp_path: Path) -> None:
         app,
         [
             "import",
-            "sim",
+            "sim_obitos",
             "--year",
             "2023",
             "--ufs",
@@ -284,7 +300,7 @@ def test_import_invalid_dbc_exits_nonzero(monkeypatch, tmp_path: Path) -> None:
         app,
         [
             "import",
-            "sim_do",
+            "sim_obitos",
             "--year",
             "2023",
             "--ufs",
@@ -316,7 +332,7 @@ def test_import_abort_prints_partial_progress(monkeypatch, tmp_path: Path, width
         app,
         [
             "import",
-            "sim_do",
+            "sim_obitos",
             "--year",
             "2023",
             "--ufs",
@@ -357,7 +373,7 @@ def test_plan_inventory_imports_only_what_the_server_lists(
         app,
         [
             "import",
-            "sim",
+            "sim_obitos",
             "--years",
             "2022-2023",
             "--ufs",
@@ -392,7 +408,7 @@ def test_plan_inventory_bypasses_a_stale_listing_cache(
     )
     argv = [
         "import",
-        "sim",
+        "sim_obitos",
         "--year",
         "2023",
         "--ufs",
@@ -409,7 +425,7 @@ def test_plan_inventory_bypasses_a_stale_listing_cache(
 
 
 def test_an_unknown_plan_is_rejected() -> None:
-    result = runner.invoke(app, ["import", "sim", "--year", "2023", "--plan", "bogus"])
+    result = runner.invoke(app, ["import", "sim_obitos", "--year", "2023", "--plan", "bogus"])
     assert result.exit_code != 0
     assert "inventory" in result.output and "product" in result.output
 

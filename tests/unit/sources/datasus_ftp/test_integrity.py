@@ -39,7 +39,7 @@ def test_truncated_dbf_raises_integrity_error(fake_decompress) -> None:
     """Header declares 3 records, only 2 present: must raise, not lose data."""
     fake_decompress(make_dbf(3, [b" AAA", b" BBB"]))
     with pytest.raises(DbfIntegrityError) as exc_info:
-        dbc_bytes_to_lazyframe(b"ignored", dataset="sim_do")
+        dbc_bytes_to_lazyframe(b"ignored", dataset="sim_obitos")
     msg = str(exc_info.value)
     assert "3" in msg
     assert "2" in msg
@@ -49,13 +49,13 @@ def test_early_eof_marker_raises_integrity_error(fake_decompress) -> None:
     """Byte length is right but an embedded 0x1A stops the parser early."""
     fake_decompress(make_dbf(3, [b" AAA", b"\x1aBBB", b" CCC"]))
     with pytest.raises(DbfIntegrityError):
-        dbc_bytes_to_lazyframe(b"ignored", dataset="sim_do")
+        dbc_bytes_to_lazyframe(b"ignored", dataset="sim_obitos")
 
 
 def test_deleted_records_are_tolerated(fake_decompress) -> None:
     """Deleted rows (flag ``*``) count toward nrec; no false positive."""
     fake_decompress(make_dbf(3, [b" AAA", b"*BBB", b" CCC"]))
-    lf = dbc_bytes_to_lazyframe(b"ignored", dataset="sim_do")
+    lf = dbc_bytes_to_lazyframe(b"ignored", dataset="sim_obitos")
     assert isinstance(lf, pl.LazyFrame)
     assert lf.collect().height == 2
 
@@ -63,12 +63,12 @@ def test_deleted_records_are_tolerated(fake_decompress) -> None:
 def test_intact_dbf_passes_gate(fake_decompress) -> None:
     """Consistent header and body: gate is invisible."""
     fake_decompress(make_dbf(2, [b" AAA", b" BBB"]))
-    lf = dbc_bytes_to_lazyframe(b"ignored", dataset="sim_do")
+    lf = dbc_bytes_to_lazyframe(b"ignored", dataset="sim_obitos")
     assert lf.collect().height == 2
 
 
 def test_real_fixture_passes_gate(dbc_fixture) -> None:
     """A genuine DATASUS file must sail through the gate untouched."""
     dbc_path = dbc_fixture("sim_rr_2023_mini")
-    lf = dbc_bytes_to_lazyframe(dbc_path.read_bytes(), dataset="sim_do")
+    lf = dbc_bytes_to_lazyframe(dbc_path.read_bytes(), dataset="sim_obitos")
     assert lf.collect().height > 0

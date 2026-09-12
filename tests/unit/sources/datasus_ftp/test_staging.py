@@ -17,7 +17,7 @@ def records(monkeypatch, values, batch=2):
 def test_null_first_and_missing_columns_are_preserved(monkeypatch, tmp_path):
     records(monkeypatch, [{"X": None}, {"X": None}, {"X": 2**60 + 1, "Y": "a"}])
     target = tmp_path / "output.parquet"
-    result = dbc_bytes_to_parquet(b"x", target, dataset="sim_do", ano=2023, uf="RR", mes=1)
+    result = dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos", ano=2023, uf="RR", mes=1)
     df = pl.read_parquet(target)
     assert result.rows == 3 and result.bytes == target.stat().st_size
     assert df["x"].to_list() == [None, None, 2**60 + 1]
@@ -35,7 +35,7 @@ def test_incompatible_families_rejected_without_publishing(monkeypatch, tmp_path
     target = tmp_path / "output.parquet"
     target.write_bytes(b"previous")
     with pytest.raises((TypeError, ValueError)):
-        dbc_bytes_to_parquet(b"x", target, dataset="sim_do", ano=2023, uf="RR")
+        dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos", ano=2023, uf="RR")
     assert target.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [target]
 
@@ -43,15 +43,15 @@ def test_incompatible_families_rejected_without_publishing(monkeypatch, tmp_path
 def test_legacy_parser_rejects_lossy_batches(monkeypatch):
     records(monkeypatch, [{"X": 2**60 + 1}, {"X": 1.5}], 1)
     with pytest.raises((TypeError, ValueError)):
-        parse.dbc_bytes_to_lazyframe(b"x", dataset="sim_do")
+        parse.dbc_bytes_to_lazyframe(b"x", dataset="sim_obitos")
 
 
 def test_fixture_multiple_batches_equivalent(dbc_fixture, monkeypatch, tmp_path):
     raw = dbc_fixture("sim_rr_2023_mini").read_bytes()
-    expected = parse.dbc_bytes_to_lazyframe(raw, dataset="sim_do", ano=2023, uf="RR").collect()
+    expected = parse.dbc_bytes_to_lazyframe(raw, dataset="sim_obitos", ano=2023, uf="RR").collect()
     monkeypatch.setattr(parse, "BATCH_ROWS", 7)
     target = tmp_path / "output.parquet"
-    dbc_bytes_to_parquet(raw, target, dataset="sim_do", ano=2023, uf="RR")
+    dbc_bytes_to_parquet(raw, target, dataset="sim_obitos", ano=2023, uf="RR")
     assert pl.read_parquet(target).equals(expected)
 
 
@@ -63,7 +63,9 @@ def test_integrity_failure_does_not_publish(monkeypatch, tmp_path):
 
     monkeypatch.setattr(parse, "_check_record_count", fail)
     with pytest.raises(parse.DbfIntegrityError):
-        dbc_bytes_to_parquet(b"x", tmp_path / "out.parquet", dataset="sim_do", ano=2023, uf="RR")
+        dbc_bytes_to_parquet(
+            b"x", tmp_path / "out.parquet", dataset="sim_obitos", ano=2023, uf="RR"
+        )
     assert not list(tmp_path.iterdir())
 
 
@@ -80,7 +82,7 @@ def test_cancelled_stream_cleans_spool_and_closes_generator(monkeypatch, tmp_pat
 
     monkeypatch.setattr(parse, "_stream_records", interrupted)
     with pytest.raises(KeyboardInterrupt):
-        dbc_bytes_to_parquet(b"x", tmp_path / "out.parquet", dataset="sim_do")
+        dbc_bytes_to_parquet(b"x", tmp_path / "out.parquet", dataset="sim_obitos")
     assert closed == [True]
     assert not list(tmp_path.iterdir())
 
@@ -88,7 +90,7 @@ def test_cancelled_stream_cleans_spool_and_closes_generator(monkeypatch, tmp_pat
 def test_empty_staging_preserves_partition_schema(monkeypatch, tmp_path):
     records(monkeypatch, [])
     target = tmp_path / "out.parquet"
-    result = dbc_bytes_to_parquet(b"x", target, dataset="sim_do", ano=2023, uf="RR")
+    result = dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos", ano=2023, uf="RR")
     assert result.rows == 0
     assert pl.read_parquet(target)["ano"].dtype == pl.UInt16
 
@@ -106,7 +108,7 @@ def test_failed_atomic_replace_preserves_target_and_cleans_spool(monkeypatch, tm
 
     monkeypatch.setattr(staging.os, "replace", fail_replace)
     with pytest.raises(OSError, match="publication"):
-        dbc_bytes_to_parquet(b"x", target, dataset="sim_do")
+        dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos")
     assert target.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [target]
 
@@ -188,7 +190,7 @@ def test_writer_failure_closes_native_reader_and_preserves_target(
     target = tmp_path / "previous.parquet"
     target.write_bytes(b"previous")
     with pytest.raises(OSError, match="disk full"):
-        dbc_bytes_to_parquet(b"x", target, dataset="sim_do")
+        dbc_bytes_to_parquet(b"x", target, dataset="sim_obitos")
     assert target.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [target]
     assert len(opened) == 1

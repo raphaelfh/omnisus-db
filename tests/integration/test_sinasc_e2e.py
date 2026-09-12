@@ -26,7 +26,7 @@ def test_import_sinasc_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) ->
     lake = Lake.local(target)
     n = (
         lake.connect()
-        .execute("SELECT count(*) FROM lake.sinasc_nv WHERE ano=2022 AND uf='RR'")
+        .execute("SELECT count(*) FROM lake.sinasc_nascidos_vivos WHERE ano=2022 AND uf='RR'")
         .fetchone()[0]
     )
     assert n > 0

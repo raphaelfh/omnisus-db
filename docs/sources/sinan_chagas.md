@@ -1,6 +1,6 @@
-# SINAN — Chagas aguda, modalidade preliminar
+# SINAN — Chagas aguda
 
-`sinan_chagas_prelim` importa notificações nacionais do diretório
+`sinan_chagas` importa notificações nacionais do diretório
 `/dissemin/publicos/SINAN/DADOS/PRELIM`, arquivos `CHAGBRYY.dbc`.
 O inventário consultado em 10/09/2026 continha 2023, 2024 e 2025.
 Disponibilidade deve ser consultada novamente antes de cada estudo.
@@ -12,11 +12,11 @@ contrato**. A modalidade preliminar não é convertida silenciosamente em final.
 ```python
 import omnisus_db as odb
 
-scopes = odb.available("sinan_chagas_prelim", years=[2023], refresh=True)
+scopes = odb.available("sinan_chagas", years=[2023], refresh=True)
 if not scopes:
     raise ValueError("O arquivo solicitado não foi listado pela fonte")
 report = odb.import_dataset(
-    "sinan_chagas_prelim", scopes=scopes,
+    "sinan_chagas", scopes=scopes,
     target="ducklake:./chagas.ducklake", policy="skip_same",
     run_id="chagas-2023-estudo-01", concurrency=1, batch_size=1,
 )
@@ -24,8 +24,8 @@ print(report.rows, report.failed)
 ```
 
 ```bash
-omnisus-db inventory sinan_chagas_prelim
-omnisus-db import sinan_chagas_prelim --years 2023 --plan inventory --policy skip_same
+omnisus-db inventory sinan_chagas
+omnisus-db import sinan_chagas --years 2023 --plan inventory --policy skip_same
 ```
 
 O recorte nacional é `ScopeKey(uf=None, ano=2023)`. Não aceita filtros de UF ou

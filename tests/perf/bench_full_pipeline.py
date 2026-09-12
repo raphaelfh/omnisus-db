@@ -27,9 +27,9 @@ def test_bench_full_pipeline_sim(benchmark, dbc_fixture, tmp_path, monkeypatch, 
         with TemporaryDirectory(prefix="bench-lake-", dir=tmp_path) as directory:
             root = Path(directory)
             staging = root / "input.parquet"
-            dbc_bytes_to_parquet(raw, staging, dataset="sim_do", ano=2023, uf="RR")
+            dbc_bytes_to_parquet(raw, staging, dataset="sim_obitos", ano=2023, uf="RR")
             with Lake.local(f"ducklake:{root}/fresh.ducklake") as lake:
-                result = lake.ingest_parquet("sim_do", staging, partition_by=("ano", "uf"))
+                result = lake.ingest_parquet("sim_obitos", staging, partition_by=("ano", "uf"))
                 return result.rows
 
     rows = benchmark.pedantic(run, rounds=7, warmup_rounds=1, iterations=1)

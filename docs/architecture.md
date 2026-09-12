@@ -14,7 +14,7 @@ dates instead of assigning an artificial UF. Its source validator verifies
 agravo/year before the shared transaction. State scopes keep their existing
 manifest identity. National and state publications cannot share a table.
 FTP publication manifests also retain the acquired source URI; older rows have
-unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas_prelim.md).
+unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas.md).
 
 - **`Dataset`** is an immutable, keyword-only DATASUS FTP registry row. It holds
   identity, FTP location, cadence, partitioning, coverage and a dictionary path.
@@ -132,7 +132,7 @@ IBGE population validates an explicit product and edition against its metadata,
 periods and territorial universe. Canonical data and provenance commit together,
 and each returned `ImportResult` carries the publication ID. It does not use the
 FTP report/recovery loop. Historical estimates without edition-specific universes
-are rejected. See the [IBGE source contract](sources/ibge_pop.md).
+are rejected. See the [IBGE source contract](sources/ibge_populacao.md).
 
 CNES master data is
 fetched and validated before its table upsert and `aux_cnes` refresh commit in

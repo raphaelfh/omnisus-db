@@ -29,7 +29,7 @@ def test_import_sim_e2e_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) -
     lake = Lake.local(target)
     n = (
         lake.connect()
-        .execute("SELECT count(*) FROM lake.sim_do WHERE ano=2023 AND uf='RR'")
+        .execute("SELECT count(*) FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'")
         .fetchone()[0]
     )
     assert n > 0

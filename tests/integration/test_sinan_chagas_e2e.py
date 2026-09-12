@@ -8,12 +8,12 @@ pytestmark = [pytest.mark.integration, pytest.mark.e2e]
 
 
 def test_live_chagas_publication_and_replay(tmp_path):
-    scopes = odb.available("sinan_chagas_prelim", refresh=True)
+    scopes = odb.available("sinan_chagas", refresh=True)
     assert scopes, "Source disappeared or no filenames match the contract"
     scope = scopes[-1]
     target = f"ducklake:{tmp_path}/chagas.ducklake"
     initial = odb.import_dataset(
-        "sinan_chagas_prelim",
+        "sinan_chagas",
         scopes=[scope],
         target=target,
         policy="skip_same",
@@ -23,7 +23,7 @@ def test_live_chagas_publication_and_replay(tmp_path):
     )
     assert initial.ok and not initial.failed and initial.rows > 0
     replay = odb.import_dataset(
-        "sinan_chagas_prelim",
+        "sinan_chagas",
         scopes=[scope],
         target=target,
         policy="skip_same",
@@ -38,9 +38,7 @@ def test_live_chagas_publication_and_replay(tmp_path):
         assert publications[0]["source_uri"].endswith(f"CHAGBR{scope.ano % 100:02d}.dbc")
         count = (
             lake.connect()
-            .execute(
-                "SELECT count(*) FROM lake.sinan_chagas_prelim WHERE _source_ano = ?", [scope.ano]
-            )
+            .execute("SELECT count(*) FROM lake.sinan_chagas WHERE _source_ano = ?", [scope.ano])
             .fetchone()[0]
         )
         assert count == initial.rows

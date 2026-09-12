@@ -9,7 +9,7 @@ from rich.console import Console
 
 from omnisus_db.lake import DEFAULT_TARGET, Lake
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY, Dataset, resolve
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, resolve
 
 app = typer.Typer(
     name="omnisus-db",
@@ -19,7 +19,7 @@ app = typer.Typer(
 )
 console = Console()
 
-_NON_FTP: dict[str, str] = {"ibge-pop": "ibge_pop", "ibge_pop": "ibge_pop"}
+_NON_FTP: dict[str, str] = {"ibge_populacao": "ibge_populacao"}
 """CLI names of datasets that are not DATASUS-FTP rows (spec §3.4), mapped to
 their dataset name. Dispatch (in ``import_cmd``) looks up the importer for
 that dataset name in a second, importer-keyed mapping built inside the
@@ -36,7 +36,7 @@ is composition (spec §5.1); this is CLI sugar over the same two functions."""
 
 def dataset_choices() -> list[str]:
     """Every name ``omnisus-db import`` accepts — derived, never listed by hand."""
-    return sorted({*REGISTRY, *ALIASES, *_NON_FTP})
+    return sorted({*REGISTRY, *_NON_FTP})
 
 
 def ftp_dataset_choices() -> list[str]:
@@ -47,7 +47,7 @@ def ftp_dataset_choices() -> list[str]:
     to list. Offering a name the command then rejects is a declaration that
     lies (spec I5).
     """
-    return sorted({*REGISTRY, *ALIASES})
+    return sorted(REGISTRY)
 
 
 @app.command()
@@ -112,7 +112,7 @@ def import_cmd(
     import_policy = cast(ImportPolicy, policy)
 
     non_ftp_importers: dict[str, Callable[..., list[odb.ImportResult]]] = {
-        "ibge_pop": lambda **kw: odb.import_ibge_pop(**kw),
+        "ibge_populacao": lambda **kw: odb.import_ibge_pop(**kw),
     }
 
     # Resolve years
@@ -153,10 +153,10 @@ def import_cmd(
     scopes = _plan_scopes(d, plan=plan, years=yrs, ufs=uf_list, months=month_list)
 
     try:
-        if d.name == "cnes_st":
+        if d.name == "cnes_estabelecimentos":
             # Named importer: refreshes aux_cnes after the load (spec §3.4, I2).
             # It takes the planned scopes, so --plan reaches this branch too.
-            report = odb.import_cnes_st(
+            report = odb.import_cnes_estabelecimentos(
                 scopes=scopes,
                 target=target,
                 policy=import_policy,

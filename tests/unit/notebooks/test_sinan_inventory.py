@@ -20,7 +20,7 @@ async def test_national_inventory_result_exports_complete_data(tmp_path):
     target = f"ducklake:{tmp_path}/national.ducklake"
     frame = pl.DataFrame({"_source_ano": [2023, 2023], "sg_uf_not": ["15", "33"]})
     with odb.Lake.local(target) as lake:
-        lake.ingest("sinan_chagas_prelim", frame.lazy())
+        lake.ingest("sinan_chagas", frame.lazy())
     report = odb.ImportReport(
         outcomes=(
             odb.ScopeOutcome(
@@ -31,7 +31,7 @@ async def test_national_inventory_result_exports_complete_data(tmp_path):
         )
     )
     _, values = await cell.run(
-        dataset=resolve("sinan_chagas_prelim"),
+        dataset=resolve("sinan_chagas"),
         mo=mo,
         odb=odb,
         pasta=tmp_path,
@@ -39,5 +39,5 @@ async def test_national_inventory_result_exports_complete_data(tmp_path):
         target=target,
     )
     assert values["resumo"].rows() == [(2023, 2)]
-    assert pl.read_parquet(tmp_path / "sinan_chagas_prelim.parquet").equals(frame)
-    assert pl.read_csv(tmp_path / "sinan_chagas_prelim.csv").height == 2
+    assert pl.read_parquet(tmp_path / "sinan_chagas.parquet").equals(frame)
+    assert pl.read_csv(tmp_path / "sinan_chagas.csv").height == 2

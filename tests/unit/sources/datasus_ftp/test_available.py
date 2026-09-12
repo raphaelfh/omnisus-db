@@ -17,8 +17,8 @@ from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 from omnisus_db.sources.datasus_ftp.inventory import available, crawl, list_dir_cached
 
-SIM_DIR = REGISTRY["sim_do"].ftp_dir
-SIA_DIR = REGISTRY["sia_bi"].ftp_dir
+SIM_DIR = REGISTRY["sim_obitos"].ftp_dir
+SIA_DIR = REGISTRY["sia_bpa_individualizado"].ftp_dir
 
 
 def _file(name: str, when: str = "01-31-20  02:48PM", size: int = 76107) -> str:
@@ -40,14 +40,14 @@ def _isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 def test_available_decodes_scopes_for_the_requested_dataset() -> None:
     lines = [_file("DOAC1996.dbc"), _file("DOAC1997.dbc"), _file("DOSP2024.dbc")]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
-        scopes = available("sim_do")
+        scopes = available("sim_obitos")
     assert ScopeKey(uf="AC", ano=1996) in scopes
     assert ScopeKey(uf="SP", ano=2024) in scopes
     assert len(scopes) == 3
 
 
 def test_available_filters_out_other_datasets_sharing_the_directory() -> None:
-    """SIASUS/200801_/Dados holds BI, AM, AQ, ATD... available('sia_bi') must
+    """SIASUS/200801_/Dados holds BI, AM, AQ, ATD... available('sia_bpa_individualizado') must
     return only BI scopes."""
     lines = [
         _file("BIRR2401.dbc"),
@@ -56,7 +56,7 @@ def test_available_filters_out_other_datasets_sharing_the_directory() -> None:
         _file("BIRR2402.dbc"),
     ]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
-        scopes = available("sia_bi")
+        scopes = available("sia_bpa_individualizado")
     assert scopes == [
         ScopeKey(uf="RR", ano=2024, mes=1),
         ScopeKey(uf="RR", ano=2024, mes=2),
@@ -66,35 +66,27 @@ def test_available_filters_out_other_datasets_sharing_the_directory() -> None:
 def test_available_skips_undecodable_names_without_raising() -> None:
     lines = [_file("DOAC1996.dbc"), _file("readme.txt"), _file("PARR2401.dbc"), _dir("OLD")]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
-        scopes = available("sim_do")
+        scopes = available("sim_obitos")
     assert scopes == [ScopeKey(uf="AC", ano=1996)]
 
 
 def test_available_filters_by_years() -> None:
     lines = [_file("DOAC1996.dbc"), _file("DOAC2020.dbc"), _file("DOAC2024.dbc")]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
-        scopes = available("sim_do", years=range(2020, 2025))
+        scopes = available("sim_obitos", years=range(2020, 2025))
     assert [s.ano for s in scopes] == [2020, 2024]
 
 
 def test_available_returns_sorted_scopes() -> None:
     lines = [_file("DOSP2024.dbc"), _file("DOAC1996.dbc"), _file("DOAC2020.dbc")]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
-        scopes = available("sim_do")
+        scopes = available("sim_obitos")
     assert scopes == sorted(scopes, key=lambda s: (s.ano, s.uf, s.mes or 0))
-
-
-def test_available_accepts_an_alias() -> None:
-    with patch(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
-        return_value=[_file("DOAC1996.dbc")],
-    ):
-        assert available("sim") == [ScopeKey(uf="AC", ano=1996)]
 
 
 def test_available_empty_directory_returns_empty_list() -> None:
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=[]):
-        assert available("sim_do") == []
+        assert available("sim_obitos") == []
 
 
 # --- caching ---------------------------------------------------------------
@@ -105,8 +97,8 @@ def test_second_call_is_served_from_cache_without_hitting_the_network() -> None:
         "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
         return_value=[_file("DOAC1996.dbc")],
     ) as spy:
-        available("sim_do")
-        available("sim_do")
+        available("sim_obitos")
+        available("sim_obitos")
     assert spy.call_count == 1
 
 
@@ -115,8 +107,8 @@ def test_refresh_bypasses_the_cache() -> None:
         "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
         return_value=[_file("DOAC1996.dbc")],
     ) as spy:
-        available("sim_do")
-        available("sim_do", refresh=True)
+        available("sim_obitos")
+        available("sim_obitos", refresh=True)
     assert spy.call_count == 2
 
 
@@ -144,7 +136,7 @@ def test_an_unwritable_cache_does_not_veto_a_good_listing() -> None:
             side_effect=PermissionError("read-only file system"),
         ),
     ):
-        scopes = available("sim_do")
+        scopes = available("sim_obitos")
     assert scopes == [ScopeKey(uf="AC", ano=1996)]
 
 
@@ -261,7 +253,7 @@ def test_crawl_is_open_world_where_available_is_closed() -> None:
     lines = [_file("DOAC1996.dbc"), _file("readme.txt"), _file("PARR2401.dbc")]
     with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", return_value=lines):
         crawled = {e.name for e in crawl(SIM_DIR)}
-        scopes = available("sim_do", refresh=True)
+        scopes = available("sim_obitos", refresh=True)
 
     assert crawled == {"DOAC1996.dbc", "readme.txt", "PARR2401.dbc"}
     assert scopes == [ScopeKey(uf="AC", ano=1996)]

@@ -29,8 +29,8 @@ def parse_filename(name: str) -> tuple[ScopeKey, str]:
     """Parse a DATASUS DBC filename into (ScopeKey, dataset_name).
 
     Examples:
-        DOSP2024.dbc -> (ScopeKey('SP', 2024), 'sim_do')
-        RDSP2401.dbc -> (ScopeKey('SP', 2024, 1), 'sih_rd')
+        DOSP2024.dbc -> (ScopeKey('SP', 2024), 'sim_obitos')
+        RDSP2401.dbc -> (ScopeKey('SP', 2024, 1), 'sih_aih_reduzida')
     """
     for d in REGISTRY.values():
         if d.geography == "national":

@@ -368,8 +368,14 @@ def _(mo, odb):
     live_config = mo.ui.dictionary(
         {
             "dataset": mo.ui.dropdown(
-                ["sim_do", "sinasc_nv", "sih_rd", "cnes_st", "sia_bi"],
-                value="sim_do",
+                [
+                    "sim_obitos",
+                    "sinasc_nascidos_vivos",
+                    "sih_aih_reduzida",
+                    "cnes_estabelecimentos",
+                    "sia_bpa_individualizado",
+                ],
+                value="sim_obitos",
                 label="Dataset",
             ),
             "year": mo.ui.number(start=2008, stop=2100, value=2023, label="Ano"),
@@ -449,8 +455,8 @@ async def execute_live_import(
 
     def _import_live():
         # Os wrappers síncronos usam asyncio.run: execute fora do loop do notebook.
-        if selected_config["dataset"] == "cnes_st":
-            return odb.import_cnes_st(scopes=selected_scopes, target=live_target)
+        if selected_config["dataset"] == "cnes_estabelecimentos":
+            return odb.import_cnes_estabelecimentos(scopes=selected_scopes, target=live_target)
         return odb.import_dataset(
             selected_config["dataset"],
             scopes=selected_scopes,
@@ -507,14 +513,14 @@ def _(mo):
     ```python
     with odb.Lake.local(live_target) as lake:
         df = lake.connect().execute(
-            "SELECT uf, ano, count(*) AS registros FROM lake.sim_do "
+            "SELECT uf, ano, count(*) AS registros FROM lake.sim_obitos "
             "WHERE uf = ? GROUP BY uf, ano", ["RR"]
         ).pl()
     # Ajuste a tabela ao dataset importado.
     ```
 
     **CNES: nomes de até três estabelecimentos já importados.**
-    `import_cnes_st` atualiza `aux_cnes`; `import_dataset("cnes_st", ...)` exige
+    `import_cnes_estabelecimentos` atualiza `aux_cnes`; `import_dataset("cnes_estabelecimentos", ...)` exige
     `lake.ensure_aux_cnes_view()` depois. A visão seleciona a linha completa da
     última competência, preserva seus NULLs e rejeita empates conflitantes.
     O nome do master é enriquecimento atual, sem garantia histórica.
@@ -522,7 +528,7 @@ def _(mo):
     ```python
     with odb.Lake.local(live_target) as lake:
         codes = [row[0] for row in lake.connect().sql(
-            "SELECT DISTINCT cnes FROM lake.cnes_st "
+            "SELECT DISTINCT cnes FROM lake.cnes_estabelecimentos "
             "WHERE cnes IS NOT NULL ORDER BY cnes LIMIT 3"
         ).fetchall()]
     written = await asyncio.to_thread(
@@ -553,7 +559,7 @@ def _(mo):
     limpeza física têm operações próprias, descritas no guia de manutenção.
 
     Referências: `docs/api.md`, `docs/guides/inventory.md`,
-    `docs/sources/cnes_st.md`, `docs/sources/ibge_pop.md`.
+    `docs/sources/cnes_estabelecimentos.md`, `docs/sources/ibge_populacao.md`.
     O controle das operações externas segue o
     [run button do marimo](https://docs.marimo.io/api/inputs/run_button/).
     """)

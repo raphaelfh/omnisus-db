@@ -43,7 +43,7 @@ print(f"Rows imported: {report.rows}; failed: {len(report.failed)}; skipped: {le
 if report.ok:
     with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
         df = lake.connect().sql(
-            "SELECT count(*) AS obitos FROM lake.sim_do WHERE ano = 2024"
+            "SELECT count(*) AS obitos FROM lake.sim_obitos WHERE ano = 2024"
         ).pl()
         print(df)
 ```

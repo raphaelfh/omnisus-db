@@ -18,9 +18,9 @@ integradas.** Nenhuma fonte abaixo deve ser apresentada como substituta equivale
 ```python
 import omnisus_db as odb
 
-scopes = odb.scopes_for("sia_am", years=[2024], ufs=["RR"], months=[1])
+scopes = odb.scopes_for("sia_apac_medicamentos", years=[2024], ufs=["RR"], months=[1])
 report = odb.import_dataset(
-    "sia_am", scopes=scopes, target="ducklake:medicamentos.ducklake",
+    "sia_apac_medicamentos", scopes=scopes, target="ducklake:medicamentos.ducklake",
     policy="skip_same", run_id="pesquisa-medicamentos-rr-202401-v1",
 )
 assert not report.failed  # Examine também skipped; ausência não é publicação.

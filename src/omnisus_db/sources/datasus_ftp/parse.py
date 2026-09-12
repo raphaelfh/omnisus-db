@@ -63,7 +63,7 @@ def dbc_bytes_to_lazyframe(
 
     Args:
         dbc_bytes: raw DBC payload from FTP.
-        dataset: dataset name (e.g. "sim_do") — used for log/error messages
+        dataset: dataset name (e.g. "sim_obitos") — used for log/error messages
             and, when ``dictionary`` is None, to look up the packaged YAML.
         ano, uf: optionally injected as canonical partition columns.
         dictionary: explicit Frictionless YAML path. Bypasses the packaged

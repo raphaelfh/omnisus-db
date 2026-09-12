@@ -30,18 +30,20 @@ def test_import_sia_bi_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None
     target = f"ducklake:{tmp_path}/test.ducklake"
     lake = Lake.local(target)
     result = asyncio.run(
-        import_scope(dataset="sia_bi", scope=ScopeKey(uf="RR", ano=2024, mes=1), lake=lake)
+        import_scope(
+            dataset="sia_bpa_individualizado", scope=ScopeKey(uf="RR", ano=2024, mes=1), lake=lake
+        )
     )
     assert result.rows == 12_099
 
     con = lake.connect()
     rows = con.execute(
-        "SELECT count(*) FROM lake.sia_bi WHERE ano=2024 AND uf='RR' AND mes=1"
+        "SELECT count(*) FROM lake.sia_bpa_individualizado WHERE ano=2024 AND uf='RR' AND mes=1"
     ).fetchone()[0]
     assert rows == 12_099
     # linkage key survived the trip into the lake
     non_blank = con.execute(
-        "SELECT count(*) FROM lake.sia_bi WHERE trim(cns_pac) != ''"
+        "SELECT count(*) FROM lake.sia_bpa_individualizado WHERE trim(cns_pac) != ''"
     ).fetchone()[0]
     assert non_blank > 11_000
     lake.close()

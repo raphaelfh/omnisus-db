@@ -26,7 +26,7 @@ def test_import_sih_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     lake = Lake.local(target)
     rows = (
         lake.connect()
-        .execute("SELECT count(*) FROM lake.sih_rd WHERE ano=2024 AND uf='RR' AND mes=1")
+        .execute("SELECT count(*) FROM lake.sih_aih_reduzida WHERE ano=2024 AND uf='RR' AND mes=1")
         .fetchone()[0]
     )
     assert rows > 0

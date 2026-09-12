@@ -70,7 +70,7 @@ def _(Path, mo):
 def preparation_helpers(UTC, asdict, datetime, json, odb, uuid4):
     def prepare_real_data(data_root, project_root):
         """Download via public API; publish latest.json only after validation."""
-        dataset = odb.resolve("sim_do")
+        dataset = odb.resolve("sim_obitos")
         scopes = [
             scope
             for scope in odb.available(dataset, years=[2022, 2023], refresh=True)
@@ -118,7 +118,7 @@ def preparation_helpers(UTC, asdict, datetime, json, odb, uuid4):
             counts = (
                 lake.connect()
                 .sql(
-                    "SELECT ano, uf, count(*) AS registros FROM lake.sim_do "
+                    "SELECT ano, uf, count(*) AS registros FROM lake.sim_obitos "
                     "GROUP BY ano, uf ORDER BY ano, uf"
                 )
                 .pl()
@@ -264,7 +264,7 @@ def read_real_lake(manifest, odb, real_target):
         assert _lake.snapshots() == manifest["snapshots"], (
             "Histórico do lake alterado desde a extração; prepare nova cópia antes de analisar"
         )
-        real_schema = _lake.connect().sql("DESCRIBE lake.sim_do").pl()
+        real_schema = _lake.connect().sql("DESCRIBE lake.sim_obitos").pl()
         real_data = (
             _lake.connect()
             .sql("""
@@ -283,7 +283,7 @@ def read_real_lake(manifest, odb, real_target):
                 NULLIF(trim(cast(codmunocor AS VARCHAR)), '') AS municipio_ocorrencia,
                 NULLIF(upper(trim(cast(causabas AS VARCHAR))), '') AS causa_basica,
                 NULLIF(trim(cast(idade AS VARCHAR)), '') AS idade_codificada
-            FROM lake.sim_do
+            FROM lake.sim_obitos
             ORDER BY ano, dtobito, codmunres, causabas, sexo
         """)
             .pl()
@@ -291,7 +291,7 @@ def read_real_lake(manifest, odb, real_target):
         current_counts = (
             _lake.connect()
             .sql(
-                "SELECT ano, uf, count(*) AS registros FROM lake.sim_do GROUP BY ano, uf ORDER BY ano, uf"
+                "SELECT ano, uf, count(*) AS registros FROM lake.sim_obitos GROUP BY ano, uf ORDER BY ano, uf"
             )
             .pl()
             .to_dicts()

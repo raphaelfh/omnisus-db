@@ -38,7 +38,9 @@ async def test_import_ibge_pop_e2e(tmp_path):
         result = await import_pop_year(year=2022, product="census", lake=lake)
         assert result.rows == 2 and result.snapshot_id is not None
         con = lake.connect()
-        assert con.execute("SELECT sum(populacao) FROM lake.ibge_pop").fetchone()[0] == 118327
+        assert (
+            con.execute("SELECT sum(populacao) FROM lake.ibge_populacao").fetchone()[0] == 118327
+        )
         records = con.execute(
             "SELECT p.publication_id, m.product, m.sha256, m.revision, m.expected_rows, m.accepted_rows, m.evidence_json FROM lake.ibge_population p JOIN lake.ibge_population_manifest m USING(publication_id)"
         ).fetchall()
@@ -89,10 +91,12 @@ async def test_legacy_table_is_preserved_and_requires_migration(tmp_path):
     mock_source()
     lake = Lake.local(f"ducklake:{tmp_path}/legacy.ducklake")
     try:
-        lake.ingest("ibge_pop", pl.DataFrame({"sentinel": [42]}).lazy())
+        lake.ingest("ibge_populacao", pl.DataFrame({"sentinel": [42]}).lazy())
         with pytest.raises(ValueError, match=r"legacy|migration"):
             await import_pop_year(year=2022, product="census", lake=lake)
-        assert lake.connect().execute("SELECT sentinel FROM lake.ibge_pop").fetchone()[0] == 42
+        assert (
+            lake.connect().execute("SELECT sentinel FROM lake.ibge_populacao").fetchone()[0] == 42
+        )
         assert "ibge_population" not in lake.tables()
     finally:
         lake.close()
@@ -114,7 +118,7 @@ async def test_append_preserves_publications_and_compatibility_view_refuses_ambi
             == 2
         )
         with pytest.raises(Exception, match="ambiguous"):
-            lake.connect().execute("SELECT populacao FROM lake.ibge_pop").fetchall()
+            lake.connect().execute("SELECT populacao FROM lake.ibge_populacao").fetchall()
     finally:
         lake.close()
 

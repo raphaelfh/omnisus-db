@@ -44,10 +44,10 @@ def test_cnes_latest_row_preserves_null(tmp_path):
     with Lake.local(f"ducklake:{tmp_path}/s.ducklake") as lake:
         con = lake.connect()
         con.execute(
-            "CREATE TABLE lake.cnes_st(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)"
+            "CREATE TABLE lake.cnes_estabelecimentos(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)"
         )
         con.execute(
-            "INSERT INTO lake.cnes_st VALUES ('1234567','05','355030',2024,1),('1234567',NULL,'330455',2024,2)"
+            "INSERT INTO lake.cnes_estabelecimentos VALUES ('1234567','05','355030',2024,1),('1234567',NULL,'330455',2024,2)"
         )
         lake.ensure_aux_cnes_view()
         assert con.execute("SELECT tp_unid,codufmun,yyyymm_max FROM lake.aux_cnes").fetchall() == [
@@ -59,10 +59,10 @@ def test_cnes_conflicting_latest_rows_rejected(tmp_path):
     with Lake.local(f"ducklake:{tmp_path}/s.ducklake") as lake:
         con = lake.connect()
         con.execute(
-            "CREATE TABLE lake.cnes_st(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)"
+            "CREATE TABLE lake.cnes_estabelecimentos(cnes VARCHAR,tp_unid VARCHAR,codufmun VARCHAR,ano INTEGER,mes INTEGER)"
         )
         con.execute(
-            "INSERT INTO lake.cnes_st VALUES ('1234567','05','355030',2024,1),('1234567','07','355030',2024,1)"
+            "INSERT INTO lake.cnes_estabelecimentos VALUES ('1234567','05','355030',2024,1),('1234567','07','355030',2024,1)"
         )
         with pytest.raises(Exception, match=r"conflict|ambig"):
             lake.ensure_aux_cnes_view()

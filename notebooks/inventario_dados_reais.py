@@ -67,7 +67,7 @@ def _(mo):
 
 @app.cell
 def _(REGISTRY, mo):
-    base = mo.ui.dropdown(list(REGISTRY), value="sim_do", label="Base DATASUS")
+    base = mo.ui.dropdown(list(REGISTRY), value="sim_obitos", label="Base DATASUS")
     base
     return (base,)
 

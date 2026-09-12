@@ -1,13 +1,13 @@
-# cnes_st
+# cnes_estabelecimentos
 
 CNES establishment data uses the DATASUS-FTP pipeline. The generated
 [registry catalog](../datasets.md) defines its cadence, coverage and partitions.
-`import_cnes_st()` returns `ImportReport` and refreshes `aux_cnes` after the load.
+`import_cnes_estabelecimentos()` returns `ImportReport` and refreshes `aux_cnes` after the load.
 
 ```python
 import omnisus_db as odb
 
-report = odb.import_cnes_st(years=[2023], ufs=["RR"], months=[1])
+report = odb.import_cnes_estabelecimentos(years=[2023], ufs=["RR"], months=[1])
 print(report.rows, report.failed)
 ```
 
@@ -17,7 +17,7 @@ Names are fetched separately by `import_cnes_master()` from the public CNES API.
 Its return value is the number of useful records fetched, not `ImportReport`.
 
 ```python
-updated = odb.import_cnes_master()  # missing codes discovered from cnes_st
+updated = odb.import_cnes_master()  # missing codes discovered from cnes_estabelecimentos
 ```
 
 The master refresh validates records before mutation and commits table creation,
@@ -43,6 +43,6 @@ A conflicting tie can therefore fail view refresh after source batches committed
 inspect the data and publication manifest before retrying.
 
 Fields and decoding metadata are in
-`src/omnisus_db/data/dicionarios/cnes_st.yaml`. See
+`src/omnisus_db/data/dicionarios/cnes_estabelecimentos.yaml`. See
 [the transaction contract](../guides/inventory.md#transactions-and-interrupted-imports)
 for the one-writer requirement and failure handling.

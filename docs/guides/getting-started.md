@@ -47,7 +47,7 @@ and interrupted imports.
 After the scope has imported successfully:
 
 ```bash
-omnisus-db query "SELECT count(*) FROM lake.sim_do WHERE ano=2023 AND uf='RR'"
+omnisus-db query "SELECT count(*) FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'"
 ```
 
 Or in Python:
@@ -57,7 +57,7 @@ import omnisus_db as odb
 
 with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
     df = reader.connect().sql(
-        "SELECT count(*) AS obitos FROM lake.sim_do WHERE ano=2023 AND uf='RR'"
+        "SELECT count(*) AS obitos FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'"
     ).pl()
 ```
 
@@ -76,11 +76,11 @@ omnisus-db import sinasc --plan inventory --years 2020-2024
 A completed FTP import reports every requested position. The CLI exits 1 for
 failed scopes or interrupted imports. Inspect an unknown commit before retrying;
 see [the transaction contract](inventory.md#transactions-and-interrupted-imports).
-The separate [IBGE population importer](../sources/ibge_pop.md) requires an explicit
+The separate [IBGE population importer](../sources/ibge_populacao.md) requires an explicit
 product and edition and returns a list of results. For example:
 
 ```bash
-omnisus-db import ibge-pop --year 2022 --population-product census
+omnisus-db import ibge_populacao --year 2022 --population-product census
 ```
 
 Historical estimates without a verified territorial universe are unavailable.

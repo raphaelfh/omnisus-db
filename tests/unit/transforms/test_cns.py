@@ -62,7 +62,7 @@ def test_with_decoded_cns_on_real_fixture(dbc_fixture) -> None:
     from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 
     lf = dbc_bytes_to_lazyframe(
-        dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes(), dataset="sia_bi"
+        dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes(), dataset="sia_bpa_individualizado"
     )
     out = with_decoded_cns(lf, source_col="cns_pac").collect()
     valid_rate = out["cns_valido"].sum() / out.height

@@ -20,7 +20,7 @@ biblioteca não constitui confirmação oficial.
 | [Manutenção e checagem](manutencao.md) | Atualização, conflitos, revisão e critérios de publicação |
 | [Consumo e integração](consumo.md) | Uso atual, protótipo JSON/Arrow e implantação na lib |
 | [JSON Schema](schemas/column-metadata.schema.json) | Contrato experimental `0.1.0-draft` |
-| [Exemplo SIM / DO / SEXO](exemplos/sim_do.sexo.json) | Um campo com evidência oficial localizada |
+| [Exemplo SIM / DO / SEXO](exemplos/sim_obitos.sexo.json) | Um campo com evidência oficial localizada |
 | [Registro das fontes](fontes/registro.json) | URLs, SHA-256, tamanho e data da consulta |
 | [Cobertura em CSV](cobertura.csv) | Inventário consumível das lacunas |
 | [Inventário por campo](campos.csv) | 1.326 ocorrências, tipos físicos, definições locais e fontes candidatas |

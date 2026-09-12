@@ -15,7 +15,7 @@ from omnisus_db.sources.datasus_ftp.parse import BATCH_ROWS
 from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 from omnisus_db.transforms.dictionaries import load_dicionario
 
-CASES = [("sim_rr_2023_mini", "sim_do"), ("sih_rr_2024_01_mini", "sih_rd")]
+CASES = [("sim_rr_2023_mini", "sim_obitos"), ("sih_rr_2024_01_mini", "sih_aih_reduzida")]
 
 
 @pytest.mark.perf

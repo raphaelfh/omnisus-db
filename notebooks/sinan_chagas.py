@@ -19,7 +19,7 @@ def _():
     import omnisus_db as odb
     from omnisus_db.transforms.dictionaries import load_dicionario
 
-    dataset = "sinan_chagas_prelim"
+    dataset = "sinan_chagas"
     root = Path(__file__).resolve().parent.parent / "data/lake/sinan-chagas"
     return Path, asyncio, dataset, json, load_dicionario, mo, odb, root, uuid4
 
@@ -211,7 +211,7 @@ def _(Path, consulta, dataset, json, mo, odb):
             _lake.connect()
             .execute(
                 "SELECT sg_uf_not, classi_fin, count(*) AS registros "
-                "FROM lake.sinan_chagas_prelim WHERE _source_ano = ? "
+                "FROM lake.sinan_chagas WHERE _source_ano = ? "
                 "GROUP BY sg_uf_not, classi_fin ORDER BY sg_uf_not, classi_fin",
                 [consulta.value["ano"]],
             )

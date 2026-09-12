@@ -1,7 +1,7 @@
 # Contrato por coluna
 
 O [JSON Schema experimental](schemas/column-metadata.schema.json) valida o formato
-resolvido mostrado em [SIM / DO / SEXO](exemplos/sim_do.sexo.json). É uma unidade
+resolvido mostrado em [SIM / DO / SEXO](exemplos/sim_obitos.sexo.json). É uma unidade
 autossuficiente de transporte: o consumidor não precisa procurar a página de
 origem em outro YAML para compreender a evidência do campo.
 
@@ -119,4 +119,4 @@ Há uma divergência relevante para a integração: o YAML atual da biblioteca u
 mostra separadamente esse tipo lógico legado e o tipo físico documental. A
 aplicabilidade do manual de 2025 ao arquivo amostrado `DORR2023.dbc` permanece
 `unknown`; o exemplo não autoriza uma conversão de tipo ou recodificação desses
-dados. Veja a URL oficial e o hash no próprio [JSON](exemplos/sim_do.sexo.json).
+dados. Veja a URL oficial e o hash no próprio [JSON](exemplos/sim_obitos.sexo.json).

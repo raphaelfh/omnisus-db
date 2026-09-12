@@ -14,7 +14,7 @@ import pytest
 import omnisus_db as odb
 import omnisus_db.cli.main as cli_main
 from omnisus_db.cli.main import dataset_choices
-from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
+from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 
 NON_FTP_DATASETS = set(cli_main._NON_FTP.values())
 """Datasets with their own importer and YAML but no registry row (spec §3.4).
@@ -31,8 +31,8 @@ def test_a_every_row_has_a_packaged_dictionary() -> None:
     assert not missing, f"registry rows without dicionarios/<name>.yaml: {sorted(missing)}"
 
 
-def test_b_cli_accepts_every_row_and_alias() -> None:
-    assert set(dataset_choices()) == set(REGISTRY) | set(ALIASES) | set(cli_main._NON_FTP)
+def test_b_cli_accepts_every_row_and_non_ftp_entry() -> None:
+    assert set(dataset_choices()) == set(REGISTRY) | set(cli_main._NON_FTP)
 
 
 def test_b_python_api_accepts_every_row() -> None:
@@ -61,12 +61,9 @@ def test_f_every_non_aux_yaml_has_exactly_one_owner() -> None:
     )
 
 
-def test_keys_equal_names_and_aliases_point_at_keys() -> None:
+def test_keys_equal_names() -> None:
     for key, d in REGISTRY.items():
         assert key == d.name
-    for alias, key in ALIASES.items():
-        assert key in REGISTRY, alias
-        assert alias not in REGISTRY, alias
 
 
 def test_coverage_is_well_formed() -> None:
@@ -87,7 +84,7 @@ def test_d_inventory_advertises_exactly_what_available_accepts() -> None:
     set. A name offered in help that `available` rejects is I5 in the UI."""
     from omnisus_db.cli.main import ftp_dataset_choices
 
-    assert set(ftp_dataset_choices()) == {*REGISTRY, *ALIASES}
+    assert set(ftp_dataset_choices()) == set(REGISTRY)
 
 
 def _file(name: str, when: str = "01-31-20  02:48PM", size: int = 76107) -> str:
@@ -95,12 +92,12 @@ def _file(name: str, when: str = "01-31-20  02:48PM", size: int = 76107) -> str:
 
 
 def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None:
-    """Tier 2 (c), spec §6: available() accepts every registry key and alias,
-    and rejects everything else. Offline — the stubbed listing includes one
+    """Tier 2 (c), spec §6: available() accepts every registry key, and
+    rejects everything else. Offline — the stubbed listing includes one
     real line, so this doesn't also pass against an available() that always
     returns []."""
     from omnisus_db.sources._base import ScopeKey
-    from omnisus_db.sources.datasus_ftp.datasets import ALIASES, REGISTRY
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
     from omnisus_db.sources.datasus_ftp.inventory import available
 
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
@@ -108,9 +105,9 @@ def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None
         "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
         lambda _p, _t: [_file("DOAC1996.dbc")],
     )
-    for name in (*REGISTRY, *ALIASES):
-        available(name)  # accepted: must not raise, for every key and alias
-    assert available("sim_do") == [ScopeKey(uf="AC", ano=1996)], (
+    for name in REGISTRY:
+        available(name)  # accepted: must not raise, for every registry key
+    assert available("sim_obitos") == [ScopeKey(uf="AC", ano=1996)], (
         "the row whose prefix matches the stubbed line must decode it"
     )
     with pytest.raises(ValueError, match="unknown dataset"):

@@ -18,19 +18,19 @@ import polars as pl
 import pytest
 
 from omnisus_db.sources._base import ScopeKey
-from omnisus_db.sources.datasus_ftp.datasets import get_config
+from omnisus_db.sources.datasus_ftp.datasets import resolve
 from omnisus_db.sources.datasus_ftp.filenames import parse_filename, scope_to_filename
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 from omnisus_db.transforms.dictionaries import load_dicionario
 
 # dataset -> (fixture name, measured nrec, measured parsed column floor)
 FIXTURES = {
-    "sia_am": ("sia_am_rr_2024_01_mini", 2_083, 51),
-    "sia_aq": ("sia_aq_rr_2024_01_mini", 17, 74),
-    "sia_atd": ("sia_atd_rr_2024_01_mini", 358, 65),
-    "sia_ad": ("sia_ad_rr_2024_01_mini", 678, 46),
-    "sia_abo": ("sia_abo_sp_2024_01_mini", 844, 78),
-    "sia_ps": ("sia_ps_rr_2024_01_mini", 1_670, 45),
+    "sia_apac_medicamentos": ("sia_am_rr_2024_01_mini", 2_083, 51),
+    "sia_apac_quimioterapia": ("sia_aq_rr_2024_01_mini", 17, 74),
+    "sia_apac_tratamento_dialitico": ("sia_atd_rr_2024_01_mini", 358, 65),
+    "sia_apac_laudos_diversos": ("sia_ad_rr_2024_01_mini", 678, 46),
+    "sia_apac_cirurgia_bariatrica": ("sia_abo_sp_2024_01_mini", 844, 78),
+    "sia_psicossocial": ("sia_ps_rr_2024_01_mini", 1_670, 45),
 }
 
 
@@ -42,14 +42,14 @@ FIXTURES = {
 @pytest.mark.parametrize(
     ("filename", "dataset", "uf"),
     [
-        ("AMRR2401.dbc", "sia_am", "RR"),
-        ("AQRR2401.dbc", "sia_aq", "RR"),
-        ("ADRR2401.dbc", "sia_ad", "RR"),
-        ("ATDRR2401.dbc", "sia_atd", "RR"),  # 3-letter, backtrack from ATDR
-        ("ABOSP2401.dbc", "sia_abo", "SP"),  # 3-letter, never AB+OS
-        ("PSRR2401.dbc", "sia_ps", "RR"),
-        ("BIRR2401.dbc", "sia_bi", "RR"),  # regression: BI still parses
-        ("RDRR2401.dbc", "sih_rd", "RR"),  # regression: SIH untouched
+        ("AMRR2401.dbc", "sia_apac_medicamentos", "RR"),
+        ("AQRR2401.dbc", "sia_apac_quimioterapia", "RR"),
+        ("ADRR2401.dbc", "sia_apac_laudos_diversos", "RR"),
+        ("ATDRR2401.dbc", "sia_apac_tratamento_dialitico", "RR"),  # 3-letter, backtrack from ATDR
+        ("ABOSP2401.dbc", "sia_apac_cirurgia_bariatrica", "SP"),  # 3-letter, never AB+OS
+        ("PSRR2401.dbc", "sia_psicossocial", "RR"),
+        ("BIRR2401.dbc", "sia_bpa_individualizado", "RR"),  # regression: BI still parses
+        ("RDRR2401.dbc", "sih_aih_reduzida", "RR"),  # regression: SIH untouched
     ],
 )
 def test_parse_filename_disambiguates_prefixes(filename: str, dataset: str, uf: str) -> None:
@@ -73,7 +73,7 @@ def test_scope_roundtrip(dataset: str) -> None:
 
 @pytest.mark.parametrize("dataset", list(FIXTURES))
 def test_registry_monthly_uf_partition(dataset: str) -> None:
-    cfg = get_config(dataset)
+    cfg = resolve(dataset)
     assert cfg.monthly is True
     assert cfg.partition_by == ("ano", "uf", "mes")
 
@@ -88,11 +88,16 @@ def test_dicionario_latin1_and_cns_marker(dataset: str) -> None:
 
 def test_apac_core_shares_linkage_fields() -> None:
     """Every APAC dicionário exposes the person/clinical core (variant-aware)."""
-    for dataset in ("sia_am", "sia_aq", "sia_atd", "sia_ad"):
+    for dataset in (
+        "sia_apac_medicamentos",
+        "sia_apac_quimioterapia",
+        "sia_apac_tratamento_dialitico",
+        "sia_apac_laudos_diversos",
+    ):
         names = {f["name"] for f in load_dicionario(dataset).fields}
         assert {"ap_cnspcn", "ap_cidpri", "ap_pripal", "ap_obito", "ap_ceppcn"} <= names
     # ABO variant core
-    abo = {f["name"] for f in load_dicionario("sia_abo").fields}
+    abo = {f["name"] for f in load_dicionario("sia_apac_cirurgia_bariatrica").fields}
     assert {"ap_cnspcn", "co_cidprim", "ab_numaih"} <= abo
 
 
@@ -117,7 +122,7 @@ def test_abo_unnamed_trailer_fields_are_dropped(dbc_fixture) -> None:
     """86 header fields, 8 unnamed -> exactly 78 data columns (+ano/uf)."""
     df = dbc_bytes_to_lazyframe(
         dbc_fixture("sia_abo_sp_2024_01_mini").read_bytes(),
-        dataset="sia_abo",
+        dataset="sia_apac_cirurgia_bariatrica",
         ano=2024,
         uf="SP",
     ).collect()
@@ -131,7 +136,7 @@ def test_abo_unnamed_trailer_fields_are_dropped(dbc_fixture) -> None:
 
 def test_am_dates_and_competencia_formats(dbc_fixture) -> None:
     df = dbc_bytes_to_lazyframe(
-        dbc_fixture("sia_am_rr_2024_01_mini").read_bytes(), dataset="sia_am"
+        dbc_fixture("sia_am_rr_2024_01_mini").read_bytes(), dataset="sia_apac_medicamentos"
     ).collect()
     assert df["ap_cmp"].head(50).str.len_chars().unique().to_list() == [6]  # AAAAMM
     inic = [v for v in df["ap_dtinic"].head(100).to_list() if v and v.strip()]
@@ -152,9 +157,9 @@ def test_cross_family_cns_intersection_rr(dbc_fixture) -> None:
         out = with_decoded_cns(lf, source_col=col).collect()
         return set(out.filter(pl.col("cns_valido"))["cns"].to_list())
 
-    bi = persons("sia_bi_rr_2024_01_mini", "sia_bi", "cns_pac")
-    am = persons("sia_am_rr_2024_01_mini", "sia_am", "ap_cnspcn")
-    ps = persons("sia_ps_rr_2024_01_mini", "sia_ps", "cns_pac")
+    bi = persons("sia_bi_rr_2024_01_mini", "sia_bpa_individualizado", "cns_pac")
+    am = persons("sia_am_rr_2024_01_mini", "sia_apac_medicamentos", "ap_cnspcn")
+    ps = persons("sia_ps_rr_2024_01_mini", "sia_psicossocial", "cns_pac")
 
     assert len(bi & am) == 312
     assert len(bi & ps) == 56

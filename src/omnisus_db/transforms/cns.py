@@ -7,7 +7,7 @@ as ``chr(digit + 0x7B)`` — alphabet ``\\x7b``-``\\x84``. Field-verified
 all identifiable SIA families.
 
 Requires the source column to have been read with **latin-1** (cp1252 raises
-``UnicodeDecodeError`` on ``0x81``; see the ``sia_bi`` dicionário).
+``UnicodeDecodeError`` on ``0x81``; see the ``sia_bpa_individualizado`` dicionário).
 
 Caveats the linkage layer must own (measured):
 - ~97% of CNS in APAC-AM are *provisórios* (first digit 7/8/9); measured

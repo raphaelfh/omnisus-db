@@ -1,4 +1,4 @@
-"""End-to-end: CNES fixture -> import_cnes_st() -> lake -> query."""
+"""End-to-end: CNES fixture -> import_cnes_estabelecimentos() -> lake -> query."""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ def test_import_cnes_st_e2e(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
 
     target = f"ducklake:{tmp_path}/test.ducklake"
-    odb.import_cnes_st(years=[2024], months=[1], ufs=["RR"], target=target)
+    odb.import_cnes_estabelecimentos(years=[2024], months=[1], ufs=["RR"], target=target)
 
     lake = Lake.local(target)
     n = (
         lake.connect()
-        .execute("SELECT count(*) FROM lake.cnes_st WHERE ano=2024 AND mes=1")
+        .execute("SELECT count(*) FROM lake.cnes_estabelecimentos WHERE ano=2024 AND mes=1")
         .fetchone()[0]
     )
     assert n > 0

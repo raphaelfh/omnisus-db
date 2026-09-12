@@ -49,7 +49,7 @@ def test_fetches_overlap_instead_of_running_one_at_a_time(tmp_path: Path, dbc_fi
 
     with patch("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", probe):
         report = odb.import_dataset(
-            "sim_do", scopes=scopes, target=f"ducklake:{tmp_path}/c.ducklake", concurrency=4
+            "sim_obitos", scopes=scopes, target=f"ducklake:{tmp_path}/c.ducklake", concurrency=4
         )
 
     assert not report.failed, report.failed
@@ -65,7 +65,7 @@ def test_concurrency_is_bounded_because_datasus_is_shared(tmp_path: Path, dbc_fi
 
     with patch("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", probe):
         odb.import_dataset(
-            "sim_do", scopes=scopes, target=f"ducklake:{tmp_path}/b.ducklake", concurrency=3
+            "sim_obitos", scopes=scopes, target=f"ducklake:{tmp_path}/b.ducklake", concurrency=3
         )
 
     assert probe.peak <= 3, f"never more than 3 connections in flight, saw {probe.peak}"
@@ -75,7 +75,7 @@ def test_concurrency_is_bounded_because_datasus_is_shared(tmp_path: Path, dbc_fi
 def test_concurrency_must_be_positive(tmp_path: Path, concurrency: int) -> None:
     with pytest.raises(ValueError, match="concurrency"):
         odb.import_dataset(
-            "sim_do",
+            "sim_obitos",
             scopes=[ScopeKey(uf="RR", ano=2023)],
             target=f"ducklake:{tmp_path}/x.ducklake",
             concurrency=concurrency,
@@ -94,7 +94,7 @@ def test_scopes_commit_in_batches_not_one_snapshot_each(tmp_path: Path, dbc_fixt
         "omnisus_db.sources.datasus_ftp.fetch._blocking_fetch",
         lambda *_a: payload,
     ):
-        report = odb.import_dataset("sim_do", scopes=scopes, target=target, batch_size=2)
+        report = odb.import_dataset("sim_obitos", scopes=scopes, target=target, batch_size=2)
 
     assert len(report.ok) == 6
     with Lake.local(target) as lake:
@@ -114,7 +114,7 @@ def test_the_report_is_ordered_by_the_scopes_the_caller_asked_for(
         _ConcurrencyProbe(payload, delay=0.01),
     ):
         report = odb.import_dataset(
-            "sim_do", scopes=scopes, target=f"ducklake:{tmp_path}/o.ducklake", concurrency=6
+            "sim_obitos", scopes=scopes, target=f"ducklake:{tmp_path}/o.ducklake", concurrency=6
         )
 
     assert [o.scope for o in report.outcomes] == scopes

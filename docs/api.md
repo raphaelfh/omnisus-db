@@ -38,7 +38,7 @@ scope restrictions, run IDs and byte budgets.
 ::: omnisus_db.import_sim
 ::: omnisus_db.import_sinasc
 ::: omnisus_db.import_sih
-::: omnisus_db.import_cnes_st
+::: omnisus_db.import_cnes_estabelecimentos
 ::: omnisus_db.import_ibge_pop
 ::: omnisus_db.import_cnes_master
 
@@ -73,7 +73,7 @@ import omnisus_db as odb
 
 with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
     latest = reader.snapshots()[-1]["snapshot_id"]
-    rows = reader.connect().execute("SELECT count(*) FROM lake.sim_do").fetchone()
+    rows = reader.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone()
 
 with odb.LakeReader(odb.DEFAULT_TARGET, snapshot_id=latest) as reader:
     ...  # every statement here sees exactly that snapshot
@@ -117,7 +117,7 @@ a deprecated physical cleanup alias; it does not expire snapshots.
 ## Registry
 
 `datasets()` lists every curated FTP dataset; `products()` adds the two
-importer families outside the registry (`ibge_pop`, `cnes_master`) and states,
+importer families outside the registry (`ibge_populacao`, `cnes_master`) and states,
 per family, the scope fields, accepted policies, how an interrupted run is
 reconciled and whether `available()` applies. Year rules for IBGE remain in
 `omnisus_db.sources.ibge.products` (`CENSUS_YEARS`, `ESTIMATE_UNAVAILABLE_YEARS`);

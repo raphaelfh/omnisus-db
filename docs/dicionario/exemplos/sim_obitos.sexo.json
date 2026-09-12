@@ -2,13 +2,13 @@
   "schema_version": "0.1.0-draft",
   "dictionary_version": "0.1.0-example",
   "dataset": {
-    "id": "sim_do",
+    "id": "sim_obitos",
     "category": "SIM",
     "subtype": "DO",
     "product": "DORES"
   },
   "field": {
-    "id": "sim_do.sexo",
+    "id": "sim_obitos.sexo",
     "name": "sexo",
     "physical_name": "SEXO",
     "label": "Sexo",
@@ -129,7 +129,7 @@
       "method": null,
       "reviewer": null,
       "evidence": [],
-      "note": "Tipo legado de src/omnisus_db/data/dicionarios/sim_do.yaml; não validado como representação de todos os códigos documentados."
+      "note": "Tipo legado de src/omnisus_db/data/dicionarios/sim_obitos.yaml; não validado como representação de todos os códigos documentados."
     }
   ],
   "sources": [

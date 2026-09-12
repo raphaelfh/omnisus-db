@@ -89,7 +89,7 @@ def arrow_roundtrip(metadata: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metadata", type=Path, default=DOCS / "exemplos/sim_do.sexo.json")
+    parser.add_argument("--metadata", type=Path, default=DOCS / "exemplos/sim_obitos.sexo.json")
     output_mode = parser.add_mutually_exclusive_group()
     output_mode.add_argument("--arrow", action="store_true")
     output_mode.add_argument(

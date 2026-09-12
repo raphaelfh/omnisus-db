@@ -21,7 +21,7 @@ class Product:
     """One importer family and what it supports."""
 
     name: str
-    """Registry key or importer name: ``sim_do``, ``ibge_pop``, ``cnes_master``."""
+    """Registry key or importer name: ``sim_obitos``, ``ibge_populacao``, ``cnes_master``."""
 
     dataset: Dataset | None
     """The FTP registry row, or ``None`` for IBGE and CNES master."""
@@ -66,6 +66,6 @@ def products() -> tuple[Product, ...]:
     )
     return (
         *ftp,
-        Product("ibge_pop", None, ("product", "ano"), ("append",), "publication_id", False),
+        Product("ibge_populacao", None, ("product", "ano"), ("append",), "publication_id", False),
         Product("cnes_master", None, (), ("append",), "rerun", False),
     )
