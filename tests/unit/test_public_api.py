@@ -278,3 +278,31 @@ def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", fake)
     assert odb.available("sim_obitos") == [ScopeKey(uf="AC", ano=1996)]
     assert not list(tmp_path.glob("*.ducklake"))
+
+
+def test_outdated_lists_scopes_whose_release_moved(tmp_path, monkeypatch) -> None:
+    import polars as pl
+
+    target = f"ducklake:{tmp_path}/l.ducklake"
+    with Lake.local(target) as lake:
+        for year, release in ((2024, "FINAIS"), (2025, "PRELIM"), (2026, "PRELIM")):
+            p = tmp_path / "d.parquet"
+            pl.DataFrame({"_source_ano": [year], "v": [1]}).write_parquet(p)
+            lake.publish_scope(
+                "sinan_chagas",
+                p,
+                scope=ScopeKey(uf=None, ano=year),
+                source_sha256=str(year) * 16,
+                parser_version="v1",
+                source_uri=f"ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/{release}/CHAGBR{year % 100}.dbc",
+            )
+    server = {
+        ScopeKey(uf=None, ano=2024): "final",
+        ScopeKey(uf=None, ano=2025): "final",
+        ScopeKey(uf=None, ano=2027): "prelim",
+    }
+    monkeypatch.setattr("omnisus_db.available_releases", lambda *a, **k: server)
+    with Lake.local(target) as lake:
+        assert odb.outdated("sinan_chagas", lake=lake) == [ScopeKey(uf=None, ano=2025)]
+        # 2026 is in the lake but no longer on the server: a withdrawal, not an outdated release
+        assert odb.outdated("sia_bpa_individualizado", lake=lake) == []

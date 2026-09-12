@@ -344,6 +344,34 @@ def import_cnes_master(
     )
 
 
+def outdated(
+    dataset: str | Dataset,
+    *,
+    lake: Lake | LakeReader,
+    refresh: bool = False,
+) -> list[ScopeKey]:
+    """Scopes whose release in ``lake`` differs from the server's current one.
+
+    The yearly operation: DATASUS moves a year from the preliminary to the
+    final directory under the same name, and nothing in the lake changes by
+    itself. Read-only; pass the result to :func:`import_dataset` with
+    ``policy="replace"`` and a ``run_id``. Scopes in the lake that the server
+    no longer lists are a withdrawal, a different fact, and are not returned.
+    """
+    d = resolve(dataset)
+    current = available_releases(d, refresh=refresh)
+    moved = {
+        row["scope"]
+        for row in lake.publications()
+        if row["dataset"] == d.name
+        and row["active"]
+        and row["scope"] is not None
+        and row["release"] is not None
+        and current.get(row["scope"]) not in (None, row["release"])
+    }
+    return sorted(moved, key=lambda s: (s.ano, s.uf or "", s.mes or 0))
+
+
 __all__ = [
     "ALL_UFS",
     "DEFAULT_TARGET",
@@ -374,6 +402,7 @@ __all__ = [
     "import_sih",
     "import_sim",
     "import_sinasc",
+    "outdated",
     "products",
     "resolve",
     "scopes_for",
