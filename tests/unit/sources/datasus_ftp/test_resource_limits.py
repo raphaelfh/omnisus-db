@@ -8,6 +8,14 @@ from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp import fetch
 
 
+@pytest.fixture(autouse=True)
+def _no_release_listing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every scope here is ``final``; sim_obitos has a ``prelim_dir``, so
+    without this ``run_scopes``/``import_dataset`` would list the server once
+    per run."""
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
+
+
 def test_download_size_is_checked_during_receipt(monkeypatch):
     class FTP:
         def __init__(self, *a, **kw):

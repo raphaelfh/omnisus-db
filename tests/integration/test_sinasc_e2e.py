@@ -19,6 +19,7 @@ def test_import_sinasc_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) ->
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch.fetch_dbc_bytes", fake_fetch)
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
     target = f"ducklake:{tmp_path}/test.ducklake"
     odb.import_sinasc(years=[2022], ufs=["RR"], target=target)
