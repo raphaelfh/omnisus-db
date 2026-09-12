@@ -1,6 +1,9 @@
 # SINAN além de Chagas e fontes públicas de dispensação
 
 Investigação, não implementação. Nenhum código de ingestão foi escrito.
+**Revisado em 2026-09-12:** a revisão adversarial da Parte 3 substitui as
+recomendações iniciais de contrato, validação e prioridade. As seções 1.4 e 1.5
+ficam como registro da versão inicial.
 Sondagens ao vivo entre **2026-09-11T23:11Z** e **2026-09-12T03:58Z**; cada seção
 registra o horário UTC. Arquivos baixados foram lidos e apagados (só hashes ficam
 aqui). O relatório de 2026-09-10 (`reports/2026-09-10-mapa-datasus/`) é citado
@@ -22,16 +25,23 @@ apenas como observação anterior.
   - `ZIKABR25` (final) tem 12 registros de outros anos.
   - `id_agravo` aparece truncado em parte dos registros (`A16.`, `A50.`).
   - Metade de `AIDABR24` não tem `id_agravo`.
+  - Os primeiros arquivos de 8 agravos nem têm a coluna `ID_AGRAVO`
+    (dengue 2000–2006, entre outros; §3.3).
 
   A validação estrita do Chagas rejeitaria esses arquivos publicados.
-- **Contrato recomendado:** produtos separados `sinan_<agravo>_final` e
-  `sinan_<agravo>_prelim`, com o sufixo espelhando o diretório do DATASUS. Antes do
-  segundo produto SINAN, duas mudanças no núcleo são obrigatórias:
-  - a decodificação de nomes precisa conhecer o diretório, porque hoje dois produtos
-    com o mesmo prefixo colidem;
-  - a validação precisa sair do `if` por nome e virar uma tabela por agravo.
-- **Prioridade sugerida:** arboviroses (dengue, chikungunya, zika), tuberculose,
-  sífilis (três arquivos), hanseníase, violência.
+- **Contrato recomendado (revisado, §3.2):** um produto por agravo, cobrindo
+  `FINAIS` e `PRELIM`. O diretório vira proveniência, já gravada em `source_uri`.
+  A versão inicial recomendava produtos separados `_final` e `_prelim`. A revisão
+  mostrou que isso quebra o probe semanal todo ano e deixa o pesquisador contar o
+  mesmo ano duas vezes.
+- **Primeiro passo, qualquer que seja o contrato (§3.5):** decodificar nomes de
+  arquivo pelo `Dataset` pedido. Hoje um `Dataset` avulso não encontra arquivos, o que
+  contradiz o ADR 0002.
+- **Validação (revisada, §3.3):** uma regra para todo produto SINAN nacional. O
+  `nu_ano` mais frequente deve ser o ano do arquivo e, se `id_agravo` existir, o
+  código mais frequente deve ser o do agravo.
+- **Prioridade (revisada, §3.4):** piloto com hanseníase; depois tuberculose,
+  arboviroses (dengue, chikungunya, zika), sífilis e violência.
 - **Dispensação:** **nenhuma fonte pública de eventos de dispensação foi
   confirmada**, nem em nível de registro nem agregada.
   - O que existe publicamente: estoque (BNAFAR/Hórus), entregas a DSEI (SasiSUS,
@@ -267,6 +277,9 @@ PRELIM AIDABR24.dbc 693beb166ce6fd1480ed4cc02786cea8fb95d5727500056bb18ef85789da
 
 ### 1.4 Contrato final × preliminar
 
+> **Superada pela Parte 3.** A recomendação desta seção (opção A e validação sem
+> checagem de ano) foi revisada em 2026-09-12. O texto fica como registro.
+
 Restrições verificadas no código atual:
 
 - **`Dataset.ftp_dir` é uma `str`** (`datasets.py`): cada linha do registro aponta
@@ -406,6 +419,9 @@ semântico.
 
 Lista priorizada:
 
+> **Ordem revisada na §3.4** (piloto com hanseníase). A lista abaixo é a versão
+> inicial.
+
 1. **Arboviroses: dengue, chikungunya, zika.**
    - Linhas: até 6, com 3 YAMLs. Dengue e chikungunya diferem em 1 campo.
    - Por quê: DENG e CHIK têm um código único e `nu_ano` limpo na amostra; o layout
@@ -472,14 +488,216 @@ confirmada.**
 - O caminho realista para pesquisa com dispensação é uma extração fornecida pelo gestor
   ou via LAI. Um contrato para isso só pode ser desenhado quando houver um arquivo real.
 
+## Parte 3 — Revisão adversarial (2026-09-12)
+
+O usuário pediu uma revisão adversarial focada em manter o projeto organizado e fácil
+para o pesquisador e o usuário final. Cada ponto foi sondado antes de mudar a
+recomendação. O usuário respondeu "yes prossiga" à revisão, e esta seção a registra.
+As decisões da §3.7 continuam abertas.
+
+### 3.1 Sondagens adicionais
+
+- **Cabeçalho DBC por faixa de bytes (2026-09-12T04:15Z).** Os primeiros 16 KB de um
+  `.dbc` trazem o cabeçalho DBF sem compressão: número de registros, tamanho do
+  registro e lista de campos.
+  - O método confere com leituras completas: `DENGBR26` 453.398 registros,
+    `CHIKBR14` 4.622, `CHAGBR23` 6.253 (igual a
+    `reports/sinan-chagas-verification.json`).
+  - 17 arquivos foram lidos assim.
+- **Uma sessão FTP com 126 leituras parciais de 8 KB (2026-09-12T04:18Z).** O primeiro
+  arquivo de cada agravo em `FINAIS` e em `PRELIM`, mais todos os arquivos de dengue.
+- **Três arquivos antigos lidos por completo (2026-09-12T04:15Z, 11.203.356 B).**
+  `DENGBR04` (SHA-256 `adb388361ff0297d…`), `TUBEBR01` (`bd9071632d7e50de…`) e
+  `HANSBR01` (`6ca59dc9b14bc31a…`).
+- **Código e documentos lidos.** ADR 0002, `lake/publication.py`, `fetch.py`,
+  `inventory.py`, `filenames.py`, `products.py`, `test_registry_probe.py` e o handoff
+  ao app.
+
+### 3.2 Contrato final × preliminar: de A para B
+
+Problemas de A que a versão inicial não pesou:
+
+1. **Contagem dupla silenciosa.** Quando um ano passa de `PRELIM` para `FINAIS`, quem
+   importa o ano em `_final` e esquece `delete_scope` em `_prelim` fica com o ano nas
+   duas tabelas. O pacote não compara tabelas diferentes, e a união das duas conta o
+   ano duas vezes. Em B, o ano é um único escopo de uma tabela. Reimportar com
+   `skip_same` para com "different source/parser version exists; request replace
+   explicitly" (`lake/publication.py:191`).
+2. **Quebra anual do probe Tier 3.**
+   - `test_coverage_matches_the_earliest_published_file` exige que `coverage[0]` seja
+     o arquivo mais antigo do diretório. Toda linha `_prelim` falha quando o ano mais
+     antigo muda de diretório. `sinan_chagas_prelim`, que começa em 2023, falha quando
+     `CHAGBR23` for para `FINAIS`.
+   - `test_coverage_end_is_not_a_stale_claim` dá 48 meses a produtos anuais. Uma linha
+     `sinan_tube_final` falharia hoje: o último arquivo é de 2019, com 81 meses. As
+     linhas finais que terminam em 2022 falham a partir de janeiro de 2027. Fechar a
+     cobertura não resolve, porque o teste falha quando o DATASUS publica o ano
+     seguinte.
+   - Em B, o primeiro ano não muda e o último avança com `PRELIM`.
+3. **O ADR 0002 não sustenta A.** O ADR separa linhas porque uma linha implica um
+   dicionário, e CID9 e CID10 têm colunas diferentes. No SINAN, o layout muda dentro
+   do mesmo diretório, não na fronteira final/preliminar:
+   - dengue em `FINAIS`: 2000–2006 com 107 campos (sem `ID_AGRAVO`), 2007–2013 com
+     67, 2014–2025 com 121; `PRELIM` 2026 com 121;
+   - listas de campos idênticas em 6 pares final × preliminar: DENG 17/26, ZIKA 25/26,
+     TUBE 19/25, HANS 23/25, LEIV 24/25 e VIOL 24/25.
+
+   Uma linha `_final` já misturaria três layouts. Separar por diretório não isola
+   esquema nenhum.
+4. **Nome enganoso.** `sinan_sifa_prelim` guardaria sífilis adquirida de 2010 a 2025.
+5. **Catálogo duplicado.** `products()` expõe uma entrada por linha, então o app
+   listaria dois produtos por agravo.
+
+Desenho mínimo de B:
+
+- **Campo novo em `Dataset`.** Aditivo e só por palavra-chave, com os diretórios
+  adicionais onde os mesmos nomes de arquivo são publicados. É compatível com a regra
+  do ADR 0002 de mudanças aditivas e por palavra-chave.
+- **Diretório pela listagem.** O diretório de cada arquivo vem da listagem em cache,
+  nunca de tentativa e erro, nos dois modos de planejamento.
+- **Arquivo nos dois diretórios é erro explícito.** Isso não foi observado hoje.
+- **Sem coluna nova.** `source_uri` já grava o diretório. A pergunta "quais anos
+  ainda são preliminares?" se responde com `lake.publications()`.
+- **Emenda ao ADR 0002.** Diretórios que só diferem na situação de publicação, com o
+  mesmo layout na fronteira, compartilham uma linha. Eras com colunas diferentes em
+  diretórios diferentes continuam linhas separadas.
+
+Pontos tocados no código: `datasets.py` (campo), `fetch.ftp_path_for`, `_runner.py`
+(`source_uri`), `inventory.available`, `test_registry_probe.py` (listagem por
+diretório), `scripts/gen_datasets_doc.py` e a documentação.
+
+O que B não resolve:
+
+- **A política padrão `append` não compara com publicações anteriores.** Reimportar o
+  mesmo ano duplica linhas, como em qualquer produto hoje. Em B, as duas publicações
+  ficam ativas no mesmo manifesto e aparecem em `publications()`. Em A, ficariam em
+  tabelas diferentes.
+- **Chagas.** `sinan_chagas_prelim` está no handoff ao app
+  (`reports/2026-09-11-handoff-omnisus-app.md`, linha 73), então B pede uma decisão
+  para Chagas (§3.7).
+
+Rejeitadas nesta revisão:
+
+- **A**, pelos itens 1 a 5 acima.
+- **Módulo SINAN que acrescenta `PRELIM` por trás de uma linha `FINAIS`.** Esconde uma
+  localização dentro do comportamento; o ADR reserva a linha para identidade e
+  localização. Além disso, as linhas só preliminares (sífilis, HIV) apontariam para
+  `FINAIS`, onde não têm arquivo, e o probe falharia.
+- **Uma linha por layout** (ex.: dengue 2000–2006, 2007–2013, 2014 em diante). As
+  linhas dividiriam prefixo e diretório, esbarrando na decodificação global e no teste
+  do ano mais antigo. E cada pesquisador teria de unir três tabelas.
+- **E** (fusão com precedência) continua rejeitada: em B, um ano em dois diretórios é
+  erro, não escolha.
+
+### 3.3 Validação de staging: regra da moda
+
+A regra da §1.4 (rejeitar `id_agravo` desconhecido, sem checar ano) não funciona:
+
+- **`ID_AGRAVO` ausente** nos primeiros arquivos de 8 agravos, 14 arquivos em
+  `FINAIS`: `CHAGBR00`, `DENGBR00`–`DENGBR06`, `ESPOBR13`, `HANTBR99`, `LEIVBR00`,
+  `LEPTBR00`, `LTANBR00` e `MALABR04`.
+- **Conjuntos de códigos montados com um ou dois arquivos são frágeis.** As variantes
+  truncadas `A16.` e `A50.` apareceram por acaso.
+- **`NU_ANO`, `SG_UF_NOT` e `DT_NOTIFIC` existem nos 126 cabeçalhos.**
+
+Regra proposta, uma função para todo produto SINAN nacional:
+
+1. `nu_ano` é obrigatório, e o valor mais frequente deve ser o ano do arquivo;
+2. se `id_agravo` existir, o valor mais frequente deve ser o código do agravo, com
+   uma entrada por agravo numa tabela pequena.
+
+Resultados nos 20 arquivos lidos:
+
+- **Ano.** A moda de `nu_ano` é o ano do arquivo em todos, inclusive `TUBEBR01`
+  (83.651 de 87.265, 95,9%), `TUBEBR19`, `TUBEBR25` e `ZIKABR25`.
+- **Código.** A moda de `id_agravo` é o código esperado em todos que têm a coluna,
+  exceto `AIDABR24` (vazio 10.623 contra `B24` 10.473). A regra sinaliza esse arquivo,
+  como deve: ele precisa de contrato próprio.
+- **Registros fora do ano.** Registros com `nu_ano` diferente de `_source_ano` ficam no
+  lake como originais. A documentação do agravo informa a proporção (ex.: 3% a 4% na
+  tuberculose).
+
+Consequências:
+
+- **Chagas.** A regra também aceita os arquivos atuais do Chagas. Aplicá-la ao Chagas
+  afrouxa o contrato estrito publicado (§3.7).
+- **Fixtures.** É preciso um arquivo sintético por layout (ex.: dengue com 107, 67 e
+  121 campos, com e sem `ID_AGRAVO`), para não repetir o caso de testes verdes
+  escondendo um bloqueio.
+- **Série completa.** Antes de registrar um agravo, a regra deve rodar uma vez contra a
+  série inteira, manualmente e fora da CI: cerca de 61 MB para hanseníase e 1,07 GB
+  para dengue.
+
+### 3.4 Prioridade revisada
+
+- **`DENGBR24` não bloqueia.** São 6.564.924 registros × 326 B ≈ 1,99 GiB de DBF
+  descomprimido em memória durante o staging, além dos 287.558.389 B baixados.
+  `DENGBR25` fica em ≈ 0,50 GiB e `VIOLBR25` em ≈ 0,36 GiB.
+- **Dengue é o pior piloto.** Três layouts e 1,07 GB de série.
+- **Hanseníase é o melhor piloto.**
+  - 63 campos em 2001, 2023 e 2025;
+  - código `A309` em 100% de `HANSBR01`, `HANSBR23` e `HANSBR25`;
+  - arquivos nos dois diretórios, o que exercita B;
+  - uso alto (75 artigos no PubMed).
+
+Ordem: hanseníase → tuberculose → dengue, chikungunya e zika → sífilis → violência.
+O layout da violência (159 campos) foi confirmado em 2009, 2024 e 2025.
+
+### 3.5 Primeiro passo: descoberta de `Dataset` avulso
+
+- **Contradição com o ADR 0002 (Decisão 1).** Um `Dataset` não registrado deveria
+  passar pelo mesmo caminho. Mas `parse_filename` só procura prefixos do registro
+  (`filenames.py:35-39`), e `available()` descarta o que não decodifica
+  (`inventory.py:300-306`). Para qualquer prefixo não registrado, `available()`
+  devolve lista vazia.
+- **Correção pequena.** Decodificar o nome contra o `Dataset` pedido, o inverso de
+  `scope_to_filename`.
+- **Ganho imediato.** Qualquer um dos 58 agravos fica importável com um `Dataset` e um
+  YAML do pesquisador, antes de qualquer curadoria.
+- **Opcional.** Um script que gere o YAML de inventário físico a partir do cabeçalho
+  DBC; o YAML do Chagas é exatamente esse inventário. Reduz o custo de curadoria por
+  agravo e mantém a exigência de YAML do ADR.
+
+### 3.6 Dispensação: conclusão mantida
+
+- **Nenhuma sondagem nova contradisse a Parte 2.**
+- **Lacuna 1.** dados.gov.br exige token também no endpoint CKAN antigo
+  (`/api/3/action/package_search`, HTTP 401 em 2026-09-12T04:15Z).
+- **Lacuna 2.** Portais municipais não foram varridos. Uma busca encontrou apenas o
+  "Remédio Fácil" de Santos, descrito como lista de medicamentos disponíveis nas
+  unidades; a página não foi aberta.
+
+### 3.7 Decisões
+
+Recomendação revisada:
+
+- contrato B;
+- regra da moda;
+- piloto com hanseníase;
+- decodificação por `Dataset` antes de tudo.
+
+A implementação muda um campo público de `Dataset` e emenda o ADR 0002. Por isso segue
+o caminho de especificação: desenho, revisão pelo usuário e plano.
+
+Decisões abertas:
+
+1. **Chagas em B.** Renomear para `sinan_chagas` e reconstruir (quebra o nome entregue
+   ao app em 2026-09-11) ou manter `sinan_chagas_prelim` como exceção documentada.
+2. **Regra do Chagas.** Trocar a validação estrita pela regra da moda (uma função só)
+   ou manter a estrita para o Chagas.
+
 ## Limites desta investigação
 
 - **Histórico do FTP.** Datas de modificação indicam reescrita, não mudança de
   conteúdo. Não há histórico de hashes além de `CHAGBR23`, de 2026-09-10.
 - **Tamanho da amostra.** Um ou dois arquivos por agravo. Anomalias raras em outros
   anos podem existir.
-- **Arquivos grandes não amostrados.** `DENGBR24` (287 MB), `VIOLBR24` e `VIOLBR25`,
-  e os ZIPs de documentação (`Docs_TAB_SINAN.zip`, `TAB_SINANNET.zip`).
+- **Arquivos grandes lidos só pelo cabeçalho.** `DENGBR24`, `VIOLBR24` e `VIOLBR25`
+  (§3.1). Os ZIPs de documentação (`Docs_TAB_SINAN.zip`, `TAB_SINANNET.zip`) não foram
+  baixados.
+- **Regra da moda.** Verificada em 20 arquivos, não na série completa de nenhum
+  agravo. A varredura de cabeçalhos cobre o primeiro arquivo de cada agravo por
+  diretório e toda a dengue.
 - **Contagens do PubMed.** São um indicador, não uma medida de uso.
 - **Painéis e dados.gov.br.** Painéis (SICLOM) e dados.gov.br autenticado não foram
   explorados além do que está descrito.
@@ -496,4 +714,14 @@ for p in ("/dissemin/publicos/SINAN/DADOS/FINAIS", "/dissemin/publicos/SINAN/DAD
 curl -sS "https://apidadosabertos.saude.gov.br/saude-indigena/sesai-assistencia-farmaceutica?limit=2&offset=0"
 curl -sS -o /dev/null -w "%{http_code}\n" "https://dados.gov.br/dados/api/publico/conjuntos-dados?isPrivado=false&nomeConjuntoDados=farmacia&pagina=1"
 curl -sS -I "https://demas-dados-abertos.s3.amazonaws.com/csv/sntpbih.csv.zip"
+```
+
+Tamanho de um DBC sem baixar o arquivo inteiro (§3.1):
+
+```python
+import struct, subprocess
+url = "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/FINAIS/DENGBR24.dbc"
+head = subprocess.run(["curl", "-sS", "-r", "0-16383", url], capture_output=True, check=True).stdout
+records, header_len, record_len = struct.unpack("<IHH", head[4:12])
+print(records, record_len, (header_len + records * record_len + 1) / 2**30, "GiB")
 ```
