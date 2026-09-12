@@ -15,7 +15,7 @@ x-evidence:
   semantic_status: Physical inventory; individual semantic fields not audited. No
     inferred category mappings.
   dictionary_url: https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf
-  source_url: ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/FINAIS/CHAGBR23.dbc
+  source_url: ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/CHAGBR23.dbc
 schema:
   fields:
   - name: tp_not
