@@ -16,6 +16,13 @@ import omnisus_db as odb
 from omnisus_db.sources._base import ScopeKey
 
 
+@pytest.fixture(autouse=True)
+def _no_release_listing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every scope here is ``final``; sim_obitos has a ``prelim_dir``, so
+    without this ``run_scopes`` would list the server once per run."""
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
+
+
 def _fetcher(fixture_bytes: bytes, *, missing: set[str]):
     """Serve ``fixture_bytes`` for every file except those named in ``missing``."""
 

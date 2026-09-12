@@ -63,6 +63,7 @@ def test_import_sim_via_cli(monkeypatch, tmp_path, dbc_fixture) -> None:
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch.fetch_dbc_bytes", fake_fetch)
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
     target = f"ducklake:{tmp_path}/cli.ducklake"
     result = runner.invoke(
@@ -240,6 +241,7 @@ def _serve_fixture_except(monkeypatch, fixture_bytes: bytes, missing: set[str]) 
         return fixture_bytes
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", _blocking)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
 
 def test_a_skipped_scope_exits_zero(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
@@ -274,6 +276,7 @@ def test_a_failed_scope_exits_one(monkeypatch, tmp_path: Path) -> None:
         raise ftplib.error_perm("530 maximum number of allowed clients")
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp.fetch._blocking_fetch", _throttled)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
     result = runner.invoke(
         app,
         [
@@ -296,6 +299,7 @@ def test_import_invalid_dbc_exits_nonzero(monkeypatch, tmp_path: Path) -> None:
         return b"invalid dbc"
 
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fetch)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
     result = runner.invoke(
         app,
         [

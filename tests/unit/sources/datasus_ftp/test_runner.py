@@ -26,6 +26,7 @@ async def test_import_scope_sim_uses_fixture(monkeypatch, tmp_path, dbc_fixture)
         "omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes",
         fake_fetch,
     )
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
     lake = Lake.local(f"ducklake:{tmp_path}/x.ducklake")
     result = await import_scope(

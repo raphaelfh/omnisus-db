@@ -8,6 +8,13 @@ from omnisus_db.sources.datasus_ftp._runner import run_scopes
 from tests.helpers.connection_faults import FaultyConnection
 
 
+@pytest.fixture(autouse=True)
+def _no_release_listing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every scope here is ``final``; sim_obitos has a ``prelim_dir``, so
+    without this ``run_scopes`` would list the server once per run."""
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
+
+
 @pytest.mark.asyncio
 async def test_dead_producer_does_not_leave_queue_waiter():
     from omnisus_db.sources.datasus_ftp import _runner
