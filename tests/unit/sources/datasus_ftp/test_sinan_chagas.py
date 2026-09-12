@@ -124,11 +124,16 @@ def test_national_inventory_and_cli_rejects_state_before_network(monkeypatch):
         )
         for name in ["CHAGBR24.dbc", "CHAGBR23.dbc", "CHAGSP23.dbc"]
     )
-    monkeypatch.setattr(
-        inventory,
-        "list_dir_cached",
-        lambda *a, **kw: inventory.Listing(entries=entries, skipped=0, path="/"),
-    )
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+
+    sinan_prelim_dir = REGISTRY["sinan_chagas"].prelim_dir
+
+    def fake_list(path: str, **kw: object) -> inventory.Listing:
+        if path == sinan_prelim_dir:
+            return inventory.Listing(entries=(), skipped=0, path=path)
+        return inventory.Listing(entries=entries, skipped=0, path=path)
+
+    monkeypatch.setattr(inventory, "list_dir_cached", fake_list)
     assert odb.available("sinan_chagas", years=[2023]) == [ScopeKey(uf=None, ano=2023)]
     for plan in ["product", "inventory"]:
         with pytest.raises(ValueError, match="national"):

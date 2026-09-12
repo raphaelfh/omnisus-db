@@ -31,7 +31,7 @@ from omnisus_db.sources.datasus_ftp._ftp import (
     TRANSIENT_FTP_ERRORS,
     is_missing,
 )
-from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
+from omnisus_db.sources.datasus_ftp.datasets import Dataset, Release, resolve
 from omnisus_db.sources.datasus_ftp.filenames import decode_for
 
 logger = structlog.get_logger(__name__)
@@ -278,13 +278,46 @@ def crawl(path: str, *, depth: int = 1, refresh: bool = False) -> Iterator[FtpEn
                 frontier.append((entry.path, remaining - 1))
 
 
+def available_releases(
+    dataset: str | Dataset,
+    *,
+    years: Iterable[int] | None = None,
+    refresh: bool = False,
+) -> dict[ScopeKey, Release]:
+    """Scopes DATASUS actually publishes for ``dataset`` and the release each
+    one is in, ordered by year, uf, month.
+
+    One cached LIST per directory of the row (spec §4.1). Filenames are decoded
+    for this row only, so other datasets sharing the directory are skipped and
+    an ad-hoc ``Dataset`` is discovered like a registered one. A scope found
+    in two directories is a server inconsistency and raises: it is never
+    resolved by preference.
+    """
+    d = resolve(dataset)
+    wanted = set(years) if years is not None else None
+    found: dict[ScopeKey, Release] = {}
+    for release, directory in d.directories().items():
+        for entry in list_dir_cached(directory, refresh=refresh).files:
+            scope = decode_for(d, entry.name)
+            if scope is None or (wanted is not None and scope.ano not in wanted):
+                continue
+            if scope in found:
+                raise ValueError(
+                    f"{d.name}: {entry.name} is published as both {found[scope]} and {release}"
+                )
+            found[scope] = release
+    ordered = sorted(found, key=lambda s: (s.ano, s.uf or "", s.mes or 0))
+    logger.info("inventory.available", dataset=d.name, scopes=len(ordered))
+    return {s: found[s] for s in ordered}
+
+
 def available(
     dataset: str | Dataset,
     *,
     years: Iterable[int] | None = None,
     refresh: bool = False,
 ) -> list[ScopeKey]:
-    """Scopes DATASUS actually publishes for ``dataset``, newest last.
+    """The scopes of :func:`available_releases`, without the release.
 
     Closed-world counterpart to :func:`crawl`: the same listing, with each
     filename decoded through the registry. Names belonging to other datasets
@@ -293,17 +326,4 @@ def available(
 
     This is the planner's input (spec §5.1) and the Tier 3 oracle (spec §6).
     """
-    d = resolve(dataset)
-    wanted = set(years) if years is not None else None
-    listing = list_dir_cached(d.ftp_dir, refresh=refresh)
-    scopes: list[ScopeKey] = []
-    for entry in listing.files:
-        scope = decode_for(d, entry.name)
-        if scope is None:
-            continue
-        if wanted is not None and scope.ano not in wanted:
-            continue
-        scopes.append(scope)
-    scopes.sort(key=lambda s: (s.ano, s.uf or "", s.mes or 0))
-    logger.info("inventory.available", dataset=d.name, scopes=len(scopes))
-    return scopes
+    return list(available_releases(dataset, years=years, refresh=refresh))

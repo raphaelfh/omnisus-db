@@ -31,6 +31,7 @@ from omnisus_db.sources.datasus_ftp.inventory import (
     FtpPathNotFound,
     FtpUnavailable,
     available,
+    available_releases,
 )
 from omnisus_db.sources.datasus_ftp.inventory import crawl as _crawl
 
@@ -358,6 +359,7 @@ __all__ = [
     "ScopeOutcome",
     "__version__",
     "available",
+    "available_releases",
     "browse",
     "datasets",
     "import_cnes_estabelecimentos",

@@ -101,10 +101,12 @@ def test_c_available_accepts_exactly_the_registry(monkeypatch, tmp_path) -> None
     from omnisus_db.sources.datasus_ftp.inventory import available
 
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
-    monkeypatch.setattr(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
-        lambda _p, _t: [_file("DOAC1996.dbc")],
-    )
+    prelim_dirs = {d.prelim_dir for d in REGISTRY.values() if d.prelim_dir is not None}
+
+    def fake(path: str, _t: float) -> list[str]:
+        return [] if path in prelim_dirs else [_file("DOAC1996.dbc")]
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", fake)
     for name in REGISTRY:
         available(name)  # accepted: must not raise, for every registry key
     assert available("sim_obitos") == [ScopeKey(uf="AC", ano=1996)], (

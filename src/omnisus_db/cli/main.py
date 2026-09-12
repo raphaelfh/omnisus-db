@@ -273,12 +273,14 @@ def inventory(
             raise typer.BadParameter(
                 f"{exc}. Choose from: {', '.join(ftp_dataset_choices())}"
             ) from exc
-        scopes = odb.available(d, refresh=refresh)
-        table = RichTable("UF", "Ano", "Mês")
-        for s in scopes:
-            table.add_row(s.uf or "Nacional", str(s.ano), "" if s.mes is None else f"{s.mes:02d}")
+        releases = odb.available_releases(d, refresh=refresh)
+        table = RichTable("UF", "Ano", "Mês", "Release")
+        for s, release in releases.items():
+            table.add_row(
+                s.uf or "Nacional", str(s.ano), "" if s.mes is None else f"{s.mes:02d}", release
+            )
         console.print(table)
-        console.print(f"[dim]{len(scopes)} scope(s) available for {d.name}[/dim]")
+        console.print(f"[dim]{len(releases)} scope(s) available for {d.name}[/dim]")
     except FtpPathNotFound as exc:
         console.print(f"[red]x[/red] not found on the server: {exc}")
         raise typer.Exit(code=1) from exc

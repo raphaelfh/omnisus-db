@@ -188,7 +188,14 @@ def test_import_dataset_reaches_every_registry_row(
 def test_available_and_browse_are_exported() -> None:
     import omnisus_db as odb
 
-    for name in ("available", "browse", "FtpEntry", "FtpPathNotFound", "FtpUnavailable"):
+    for name in (
+        "available",
+        "available_releases",
+        "browse",
+        "FtpEntry",
+        "FtpPathNotFound",
+        "FtpUnavailable",
+    ):
         assert name in odb.__all__, name
         assert hasattr(odb, name), name
 
@@ -257,11 +264,16 @@ def test_deletion_result_is_exported() -> None:
 def test_available_needs_no_lake(monkeypatch, tmp_path: Path) -> None:
     """Discovery is decoupled from the lake — it works before `init` (spec §4.4)."""
     import omnisus_db as odb
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
 
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
-    monkeypatch.setattr(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
-        lambda _p, _t: ["01-31-20  02:48PM                76107 DOAC1996.dbc"],
-    )
+    sim_dir = REGISTRY["sim_obitos"].ftp_dir
+
+    def fake(path: str, _t: float) -> list[str]:
+        if path == sim_dir:
+            return ["01-31-20  02:48PM                76107 DOAC1996.dbc"]
+        return []
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", fake)
     assert odb.available("sim_obitos") == [ScopeKey(uf="AC", ano=1996)]
     assert not list(tmp_path.glob("*.ducklake"))

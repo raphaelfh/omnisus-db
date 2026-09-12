@@ -24,10 +24,20 @@ def _isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _patch(monkeypatch: pytest.MonkeyPatch, lines: list[str] | None = None) -> None:
-    monkeypatch.setattr(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
-        lambda _p, _t: LINES if lines is None else lines,
-    )
+    """Fake every LIST as ``lines``/``LINES``, except ``sim_obitos``'s prelim
+    directory: it must stay empty so the dataset tests (which reuse the same
+    filenames for any path) don't see a scope as published in both releases.
+    """
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+
+    sim_prelim_dir = REGISTRY["sim_obitos"].prelim_dir
+
+    def fake(path: str, _t: float) -> list[str]:
+        if path == sim_prelim_dir:
+            return []
+        return LINES if lines is None else lines
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", fake)
 
 
 def test_inventory_dataset_lists_available_scopes(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -36,6 +46,29 @@ def test_inventory_dataset_lists_available_scopes(monkeypatch: pytest.MonkeyPatc
     assert result.exit_code == 0, result.output
     assert "AC" in result.output
     assert "1996" in result.output
+
+
+def test_inventory_dataset_shows_release_column(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A row with a prelim_dir (spec §4.1): the table names which release each
+    scope came from, not just the scope itself."""
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+
+    sim_dir = REGISTRY["sim_obitos"].ftp_dir
+    sim_prelim_dir = REGISTRY["sim_obitos"].prelim_dir
+
+    def fake(path: str, _t: float) -> list[str]:
+        if path == sim_dir:
+            return ["01-31-20  02:48PM                76107 DOAC1996.dbc"]
+        if path == sim_prelim_dir:
+            return ["12-23-25  03:48PM               874197 DOAC2025.dbc"]
+        raise AssertionError(path)
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", fake)
+    result = runner.invoke(app, ["inventory", "sim_obitos"])
+    assert result.exit_code == 0, result.output
+    assert "Release" in result.output
+    assert "final" in result.output
+    assert "prelim" in result.output
 
 
 def test_inventory_path_browses_any_directory(monkeypatch: pytest.MonkeyPatch) -> None:

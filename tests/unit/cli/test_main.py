@@ -356,11 +356,17 @@ def test_plan_inventory_imports_only_what_the_server_lists(
 ) -> None:
     """The goal: build the lake from what is actually published. The server
     lists 2023 only, so 2022 is never even attempted."""
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
-    monkeypatch.setattr(
-        "omnisus_db.sources.datasus_ftp.inventory._blocking_list",
-        lambda _p, _t: ["01-31-20  02:48PM                76107 DORR2023.dbc"],
-    )
+    sim_prelim_dir = REGISTRY["sim_obitos"].prelim_dir
+
+    def _list(path: str, _t: float) -> list[str]:
+        if path == sim_prelim_dir:
+            return []
+        return ["01-31-20  02:48PM                76107 DORR2023.dbc"]
+
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.inventory._blocking_list", _list)
     fetched: list[str] = []
 
     def _blocking(_remote_dir: str, filename: str, _timeout: float) -> bytes:
@@ -393,11 +399,16 @@ def test_plan_inventory_bypasses_a_stale_listing_cache(
 ) -> None:
     """--plan implies refresh=True. A 23-hour-old cache would silently omit a
     month published this morning, and the run is about to use the network anyway."""
+    from omnisus_db.sources.datasus_ftp.datasets import REGISTRY
+
     monkeypatch.setenv("OMNISUS_CACHE_DIR", str(tmp_path / "cache"))
+    sim_prelim_dir = REGISTRY["sim_obitos"].prelim_dir
     listings = 0
 
-    def _list(_p: str, _t: float) -> list[str]:
+    def _list(path: str, _t: float) -> list[str]:
         nonlocal listings
+        if path == sim_prelim_dir:
+            return []
         listings += 1
         return ["01-31-20  02:48PM                76107 DORR2023.dbc"]
 
