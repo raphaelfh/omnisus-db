@@ -22,6 +22,7 @@ TODOS = sorted(
 
 ESPERADOS = {
     "bases/medicamentos.py",
+    "bases/sih_aih_reduzida.py",
     "bases/sim_obitos.py",
     "bases/sinan.py",
     "bases/sinasc_nascidos_vivos.py",
