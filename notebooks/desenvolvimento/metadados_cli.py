@@ -9,6 +9,7 @@ app = marimo.App(width="full", app_title="Metadados por coluna · CLI")
 @app.cell
 def _():
     import json
+    import os
     import shlex
     import subprocess
     import sys
@@ -19,11 +20,14 @@ def _():
     project_root = Path(__file__).resolve().parents[2]
 
     def run_python(arguments):
+        # UTF-8 nos dois lados: no Windows o console padrão (cp1252) não codifica
+        # caracteres como "→" que os scripts imprimem.
         result = subprocess.run(
             [sys.executable, *arguments],
             cwd=project_root,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
             timeout=60,
             check=False,
         )
