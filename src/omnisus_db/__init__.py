@@ -190,48 +190,7 @@ def import_dataset(
     return asyncio.run(run())
 
 
-def import_sim(
-    *,
-    years: Iterable[int],
-    ufs: Sequence[str] | None = None,
-    target: str = DEFAULT_TARGET,
-) -> ImportReport:
-    """Import SIM-DO (declarações de óbito). Alias for ``import_dataset("sim_obitos", ...)``."""
-    return import_dataset(
-        "sim_obitos", scopes=scopes_for("sim_obitos", years=years, ufs=ufs), target=target
-    )
-
-
-def import_sinasc(
-    *,
-    years: Iterable[int],
-    ufs: Sequence[str] | None = None,
-    target: str = DEFAULT_TARGET,
-) -> ImportReport:
-    """Import SINASC-NV (nascidos vivos). Alias for ``import_dataset("sinasc_nascidos_vivos", ...)``."""
-    return import_dataset(
-        "sinasc_nascidos_vivos",
-        scopes=scopes_for("sinasc_nascidos_vivos", years=years, ufs=ufs),
-        target=target,
-    )
-
-
-def import_sih(
-    *,
-    years: Iterable[int],
-    ufs: Sequence[str] | None = None,
-    months: Iterable[int] = range(1, 13),
-    target: str = DEFAULT_TARGET,
-) -> ImportReport:
-    """Import SIH-RD (AIH reduzida), monthly. Alias for ``import_dataset("sih_aih_reduzida", ...)``."""
-    return import_dataset(
-        "sih_aih_reduzida",
-        scopes=scopes_for("sih_aih_reduzida", years=years, ufs=ufs, months=months),
-        target=target,
-    )
-
-
-def import_ibge_pop(
+def import_ibge_populacao(
     *,
     years: Iterable[int] | None = None,
     product: str | None = None,
@@ -401,10 +360,7 @@ __all__ = [
     "import_cnes_estabelecimentos",
     "import_cnes_master",
     "import_dataset",
-    "import_ibge_pop",
-    "import_sih",
-    "import_sim",
-    "import_sinasc",
+    "import_ibge_populacao",
     "outdated",
     "products",
     "resolve",

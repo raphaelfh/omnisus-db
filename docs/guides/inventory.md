@@ -16,7 +16,12 @@ import omnisus_db as odb
 
 odb.available("sim_obitos")                      # matching scopes in the cached/fresh listing
 odb.available("sim_obitos", years=range(2020, 2025))
+odb.available("sim_obitos", years=[2024], ufs=["SP"])  # same selectors as scopes_for()
+odb.available("sih_aih_reduzida", years=[2024], ufs=["SP"], months=[1, 2])
 ```
+
+`ufs` and `months` select among what the listing has; a national row such as
+`sinan_chagas` has neither and raises if you pass them.
 
 Names belonging to other datasets in the same directory are skipped, not raised
 on — `SIASUS/200801_/Dados` holds seven of our eleven datasets side by side.
@@ -98,7 +103,7 @@ anyway. Pass `--refresh` to force it for browsing too.
 ## Reading the report
 
 A normally completed DATASUS-FTP import returns an `ImportReport`.
-`import_ibge_pop` instead returns `list[ImportResult]`, and `import_cnes_master`
+`import_ibge_populacao` instead returns `list[ImportResult]`, and `import_cnes_master`
 returns an integer count:
 
 ```python

@@ -1,4 +1,4 @@
-"""End-to-end: SIH monthly fixture -> import_sih() -> lake -> query."""
+"""End-to-end: SIH monthly fixture -> import_dataset("sih_aih_reduzida") -> lake -> query."""
 
 from __future__ import annotations
 
@@ -21,7 +21,11 @@ def test_import_sih_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.fetch_dbc_bytes", fake_fetch)
 
     target = f"ducklake:{tmp_path}/test.ducklake"
-    odb.import_sih(years=[2024], ufs=["RR"], months=[1], target=target)
+    odb.import_dataset(
+        "sih_aih_reduzida",
+        scopes=odb.scopes_for("sih_aih_reduzida", years=[2024], ufs=["RR"], months=[1]),
+        target=target,
+    )
 
     lake = Lake.local(target)
     rows = (

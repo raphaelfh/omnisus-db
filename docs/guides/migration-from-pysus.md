@@ -8,14 +8,18 @@ in [Getting Started](getting-started.md). Older tags can expose different APIs.
 ```python
 import omnisus_db as odb
 
-report = odb.import_sim(years=[2023], ufs=["SP"])
+report = odb.import_dataset(
+    "sim_obitos", scopes=odb.available("sim_obitos", years=[2023], ufs=["SP"])
+)
 print(report.rows, report.failed)
 ```
 
-The FTP import functions return `ImportReport`, rather than a downloaded file
-handle or a list of results. Access successful `ImportResult` values through
-`outcome.result` in `report.ok`. Use `available()` and `import_dataset()` when
-the list of published scopes should drive the import.
+There is one import function for every DATASUS-FTP dataset, and the dataset
+name is the table name you will query. `import_dataset` returns `ImportReport`,
+rather than a downloaded file handle or a list of results. Access successful
+`ImportResult` values through `outcome.result` in `report.ok`. `available()`
+asks the server what exists; `scopes_for()` plans blindly and lets tolerance
+absorb the gaps.
 
 ## Read into a DataFrame
 

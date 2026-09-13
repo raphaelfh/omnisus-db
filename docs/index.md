@@ -37,7 +37,11 @@ cached, the environment needs access to DuckDB's extension repository.
 ```python
 import omnisus_db as odb
 
-report = odb.import_sim(years=[2024], ufs=["SP"], target=odb.DEFAULT_TARGET)
+report = odb.import_dataset(
+    "sim_obitos",
+    scopes=odb.available("sim_obitos", years=[2024], ufs=["SP"]),
+    target=odb.DEFAULT_TARGET,
+)
 print(f"Rows imported: {report.rows}; failed: {len(report.failed)}; skipped: {len(report.skipped)}")
 
 if report.ok:

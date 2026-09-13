@@ -545,7 +545,7 @@ def _(mo):
 
     ```python
     ibge_results = await asyncio.to_thread(
-        odb.import_ibge_pop, years=[2022], product="census", target=live_target
+        odb.import_ibge_populacao, years=[2022], product="census", target=live_target
     )
     for result in ibge_results:
         print(result.rows, result.snapshot_id, result.publication_id)

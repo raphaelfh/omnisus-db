@@ -1,4 +1,4 @@
-"""End-to-end: fixture DBC -> import_sim() -> lake -> query."""
+"""End-to-end: fixture DBC -> import_dataset("sim_obitos") -> lake -> query."""
 
 from __future__ import annotations
 
@@ -23,7 +23,9 @@ def test_import_sim_e2e_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) -
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
     target = f"ducklake:{tmp_path}/test.ducklake"
-    report = odb.import_sim(years=[2023], ufs=["RR"], target=target)
+    report = odb.import_dataset(
+        "sim_obitos", scopes=odb.scopes_for("sim_obitos", years=[2023], ufs=["RR"]), target=target
+    )
     assert not report.failed, report.failed
     assert report.rows > 0
 

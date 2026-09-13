@@ -112,7 +112,7 @@ def import_cmd(
     import_policy = cast(ImportPolicy, policy)
 
     non_ftp_importers: dict[str, Callable[..., list[odb.ImportResult]]] = {
-        "ibge_populacao": lambda **kw: odb.import_ibge_pop(**kw),
+        "ibge_populacao": lambda **kw: odb.import_ibge_populacao(**kw),
     }
 
     # Resolve years
@@ -219,14 +219,7 @@ def _plan_scopes(
     if plan == "product":
         return odb.scopes_for(d, years=years, ufs=ufs, months=months)
 
-    scopes = odb.available(d, years=years, refresh=True)
-    if ufs is not None:
-        wanted_ufs = set(ufs)
-        scopes = [s for s in scopes if s.uf in wanted_ufs]
-    if months is not None:
-        wanted_months = set(months)
-        scopes = [s for s in scopes if s.mes in wanted_months]
-    return scopes
+    return odb.available(d, years=years, ufs=ufs, months=months, refresh=True)
 
 
 @app.command()

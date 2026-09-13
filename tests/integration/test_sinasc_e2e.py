@@ -1,4 +1,4 @@
-"""End-to-end: SINASC fixture -> import_sinasc() -> lake -> query."""
+"""End-to-end: SINASC fixture -> import_dataset("sinasc_nascidos_vivos") -> lake -> query."""
 
 from __future__ import annotations
 
@@ -22,7 +22,11 @@ def test_import_sinasc_with_fixture(monkeypatch, tmp_path: Path, dbc_fixture) ->
     monkeypatch.setattr("omnisus_db.sources.datasus_ftp._runner.release_map", lambda d: {})
 
     target = f"ducklake:{tmp_path}/test.ducklake"
-    odb.import_sinasc(years=[2022], ufs=["RR"], target=target)
+    odb.import_dataset(
+        "sinasc_nascidos_vivos",
+        scopes=odb.scopes_for("sinasc_nascidos_vivos", years=[2022], ufs=["RR"]),
+        target=target,
+    )
 
     lake = Lake.local(target)
     n = (

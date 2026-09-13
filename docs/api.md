@@ -35,7 +35,7 @@ to `import_dataset`. There is no planner flag on the Python API.
 ## Importing
 
 The FTP importers return `ImportReport`; inspect `report.failed`, `report.skipped`
-and `report.ok`. `import_ibge_pop` returns `list[ImportResult]`, while
+and `report.ok`. `import_ibge_populacao` returns `list[ImportResult]`, while
 `import_cnes_master` returns the number of records written.
 
 `ImportAbortedError` interrupts an FTP run when it cannot safely continue.
@@ -47,11 +47,8 @@ explicit replay `policy` is selected. FTP imports accept `append` (default),
 scope restrictions, run IDs and byte budgets.
 
 ::: omnisus_db.import_dataset
-::: omnisus_db.import_sim
-::: omnisus_db.import_sinasc
-::: omnisus_db.import_sih
 ::: omnisus_db.import_cnes_estabelecimentos
-::: omnisus_db.import_ibge_pop
+::: omnisus_db.import_ibge_populacao
 ::: omnisus_db.import_cnes_master
 
 ## Results
@@ -114,7 +111,7 @@ this version does not write), alongside the raw `scope_json`.
 scope validation, source identity and replay policy to that write.
 `Lake.delete_scope(table, scope)` removes one source scope and retires every
 publication within it in the same transaction; a yearly scope on a monthly
-table covers all its months. `import_ibge_pop` and `import_cnes_master` do not
+table covers all its months. `import_ibge_populacao` and `import_cnes_master` do not
 take part in this manifest — see their docstrings for how each reconciles.
 
 `Lake.optimize(table)` merges adjacent files. `Lake.expire_snapshots` and

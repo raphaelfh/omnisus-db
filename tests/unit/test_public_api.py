@@ -93,14 +93,16 @@ def test_import_dataset_accepts_hand_built_scopes(
         assert "sim_obitos" in lake.tables()
 
 
-def test_import_sim_alias_returns_a_report(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
-    """Back-compat for this plan: aliases keep list[ImportResult] until the
-    tolerance plan introduces ImportReport (spec §5.1 compatibility note)."""
-    _fake_fetch_from(monkeypatch, dbc_fixture("sim_rr_2023_mini").read_bytes())
-    report = odb.import_sim(years=[2023], ufs=["RR"], target=f"ducklake:{tmp_path}/s.ducklake")
-    assert isinstance(report, odb.ImportReport)
-    assert not report.failed
-    assert report.rows > 0
+def test_public_import_functions_are_the_readable_ones() -> None:
+    """One generic FTP entry point plus the importers that carry behaviour of
+    their own. Short-name aliases (``import_sim`` …) were removed in 0.1.1."""
+    importers = sorted(name for name in odb.__all__ if name.startswith("import_"))
+    assert importers == [
+        "import_cnes_estabelecimentos",
+        "import_cnes_master",
+        "import_dataset",
+        "import_ibge_populacao",
+    ]
 
 
 def test_default_target_is_exported_from_lake() -> None:

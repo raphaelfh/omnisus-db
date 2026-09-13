@@ -4,7 +4,7 @@ The separate HTTP/SIDRA importer requires both `years` and `product`:
 
 ```python
 import omnisus_db as odb
-odb.import_ibge_pop(years=[2022], product="census", target="ducklake:population.ducklake")
+odb.import_ibge_populacao(years=[2022], product="census", target="ducklake:population.ducklake")
 ```
 
 It returns `list[ImportResult]`, outside the FTP inventory and `ImportReport`.

@@ -368,3 +368,27 @@ def test_crawl_refresh_propagates_into_recursion() -> None:
         list(crawl(SIM_DIR, depth=2, refresh=True))
 
     assert spy.call_count == 4, "refresh must refetch the subdirectory too, not only the root"
+
+
+def test_available_filters_by_ufs_and_months_like_scopes_for() -> None:
+    """``available`` takes the same selectors as ``scopes_for`` so a caller can
+    ask "what exists for SP in 2024" without post-filtering the listing."""
+    lines = [_file("DOSP2024.dbc"), _file("DORJ2024.dbc"), _file("DOSP2023.dbc")]
+    fake = _listing_by_path({SIM_DIR: lines, SIM_PRELIM_DIR: []})
+    with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", side_effect=fake):
+        scopes = available("sim_obitos", years=[2024], ufs=["sp"])
+    assert scopes == [ScopeKey(uf="SP", ano=2024)]
+
+    sih = [_file("RDSP2401.dbc"), _file("RDSP2402.dbc"), _file("RDRJ2401.dbc")]
+    sih_dir = REGISTRY["sih_aih_reduzida"].ftp_dir
+    fake = _listing_by_path({sih_dir: sih})
+    with patch("omnisus_db.sources.datasus_ftp.inventory._blocking_list", side_effect=fake):
+        scopes = available("sih_aih_reduzida", ufs=["SP"], months=[2])
+    assert scopes == [ScopeKey(uf="SP", ano=2024, mes=2)]
+
+
+def test_available_rejects_uf_or_month_selectors_on_a_national_row() -> None:
+    """A national row has no uf/month; filtering by them would silently return
+    nothing, so it raises like the CLI does."""
+    with pytest.raises(ValueError, match="national"):
+        available("sinan_chagas", ufs=["SP"])

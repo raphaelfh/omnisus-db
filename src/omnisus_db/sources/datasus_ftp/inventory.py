@@ -19,7 +19,7 @@ from __future__ import annotations
 import contextlib
 import ftplib
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -282,6 +282,8 @@ def available_releases(
     dataset: str | Dataset,
     *,
     years: Iterable[int] | None = None,
+    ufs: Sequence[str] | None = None,
+    months: Iterable[int] | None = None,
     refresh: bool = False,
 ) -> dict[ScopeKey, Release]:
     """Scopes DATASUS actually publishes for ``dataset`` and the release each
@@ -291,16 +293,26 @@ def available_releases(
     for this row only, so other datasets sharing the directory are skipped and
     an ad-hoc ``Dataset`` is discovered like a registered one. A scope found
     in two directories is a server inconsistency and raises: it is never
-    resolved by preference. ``years`` filters before that check, so a duplicate
-    of a year outside the requested range is not reported.
+    resolved by preference. The selectors are the same as ``scopes_for``'s and
+    filter before that check, so a duplicate outside the requested range is
+    not reported. A national row has no uf or month, so ``ufs``/``months``
+    raise there instead of silently selecting nothing.
     """
     d = resolve(dataset)
+    if d.geography == "national" and (ufs is not None or months is not None):
+        raise ValueError(f"{d.name} is national: it has no UF or month to filter by")
     wanted = set(years) if years is not None else None
+    wanted_ufs = {u.upper() for u in ufs} if ufs is not None else None
+    wanted_months = set(months) if months is not None else None
     found: dict[ScopeKey, Release] = {}
     for release, directory in d.directories().items():
         for entry in list_dir_cached(directory, refresh=refresh).files:
             scope = decode_for(d, entry.name)
             if scope is None or (wanted is not None and scope.ano not in wanted):
+                continue
+            if wanted_ufs is not None and scope.uf not in wanted_ufs:
+                continue
+            if wanted_months is not None and scope.mes not in wanted_months:
                 continue
             if scope in found:
                 raise ValueError(
@@ -316,6 +328,8 @@ def available(
     dataset: str | Dataset,
     *,
     years: Iterable[int] | None = None,
+    ufs: Sequence[str] | None = None,
+    months: Iterable[int] | None = None,
     refresh: bool = False,
 ) -> list[ScopeKey]:
     """The scopes of :func:`available_releases`, without the release.
@@ -327,4 +341,4 @@ def available(
 
     This is the planner's input (spec §5.1) and the Tier 3 oracle (spec §6).
     """
-    return list(available_releases(dataset, years=years, refresh=refresh))
+    return list(available_releases(dataset, years=years, ufs=ufs, months=months, refresh=refresh))
