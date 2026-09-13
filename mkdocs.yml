@@ -47,6 +47,7 @@ nav:
       - IBGE população: sources/ibge_populacao.md
       - CNES estabelecimentos: sources/cnes_estabelecimentos.md
       - SINAN Chagas: sources/sinan_chagas.md
+      - SINAN Hanseníase: sources/sinan_hanseniase.md
       - Medicamentos e assistência farmacêutica: sources/medicamentos.md
   - Decisions:
       - 0001 Rust DBF: decisions/0001-rust-dbf.md

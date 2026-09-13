@@ -31,6 +31,7 @@ FTP_TIMEOUT = 60
 
 TARGETS: list[tuple[str, ScopeKey, str]] = [
     ("sinan_chagas", ScopeKey(uf=None, ano=2023), "sinan_chagas_br_2023.dbc"),
+    ("sinan_hanseniase", ScopeKey(uf=None, ano=2026), "sinan_hanseniase_br_2026.dbc"),
     ("sim_obitos", ScopeKey(uf="RR", ano=2023), "sim_rr_2023_mini.dbc"),
     ("sinasc_nascidos_vivos", ScopeKey(uf="RR", ano=2022), "sinasc_rr_2022_mini.dbc"),
     ("sih_aih_reduzida", ScopeKey(uf="RR", ano=2024, mes=1), "sih_rr_2024_01_mini.dbc"),

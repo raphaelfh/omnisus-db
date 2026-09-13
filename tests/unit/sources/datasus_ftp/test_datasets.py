@@ -22,6 +22,7 @@ ROWS = {
     "sia_psicossocial",
     "cnes_estabelecimentos",
     "sinan_chagas",
+    "sinan_hanseniase",
 }
 
 

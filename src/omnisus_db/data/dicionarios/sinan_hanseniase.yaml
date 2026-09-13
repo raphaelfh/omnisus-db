@@ -1,0 +1,146 @@
+name: sinan_hanseniase
+title: SINAN — Hanseníase, notificações nacionais
+profile: tabular-data-resource
+encoding: latin-1
+x-version: 1.0.0
+x-source-format: dbc
+x-partitions:
+- _source_ano
+x-evidence:
+  physical_schema: HANSBR26.dbc, 63 fields; observed 2026-09-12
+  semantic_status: Physical inventory; individual semantic fields not audited. No
+    inferred category mappings.
+  dictionary_url: https://portalsinan.saude.gov.br/images/documentos/Agravos/Hanseniase/DIC_DADOS_Hanseniase_v5.pdf
+  source_url: ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/HANSBR26.dbc
+schema:
+  fields:
+  - name: tp_not
+    type: string
+  - name: id_agravo
+    type: string
+  - name: dt_notific
+    type: date
+  - name: nu_ano
+    type: string
+  - name: sg_uf_not
+    type: string
+  - name: id_municip
+    type: string
+  - name: id_regiona
+    type: string
+  - name: id_unidade
+    type: string
+  - name: dt_diag
+    type: date
+  - name: sem_diag
+    type: string
+  - name: ano_nasc
+    type: string
+  - name: nu_idade_n
+    type: integer
+  - name: cs_sexo
+    type: string
+  - name: cs_gestant
+    type: string
+  - name: cs_raca
+    type: string
+  - name: cs_escol_n
+    type: string
+  - name: sg_uf
+    type: string
+  - name: id_mn_resi
+    type: string
+  - name: id_rg_resi
+    type: string
+  - name: id_pais
+    type: string
+  - name: nduplic_n
+    type: string
+  - name: dt_digita
+    type: date
+  - name: dt_transus
+    type: date
+  - name: dt_transdm
+    type: date
+  - name: dt_transsm
+    type: date
+  - name: dt_transrm
+    type: date
+  - name: dt_transrs
+    type: date
+  - name: dt_transse
+    type: date
+  - name: nu_lote_v
+    type: string
+  - name: nu_lote_h
+    type: string
+  - name: cs_flxret
+    type: string
+  - name: flxrecebi
+    type: string
+  - name: migrado_w
+    type: string
+  - name: id_ocupa_n
+    type: string
+  - name: nu_lesoes
+    type: integer
+  - name: formaclini
+    type: string
+  - name: avalia_n
+    type: string
+  - name: classopera
+    type: string
+  - name: modoentr
+    type: string
+  - name: mododetect
+    type: string
+  - name: baciloscop
+    type: string
+  - name: dtinictrat
+    type: date
+  - name: esq_ini_n
+    type: string
+  - name: contreg
+    type: integer
+  - name: nervosafet
+    type: integer
+  - name: ufatual
+    type: string
+  - name: id_muni_at
+    type: string
+  - name: dt_noti_at
+    type: date
+  - name: id_unid_at
+    type: string
+  - name: ufresat
+    type: string
+  - name: muniresat
+    type: string
+  - name: dtultcomp
+    type: date
+  - name: classatual
+    type: string
+  - name: aval_atu_n
+    type: string
+  - name: esq_atu_n
+    type: string
+  - name: dose_receb
+    type: integer
+  - name: epis_racio
+    type: string
+  - name: dtmudesq
+    type: date
+  - name: contexam
+    type: integer
+  - name: dtalta_n
+    type: date
+  - name: tpalta_n
+    type: string
+  - name: in_vincula
+    type: string
+  - name: nu_lote_ia
+    type: string
+x-identity:
+  year_column: nu_ano
+  code_column: id_agravo
+  code: A309

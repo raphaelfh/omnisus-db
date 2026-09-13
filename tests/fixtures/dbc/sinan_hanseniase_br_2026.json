@@ -1,0 +1,9 @@
+{
+  "source_uri": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/DADOS/PRELIM/HANSBR26.dbc",
+  "acquired_at": "2026-09-12",
+  "sha256": "2a1d5b69008bf320c8aabff01a99cc0f12ed1884bf006a002997bc50de795a62",
+  "bytes": 610149,
+  "scope": "national preliminary 2026",
+  "records": 10354,
+  "note": "Complete public DATASUS artifact; not a truncated or synthetic sample."
+}

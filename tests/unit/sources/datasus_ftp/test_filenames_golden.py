@@ -20,6 +20,7 @@ from omnisus_db.sources.datasus_ftp.filenames import decode_for, scope_to_filena
 # fmt: off
 GOLDEN: list[tuple[str, ScopeKey, str]] = [
     ("sinan_chagas", ScopeKey(uf=None, ano=2023), "CHAGBR23.dbc"),
+    ("sinan_hanseniase", ScopeKey(uf=None, ano=2026), "HANSBR26.dbc"),
     ("sim_obitos",    ScopeKey(uf="SP", ano=2024),         "DOSP2024.dbc"),
     ("sim_obitos",    ScopeKey(uf="RR", ano=1996),         "DORR1996.dbc"),
     ("sinasc_nascidos_vivos", ScopeKey(uf="MG", ano=2022),         "DNMG2022.dbc"),
