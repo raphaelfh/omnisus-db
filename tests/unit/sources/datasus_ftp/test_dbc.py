@@ -15,6 +15,7 @@ from omnisus_db.sources.datasus_ftp import dbc, native
 
 FIXTURES = Path(__file__).resolve().parents[3] / "fixtures"
 GOLDEN = json.loads((FIXTURES / "dbc" / "golden.json").read_text(encoding="utf-8"))
+MUTATION_SEED = (FIXTURES / "dbc" / "sia_aq_rr_2024_01_mini.dbc").read_bytes()
 VECTOR = (FIXTURES / "blast" / "test.pk").read_bytes()
 BACKENDS = ["python", pytest.param("rust", marks=pytest.mark.rust_dbf)]
 
@@ -80,10 +81,27 @@ def test_arbitrary_bytes_decode_or_raise_invalid(body, frame):
 
 @pytest.mark.rust_dbf
 @settings(max_examples=500, deadline=None)
-@given(body=st.binary(max_size=2048), frame=st.booleans())
+@given(
+    body=st.one_of(
+        st.binary(max_size=2048),
+        st.tuples(st.integers(0, 1), st.integers(4, 6), st.binary(max_size=2048)).map(
+            lambda t: bytes([t[0], t[1]]) + t[2]
+        ),
+    ),
+    frame=st.booleans(),
+)
 def test_backends_agree_on_bytes_and_messages(body, frame):
     raw = framed(body) if frame else body
     assert outcome(raw, "rust") == outcome(raw, "python")
+
+
+@pytest.mark.rust_dbf
+@settings(max_examples=200, deadline=None)
+@given(index=st.integers(0, len(MUTATION_SEED) - 1), value=st.integers(0, 255))
+def test_backends_agree_on_mutated_fixture(index, value):
+    mutated = bytearray(MUTATION_SEED)
+    mutated[index] = value
+    assert outcome(bytes(mutated), "rust") == outcome(bytes(mutated), "python")
 
 
 class Recorder:
