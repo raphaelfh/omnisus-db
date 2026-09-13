@@ -1776,7 +1776,6 @@ dependencies = [
     { name = "duckdb" },
     { name = "frictionless" },
     { name = "httpx" },
-    { name = "marimo" },
     { name = "obstore" },
     { name = "pandera" },
     { name = "polars" },
@@ -1794,6 +1793,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "hypothesis" },
+    { name = "marimo" },
     { name = "moto", extra = ["s3", "server"] },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -1825,7 +1825,7 @@ requires-dist = [
     { name = "frictionless", specifier = ">=5.19.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.168.0" },
-    { name = "marimo", specifier = ">=0.23.16" },
+    { name = "marimo", marker = "extra == 'dev'", specifier = ">=0.23.16,<0.25" },
     { name = "marimo", marker = "extra == 'notebooks'", specifier = ">=0.23.16,<0.25" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1,<2.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.7" },

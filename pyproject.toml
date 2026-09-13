@@ -32,7 +32,6 @@ dependencies = [
     "httpx>=0.28.1",
     "tomli-w>=1.2.0",
     "pyyaml>=6.0.3",
-    "marimo>=0.23.16",
     # Windows has no system time-zone database; pyarrow needs it to convert the
     # TIMESTAMPTZ columns that expire_snapshots and cleanup_files return.
     "tzdata>=2026.3; sys_platform == 'win32'",
@@ -55,6 +54,8 @@ dev = [
     "mypy>=2.3.1",
     "types-PyYAML>=6.0.12.20260906",
     "pre-commit>=4.6.2",
+    # The notebook tests import marimo; keep one pin, in the notebooks extra.
+    "omnisus-db[notebooks]",
 ]
 docs = [
     "mkdocs>=1.6.1,<2.0",
@@ -108,8 +109,7 @@ extend-immutable-calls = ["typer.Argument", "typer.Option"]
 
 [tool.ruff.lint.per-file-ignores]
 # marimo displays final expressions and injects imported classes as cell arguments.
-"notebooks/api_cenarios.py" = ["B018", "N803"]
-"notebooks/api_dados_reais.py" = ["B018", "N803"]
+"notebooks/**/*.py" = ["B018", "N803"]
 
 [tool.ruff.format]
 quote-style = "double"

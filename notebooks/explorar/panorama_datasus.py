@@ -1,6 +1,4 @@
 """Learn all 18 DATASUS portal categories with a persisted, real sample archive."""
-# marimo injects imported classes and uses final expressions as visual outputs.
-# ruff: noqa: B018, N803
 
 import marimo
 
@@ -12,7 +10,6 @@ app = marimo.App(width="full", app_title="DATASUS · panorama das 18 categorias"
 def _():
     import asyncio
     import json
-    import sys
     from datetime import UTC, datetime
     from pathlib import Path
     from uuid import uuid4
@@ -20,9 +17,7 @@ def _():
     import marimo as mo
     import polars as pl
 
-    # Notebook helpers stay together; working directory does not affect imports/data.
-    project_root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(project_root / "notebooks"))
+    project_root = Path(__file__).resolve().parents[2]
     from _acervo.catalogo import SOURCES
     from _acervo.coleta import collect
     from _acervo.relatorio import maps, write_report
@@ -60,6 +55,32 @@ def _(mo):
     subtipos, agravos, períodos ou UFs**. TABWIN é um aplicativo: inspecionamos
     seus mapas, documentos e componentes sem executar programas. Bases antigas
     usam arquivos históricos, com os nomes e as datas preservados na proveniência.
+
+    ## Como executar
+
+    ```bash
+    uv sync --locked --extra notebooks
+    uv run --locked --extra notebooks marimo edit notebooks/explorar/panorama_datasus.py
+    ```
+
+    Cada coleta grava em `data/lake/panorama-datasus/<execucao>/`: por categoria,
+    consulta ao portal, inventário FTP, arquivo original, SHA-256, tentativas,
+    amostras CSV/Parquet e descritores de colunas; além de `manifesto.json`
+    (proveniência e estado final), `portal_transferencia.js` (cópia do seletor) e
+    `mapa/` (relatório Markdown e mapas CSV/JSON). O ponteiro `latest.json` só é
+    publicado quando a tentativa termina, mesmo com falhas parciais. Interromper a
+    célula pode não encerrar imediatamente a thread de aquisição.
+
+    ```bash
+    # Exportar o acervo local já preparado (sem novos downloads)
+    uv run --locked --extra notebooks marimo export html notebooks/explorar/panorama_datasus.py -o /tmp/panorama-datasus.html
+
+    # Executar uma nova coleta real das 18 categorias e gerar o HTML
+    uv run --locked --extra notebooks marimo export html notebooks/explorar/panorama_datasus.py -o /tmp/panorama-datasus.html -- --preparar true
+    ```
+
+    `--preparar true` é para execução automática, não para uma sessão interativa;
+    falhas permanecem visíveis no manifesto e fazem a exportação terminar com erro.
     """)
     return
 

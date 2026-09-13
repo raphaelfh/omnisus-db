@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "notebooks"))
+sys.path.insert(0, str(ROOT / "notebooks/desenvolvimento"))
 from _performance_dbf import comparison_rows, measurement_rows, measurement_svg  # noqa: E402
 
 

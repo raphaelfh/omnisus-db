@@ -1,110 +1,257 @@
-# SINAN — Chagas aguda
+# SINAN · doença de Chagas aguda (`sinan_chagas`)
 
-`sinan_chagas` importa notificações nacionais de Chagas aguda, arquivos
-`CHAGBRYY.dbc`, publicados em **dois diretórios**:
-`/dissemin/publicos/SINAN/DADOS/FINAIS` (edição final, 2000–2022 hoje) e
-`/dissemin/publicos/SINAN/DADOS/PRELIM` (edição preliminar, 2023– hoje).
-Disponibilidade e modalidade devem ser consultadas novamente antes de cada
-estudo: um ano migra de `prelim` para `final` quando o DATASUS o republica no
-outro diretório, e a biblioteca não converte uma modalidade na outra
-silenciosamente.
+## Em uma frase
 
-## Descobrir, selecionar e publicar
+Notificações de doença de Chagas aguda do Sistema de Informação de Agravos de
+Notificação (SINAN), que o DATASUS publica em um arquivo nacional por ano, ora no
+diretório final, ora no preliminar.
+
+## O que um registro representa
+
+- O dicionário do agravo diz que o número de notificação e os campos de 1 a 30
+  correspondem aos mesmos campos da ficha de notificação, exceto a data de diagnóstico,
+  e descreve os campos da investigação a partir do campo 31, data da investigação
+  (Dicionário Chagas v5, p. 1).
+- `tp_not` é o tipo de notificação: 1 = negativa, 2 = individual, 3 = surto,
+  4 = agregado (Dicionário Notificação Individual v5, p. 1).
+- `id_agravo` é o código CID-10 do agravo notificado, e ao exportar retira-se o ponto
+  (Dicionário Notificação Individual v5, p. 1); a biblioteca espera `B571`
+  (`src/omnisus_db/data/dicionarios/sinan_chagas.yaml`, `x-identity`).
+- `classi_fin` é a classificação final, conclusão da investigação: 1 = confirmado,
+  2 = descartado; é obrigatória quando a data de encerramento está preenchida
+  (Dicionário Chagas v5, p. 10).
+- `criterio` é o critério de confirmação ou descarte: 1 = laboratório,
+  2 = clínico-epidemiológico, 3 = clínico (Dicionário Chagas v5, p. 10).
+- `evolucao` é a evolução do caso: 1 = vivo, 2 = óbito por Chagas, 3 = óbito por outras
+  causas, 9 = ignorado (Dicionário Chagas v5, p. 10).
+- `nduplic_n` marca duplicidades: 0 ou branco = não identificado, 1 = não é duplicidade
+  (não listar), 2 = duplicidade (não contar)
+  (Dicionário Notificação Individual v5, p. 8).
+- O número da notificação (`NU_NOTIFIC`) é o campo chave do registro no sistema
+  (Dicionário Notificação Individual v5, p. 1), mas não está entre os 108 campos
+  observados no arquivo `CHAGBR23.dbc`
+  (`src/omnisus_db/data/dicionarios/sinan_chagas.yaml`, `x-evidence` e `schema.fields`).
+- O dicionário da biblioteca é um inventário físico daquele arquivo, sem auditoria
+  semântica dos campos nem mapeamento de categorias
+  (`src/omnisus_db/data/dicionarios/sinan_chagas.yaml`, `x-evidence.semantic_status`).
+- A importação grava as colunas do arquivo com nomes em minúsculas e acrescenta
+  `_source_ano` e `_source_release`; como o arquivo é nacional, não acrescenta `ano`,
+  `uf` nem `mes` (`src/omnisus_db/sources/datasus_ftp/_runner.py`, `ingest_raw`;
+  `src/omnisus_db/sources/datasus_ftp/staging.py`, `dbc_bytes_to_parquet`).
+
+## Datas e geografia
+
+- `dt_notific` é a data de preenchimento da ficha de notificação
+  (Dicionário Notificação Individual v5, p. 2).
+- `nu_ano` é o ano da notificação, variável interna preenchida pelo sistema a partir da
+  data de notificação (Dicionário Notificação Individual v5, p. 2).
+- `dt_sin_pri` é a data dos primeiros sintomas no agravo agudo
+  (Dicionário Notificação Individual v5, p. 3).
+- `dt_invest` é a data da investigação, da primeira visita ao paciente, e deve ser igual
+  ou posterior à data da notificação (Dicionário Chagas v5, p. 1).
+- `dt_encerra` é a data do encerramento do caso, igual ou posterior à data da
+  investigação (Dicionário Chagas v5, p. 16).
+- `dt_digita` é a data da primeira inclusão da notificação no sistema e não é
+  atualizada se os dados mudarem (Dicionário Notificação Individual v5, p. 14).
+- `_source_ano` é o ano do arquivo (`CHAGBR23.dbc` → 2023), não uma data dos registros
+  (`src/omnisus_db/sources/datasus_ftp/_runner.py`, `ingest_raw`).
+- A biblioteca rejeita o arquivo inteiro quando o valor mais frequente de `nu_ano` não é
+  o ano do arquivo, e mantém no lake os registros isolados de outro ano
+  (`src/omnisus_db/sources/datasus_ftp/identity.py`, docstring do módulo e
+  `validate_identity`).
+- Todos os arquivos SINAN do FTP são nacionais e anuais, `<PREFIXO>BR<AA>.dbc`, sem
+  arquivo por UF ([relatório de 2026-09-12](https://github.com/raphaelfh/omnisus-db/blob/main/reports/2026-09-12-sinan-e-dispensacao.md),
+  §1.1).
+- `sg_uf_not` é a UF da unidade de saúde que notificou, e `id_municip` o município dessa
+  unidade (Dicionário Notificação Individual v5, p. 2).
+- `sg_uf` é a UF de residência do paciente na notificação, e `id_mn_resi` o município de
+  residência, com 6 caracteres (Dicionário Notificação Individual v5, p. 6).
+- `coufinf`, `copaisinf` e `comuninf` são a UF, o país e o município prováveis da
+  infecção (Dicionário Chagas v5, p. 13–14).
+- O código de município da população do IBGE tem 7 dígitos
+  (`src/omnisus_db/data/dicionarios/ibge_populacao.yaml`, `codigo_ibge`).
+
+## Cobertura e modalidade
+
+Um arquivo nacional por ano, de 2000 em diante, no diretório final
+`/dissemin/publicos/SINAN/DADOS/FINAIS` ou no preliminar
+`/dissemin/publicos/SINAN/DADOS/PRELIM`; veja o [catálogo de datasets](../datasets.md).
+Em 2026-09-11, 2000–2022 estavam em `FINAIS` e 2023–2025 em `PRELIM`, e nenhum ano
+estava nos dois (relatório de 2026-09-12, §1.1 e §1.2). A importação não aceita filtro
+de UF nem de mês.
+
+Para saber em qual diretório cada ano está hoje:
 
 ```python
 import omnisus_db as odb
 
-scopes = odb.available("sinan_chagas", years=[2023], refresh=True)
-if not scopes:
-    raise ValueError("O arquivo solicitado não foi listado pela fonte")
-report = odb.import_dataset(
-    "sinan_chagas", scopes=scopes,
-    target="ducklake:./chagas.ducklake", policy="skip_same",
-    run_id="chagas-2023-estudo-01", concurrency=1, batch_size=1,
-)
-print(report.rows, report.failed)
+publicados = odb.available_releases("sinan_chagas", refresh=True)
 ```
+
+## Armadilhas
+
+- Uma notificação não é um caso confirmado: a classificação final separa confirmado
+  (1) de descartado (2) (Dicionário Chagas v5, p. 10). Filtre `classi_fin` antes de
+  contar casos.
+- O Anexo I do dicionário da notificação lista para Chagas também 8 = inconclusivo
+  (Dicionário Notificação Individual v5, p. 18), código que o dicionário do agravo não
+  traz (Dicionário Chagas v5, p. 10), e o anexo começa com a nota "Falta concluir
+  revisão" (Dicionário Notificação Individual v5, p. 17).
+- Nem toda notificação é individual: `tp_not` tem negativa, surto e agregado
+  (Dicionário Notificação Individual v5, p. 1).
+- Duplicidades marcadas com 2 em `nduplic_n` não devem ser computadas na incidência
+  (Dicionário Notificação Individual v5, p. 8–9).
+- Quando a classificação final é descartado, o sistema apaga os campos de local provável
+  de infecção e de doença relacionada ao trabalho (Dicionário Chagas v5, p. 11–16).
+- `sg_uf_not` e `id_municip` descrevem onde se notificou, e `sg_uf` e `id_mn_resi` onde
+  o paciente morava (Dicionário Notificação Individual v5, p. 2 e p. 6); contagens por
+  um e por outro respondem a perguntas diferentes, como mostram as consultas
+  `notificacoes_por_uf_de_notificacao` e `notificacoes_por_uf_de_residencia` do
+  notebook (`notebooks/bases/sinan.py`).
+- `historia` tem o rótulo "História de uso de sangue ou hemoderivados nos últimos 120
+  dias" e a descrição "nos últimos 90 dias" (Dicionário Chagas v5, p. 3).
+- Um ano preliminar muda: a nota técnica do TABNET de Chagas diz que a base preliminar é
+  exportada no segundo semestre do ano seguinte e considerada fechada após dois anos, e
+  lista UFs de 2024 cuja classificação final foi ajustada pela área técnica nacional
+  (relatório de 2026-09-12, §1.2, item 3).
+- Os dois diretórios são reescritos: a data de modificação no FTP prova reescrita, não
+  mudança de conteúdo, e só `CHAGBR23` tem hash gravado desde 2026-09-10
+  (relatório de 2026-09-12, §1.2, item 4).
+- Doença de Chagas crônica não está nesta base: seus arquivos (`DCCRBR*.dbc`) ficam em
+  `/dissemin/publicos/ESUSNOTIFICA` (relatório de 2026-09-12, §1.1).
+- `CHAGBR00` não tem a coluna `ID_AGRAVO` (relatório de 2026-09-12, §3.3); nesse caso a
+  biblioteca só confere o ano (`src/omnisus_db/sources/datasus_ftp/identity.py`,
+  `validate_identity`).
+- Os códigos ficam no lake como publicados: o dicionário da biblioteca não mapeia
+  categorias (`src/omnisus_db/data/dicionarios/sinan_chagas.yaml`,
+  `x-evidence.semantic_status`).
+
+### Em aberto
+
+- Como identificar pessoas únicas: o número da notificação é o campo chave no sistema
+  (Dicionário Notificação Individual v5, p. 1), mas não está no arquivo observado
+  (`sinan_chagas.yaml`). Não trate linhas como pessoas.
+- Se `classi_fin` traz 8 = inconclusivo ou valores vazios nos seus dados: os dois
+  documentos divergem (p. 10 do agravo, p. 18 da notificação). Olhe a distribuição com a
+  consulta `classificacao_e_evolucao` do notebook.
+- Se o dicionário v5, revisado em julho de 2010 (rodapé das páginas), vale para os
+  arquivos atuais: o inventário da biblioteca vem de `CHAGBR23.dbc`, e os campos não
+  foram cruzados com o PDF (`sinan_chagas.yaml`, `x-evidence`; relatório de 2026-09-12,
+  §1.5).
+- Como a passagem de preliminar para final acontece: pela ausência de sobreposição, o
+  provável é que o arquivo saia de `PRELIM` quando entra em `FINAIS`, mas isso é
+  inferência, não observação (relatório de 2026-09-12, §1.2, item 5).
+
+## Como usar
+
+```python
+import omnisus_db as odb
+
+alvo = "ducklake:./data/lake/pesquisa/dados.ducklake"
+print(odb.available_releases("sinan_chagas", refresh=True))  # ano -> final ou prelim
+escopos = odb.available("sinan_chagas", years=[2022])
+relatorio = odb.import_dataset(
+    "sinan_chagas", scopes=escopos, target=alvo, policy="skip_same", run_id="chagas-2022"
+)
+with odb.LakeReader(alvo) as leitor:
+    print(leitor.connect().sql("SELECT _source_ano, _source_release, count(*) FROM lake.sinan_chagas GROUP BY ALL").pl())
+```
+
+Passo a passo com Chagas e hanseníase, análise e proveniência:
+[notebooks/bases/sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py).
+
+## Fontes
+
+- Sistema de Informação de Agravos de Notificação, Dicionário de Dados – SINAN NET –
+  Versão 5.0, agravo doença de Chagas (`DIC_DADOS_Chagas_v5.pdf`), Ministério da Saúde /
+  SVS / GT-SINAN, revisado em julho de 2010:
+  <https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf>
+  — consultado em 2026-09-10; SHA-256
+  `16c598f86fbfedd8040ebb34ad03c3351ff25c9bf1558354fe86ccb8b4bf8bd1`, conferido de novo
+  em 2026-09-13. Registro: `docs/dicionario/fontes/registro.json`.
+- Dicionário de Dados – SINAN NET – Versão 5.0, Notificação Individual
+  (`DIC_DADOS_Notificacao_Individual_v5.pdf`), Ministério da Saúde / SVS / GT-SINAN,
+  revisado em julho de 2010:
+  <https://portalsinan.saude.gov.br/images/documentos/Agravos/NINDIV/DIC_DADOS_Notificacao_Individual_v5.pdf>
+  — consultado em 2026-09-10; SHA-256
+  `b3e0561c7a2d0a83d717286e07d01ca75b0d4499a38d3b3ba2b602a4fc983004`, conferido de novo
+  em 2026-09-13. Registro: `docs/dicionario/fontes/registro.json`.
+- Relatório "SINAN além de Chagas e fontes públicas de dispensação", revisado em
+  2026-09-12, §1.1–1.5 e §3.3:
+  <https://github.com/raphaelfh/omnisus-db/blob/main/reports/2026-09-12-sinan-e-dispensacao.md>.
+- Página oficial do agravo no Portal SINAN:
+  <https://www.portalsinan.saude.gov.br/doenca-de-chagas-aguda> — fonte da página
+  anterior; não relida nesta revisão.
+- Catálogo gerado do registro da biblioteca: [Datasets](../datasets.md).
+
+## Detalhes técnicos
+
+### Linha de comando
 
 ```bash
 omnisus-db inventory sinan_chagas
 omnisus-db import sinan_chagas --years 2023 --plan inventory --policy skip_same
 ```
 
-O recorte nacional é `ScopeKey(uf=None, ano=2023)`. Não aceita filtros de UF ou
-mês na aquisição. Use `sg_uf_not` (notificação) ou os campos de residência
-originais na consulta, conforme a pergunta científica.
+O recorte nacional é `ScopeKey(uf=None, ano=2023)`; filtros de UF ou mês na aquisição
+são rejeitados. Filtre a geografia na consulta, por `sg_uf_not` ou pelos campos de
+residência, conforme a pergunta.
 
-Cada arquivo é buscado no diretório em que foi listado e a linha registra a
-modalidade em `_source_release` (`final` ou `prelim`), ao lado de
-`_source_ano`. Anos finais e preliminares convivem na mesma tabela; a coluna
-diz qual é qual, e `lake.publications()` repete a modalidade por publicação.
+### Final e preliminar
 
-## Contrato de integridade e publicação
-
-- O arquivo inteiro passa pela verificação de tamanho e contagem DBF, pelo
-  staging Arrow/Parquet e pela mesma transação dos importadores estaduais.
-- A identidade da fonte é declarada no YAML (`x-identity`) e verificada por
-  moda, não por registro: o `nu_ano` mais frequente deve ser o ano do arquivo
-  e o `id_agravo` mais frequente deve ser `B571`; registros isolados fora do
-  ano são preservados. Erros de moda rejeitam o arquivo inteiro; não há
-  descarte silencioso de linhas.
-- `_source_ano` e `_source_release` identificam o ano e a modalidade do
-  arquivo e são reservados à biblioteca. Não sobrescrevem `ano`, `uf` nem os
-  campos originais, se estiverem presentes.
-- `replace` valida antes de substituir exatamente o ano nacional; dados e
-  manifesto são publicados atomicamente. Misturar publicação nacional e
-  estadual na mesma tabela é rejeitado.
-- `skip_same` verifica novamente a fonte. Se hash ou parser/dicionário mudou,
-  exige uma decisão explícita de substituição. O padrão geral da API continua
-  `append`; para pesquisadores, os exemplos escolhem `skip_same`.
-- O manifesto mantém SHA-256, versão, URL de origem, IDs de execução/publicação
-  e situação ativa. Manifestos antigos recebem URL nula, sem inventar origem.
-  A URL não é um identificador imutável: o hash identifica os bytes adquiridos.
-
-Uma falha de commit pode ter resultado desconhecido. Reabra o lake, consulte
-`lake.publications(run_id=...)` e reconcilie antes de repetir a escrita. O lock
-continua local/cooperativo; isso não estabelece recuperação distribuída.
-
-## Quando o ano deixa de ser preliminar
+Cada arquivo é buscado no diretório em que foi listado, e a linha registra a modalidade
+em `_source_release` (`final` ou `prelim`), ao lado de `_source_ano`. Anos finais e
+preliminares convivem na mesma tabela; a coluna diz qual é qual, e
+`publications()` repete a modalidade por publicação. A biblioteca não converte uma
+modalidade na outra em silêncio. Quando o DATASUS republica um ano preliminar como final:
 
 ```python
-with odb.Lake.local("ducklake:./chagas.ducklake") as lake:
-    moved = odb.outdated("sinan_chagas", lake=lake)
-odb.import_dataset("sinan_chagas", scopes=moved, target="ducklake:./chagas.ducklake",
+with odb.LakeReader(alvo) as leitor:
+    movidos = odb.outdated("sinan_chagas", lake=leitor)
+odb.import_dataset("sinan_chagas", scopes=movidos, target=alvo,
                    policy="replace", run_id="chagas-final-2026")
 ```
 
-`outdated()` compara a modalidade publicada no lake com a modalidade listada
-hoje no servidor e devolve apenas os escopos que se moveram. A substituição é
-sempre explícita: `replace` valida antes de substituir exatamente aquele ano
-nacional, e dados e manifesto são publicados atomicamente. Nada é atualizado
-por conta própria.
+`outdated()` compara a modalidade publicada no lake com a listada hoje no servidor e
+devolve só os escopos que mudaram. A substituição é sempre explícita: `replace` valida
+antes de substituir exatamente aquele ano nacional, e dados e manifesto são publicados
+atomicamente. Nada é atualizado por conta própria.
 
-## Interpretação e reprodução
+### Contrato de integridade e publicação
 
-Os 108 campos do YAML são um inventário físico observado em CHAGBR23.dbc,
-**não uma auditoria semântica integral**. Campos adicionais são preservados;
-incompatibilidades de tipo seguem a política geral de esquema. A validação
-da identidade da fonte não comprova qualidade clínica, completitude da
-vigilância nem classificação final do caso.
+- O arquivo inteiro passa pela verificação de tamanho e contagem DBF, pelo staging
+  Arrow/Parquet e pela mesma transação dos importadores estaduais.
+- A identidade da fonte é declarada no YAML (`x-identity`) e verificada pela moda, não
+  registro a registro: o `nu_ano` mais frequente deve ser o ano do arquivo e, se a
+  coluna existir, o `id_agravo` mais frequente deve ser `B571`. Um erro de moda rejeita
+  o arquivo inteiro; não há descarte silencioso de linhas.
+- `_source_ano` e `_source_release` são reservados à biblioteca; um arquivo que traga
+  colunas com esses nomes é rejeitado.
+- Misturar publicação nacional e estadual na mesma tabela é rejeitado.
+- `skip_same` verifica a fonte de novo. Se o hash, o parser ou o dicionário mudou, exige
+  uma decisão explícita de substituição. O padrão geral da API continua `append`; os
+  exemplos para pesquisa usam `skip_same`.
+- O manifesto guarda SHA-256, versão, URL de origem, IDs de execução e de publicação e
+  situação ativa. Manifestos antigos recebem URL nula, sem inventar origem. A URL não é
+  um identificador imutável: o hash identifica os bytes adquiridos.
 
-Não confundir notificações com casos confirmados, indivíduos únicos ou
-incidência. Não confundir doença de Chagas aguda com os registros de doença
-de Chagas crônica do e-SUS Notifica. A edição preliminar pode ser revisada ou
-retirada do diretório; a existência de arquivos é distinta de encerramento
-epidemiológico dos registros.
+Uma falha de commit pode ter resultado desconhecido. Reabra o lake, consulte
+`publications(run_id=...)` e reconcilie antes de repetir a escrita. O lock é local e
+cooperativo; isso não estabelece recuperação distribuída.
 
-Fontes: [página oficial do agravo](https://www.portalsinan.saude.gov.br/doenca-de-chagas-aguda)
-e [dicionário SINAN NET v5](https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf).
+### Dicionário
 
-O notebook `notebooks/sinan_chagas.py` apresenta descoberta, contrato, plano
-salvo, importação explícita, recuperação e análise agregada com exportação da
-proveniência. Execute na raiz do checkout:
+Os 108 campos de `src/omnisus_db/data/dicionarios/sinan_chagas.yaml` são um inventário
+físico observado em `CHAGBR23.dbc`, não uma auditoria semântica. Campos adicionais são
+preservados; incompatibilidades de tipo seguem a política geral de esquema. A validação
+da identidade da fonte não comprova qualidade clínica, completude da vigilância nem
+classificação final do caso.
+
+### Notebook
 
 ```bash
-uv run --locked --extra notebooks marimo edit notebooks/sinan_chagas.py
+uv run --locked --extra notebooks marimo edit notebooks/bases/sinan.py
 ```
 
-Abrir/exportar o notebook não inicia rede nem publicação. Interromper uma
-célula não garante cancelar a thread do importador; aguarde sua conclusão
-antes de reabrir o mesmo destino.
+Abrir ou exportar o notebook não usa rede nem grava nada. Interromper uma célula não
+cancela a thread do importador; espere a conclusão antes de reabrir o mesmo destino.

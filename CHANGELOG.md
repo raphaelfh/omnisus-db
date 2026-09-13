@@ -2,8 +2,21 @@
 
 ## Unreleased
 
+### Added
+
+- **A researcher guide** (`docs/pesquisa/`): a starting point, indicators and
+  reproducibility, in Portuguese. The source profiles in `docs/sources/` follow a
+  shared outline with cited sources; SIA now has a profile too.
+- **One notebook per database** in `notebooks/bases/` (SIM, SINASC, SIH, SIA, CNES,
+  IBGE, SINAN, medicines), with the same six steps and a shared research lake.
+  Opening a notebook downloads and writes nothing; a test guards that. The other
+  notebooks live in `notebooks/explorar/` and `notebooks/desenvolvimento/`.
+
 ### Changed
 
+- **marimo is no longer installed with the package.** A base install pulls
+  only what imports need. The notebooks need the extra:
+  `uv sync --locked --extra notebooks` (or `pip install ".[notebooks]"`).
 - **Installs from wheels on Python 3.13 and 3.14.** DBC decompression no
   longer uses `datasus-dbc`, which has no 3.13 wheels for macOS, Windows or
   Linux x86_64 and made `pip install` need Rust there. `omnisus-db` now ports

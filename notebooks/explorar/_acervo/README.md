@@ -30,4 +30,4 @@ registros truncados não é publicado como uma amostra válida. Os bytes origina
 sempre permanecem preservados.
 
 Testes: `uv run --locked --extra dev pytest tests/unit/notebooks/test_acervo.py -q`.
-A validação real das 18 categorias está em `../../reports/2026-09-10-mapa-datasus/`.
+A validação real das 18 categorias está em `../../../reports/2026-09-10-mapa-datasus/`.

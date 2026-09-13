@@ -24,8 +24,8 @@ absorb the gaps.
 ## Read into a DataFrame
 
 ```python
-with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-    df = lake.connect().sql(
+with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    df = reader.connect().sql(
         "SELECT * FROM lake.sim_obitos WHERE ano=2023 AND uf='SP'"
     ).pl()
 ```

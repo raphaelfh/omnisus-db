@@ -1,5 +1,0 @@
-[      69ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://datasus-homologacao.saude.gov.br/wp-content/uploads/elementor/google-fonts/css/roboto.css?ver=1748872104:0
-[      69ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://datasus-homologacao.saude.gov.br/wp-content/uploads/elementor/google-fonts/css/robotoslab.css?ver=1748872119:0
-[     975ms] [LOG] JQMIGRATE: Migrate is installed, version 3.4.1 @ https://datasus.saude.gov.br/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1:1
-[     976ms] TypeError: $ is not a function
-    at https://datasus.saude.gov.br/wp-content/plugins/idg-abas/inc/js/rtbs.js?ver=7.1:1:1

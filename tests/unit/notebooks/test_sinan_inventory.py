@@ -9,7 +9,7 @@ import polars as pl
 import omnisus_db as odb
 from omnisus_db.sources.datasus_ftp.datasets import resolve
 
-NOTEBOOK = Path(__file__).resolve().parents[3] / "notebooks/inventario_dados_reais.py"
+NOTEBOOK = Path(__file__).resolve().parents[3] / "notebooks/explorar/inventario_dados_reais.py"
 
 
 async def test_national_inventory_result_exports_complete_data(tmp_path):

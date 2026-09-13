@@ -1,6 +1,4 @@
 """Inventário DATASUS → seleção de arquivos reais → DuckLake → SQL e exportação."""
-# Expressões finais são saídas visuais; marimo injeta as classes importadas.
-# ruff: noqa: B018, N803
 
 import marimo
 
@@ -38,6 +36,28 @@ def _(mo):
     pela consulta ao servidor. O exemplo inicial é **SIM · Roraima · 2023**.
     A seleção permite até três arquivos, com limite total de 25 MiB comprimidos.
     Não há dados sintéticos nem substituição por exemplos quando a rede falha.
+
+    ## Como executar
+
+    ```bash
+    uv sync --locked --extra notebooks
+    uv run --locked --extra notebooks marimo edit notebooks/explorar/inventario_dados_reais.py
+    ```
+
+    Cada tentativa grava em `data/lake/inventario-real/<data-uuid>/`: `inventario.csv`,
+    `selecao.csv`, `execucao.json`, catálogo DuckLake e exportações CSV/Parquet
+    completas. Os dados não são versionados. Aguarde a importação terminar antes de
+    repetir; interromper a célula pode não cancelar a thread de download.
+
+    ```bash
+    # Executar o exemplo real inteiro e gerar um HTML com resultados
+    uv run --locked --extra notebooks marimo export html notebooks/explorar/inventario_dados_reais.py -o /tmp/inventario-dados-reais.html -- --executar true
+    ```
+
+    Esse comando **acessa o DATASUS e baixa dados**. O HTML é estático; filtros e
+    botões de download interativos exigem `marimo edit` ou `marimo run`. Sem
+    `--executar true`, a exportação valida a abertura e aguarda os botões, sem
+    consultar o DATASUS — não use essa opção ao servir uma sessão interativa.
     """)
     return
 
@@ -214,7 +234,7 @@ async def _(
     mo.stop(not (executar or baixar.value), mo.md("O download começa ao clicar no botão acima."))
     # mo.notebook_location() funciona mesmo quando o processo parte de outro diretório.
     pasta = (
-        Path(mo.notebook_location()).parent
+        Path(mo.notebook_location()).parents[1]
         / "data/lake/inventario-real"
         / f"{datetime.now(UTC):%Y%m%dT%H%M%S}-{uuid4().hex[:8]}"
     ).resolve()
@@ -300,8 +320,8 @@ def _(dataset, mo, odb, pasta, relatorio, target):
     mo.stop(not relatorio.ok, mo.md("Nenhum escopo confirmado para consultar."))
     # O nome da tabela vem exclusivamente do registro de datasets da biblioteca.
     tabela_sql = f'lake."{dataset.name}"'
-    with odb.Lake.local(target) as _lake:
-        _conn = _lake.connect()
+    with odb.LakeReader(target) as _leitor:
+        _conn = _leitor.connect()
         total = _conn.sql(f"SELECT count(*) FROM {tabela_sql}").fetchone()[0]
         assert total == relatorio.rows, "A contagem persistida diverge do relatório de importação."
         amostra = _conn.sql(f"SELECT * FROM {tabela_sql} LIMIT 50").pl()
