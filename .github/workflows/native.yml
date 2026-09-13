@@ -73,7 +73,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.platform.architecture }}
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - uses: dtolnay/rust-toolchain@1.98.1
         with:
           targets: ${{ matrix.platform.target }}
@@ -161,7 +161,7 @@ jobs:
         with:
           python-version: "3.12"
           architecture: x64
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - uses: dtolnay/rust-toolchain@1.98.1
       - name: Build the sdist with the pinned backend
         run: uv build native/omnisus-db-dbf --sdist --out-dir dist/sdist
