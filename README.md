@@ -63,7 +63,11 @@ separate bounded BNAFAR/Hórus stock query. Stock observations are partial and
 are not dispensing events or managed lake publications. See the
 [source contract](docs/sources/medicamentos.md) for access and coverage limits.
 
-See [docs](https://raphaelfh.github.io/omnisus-db) for details.
+The documentation site is not published yet (the repository has no remote). Build it locally:
+
+```bash
+uv sync --locked --extra docs && uv run mkdocs serve
+```
 
 ## Notebooks: learning path
 

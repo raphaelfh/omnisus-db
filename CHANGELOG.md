@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## v0.1.1 — 2026-09-12
+
+### Removed
+
+- `import_sim`, `import_sinasc` and `import_sih`. They were one-line aliases
+  over `import_dataset` + `scopes_for` and hid the two things a repeatable
+  import needs: `available()` and `policy`. Write
+  `import_dataset("sim_obitos", scopes=available("sim_obitos", years=...))`.
+- `import_ibge_pop` is now `import_ibge_populacao`, matching the dataset name.
+  `import_cnes_estabelecimentos` and `import_cnes_master` are unchanged: both
+  carry behaviour of their own, so they stay named functions.
+
+### Fixed
 
 - Failed DBC scopes are included in import reports. Rolled-back batches no longer
   leave missing outcomes, and unknown commits abort with inspectable partial progress.
@@ -11,6 +23,10 @@
 
 ### Added
 
+- `available()` and `available_releases()` take `ufs` and `months`, the same
+  selectors as `scopes_for()`, so "what exists for SP in 2024" is one call.
+  A national row raises on either selector instead of returning nothing. The
+  CLI's `--plan inventory` now delegates to it rather than post-filtering.
 - `sinan_hanseniase` (SINAN HANS, 2001–, final and preliminary).
 - `scripts/gen_dicionario.py`: physical-inventory YAML from one DBC file.
 - Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow

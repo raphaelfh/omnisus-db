@@ -148,3 +148,19 @@ alias e os lakes existentes precisam ser reconstruídos em um target novo (ver
 
 Não existe alias nenhum; as tabelas do lake carregam os nomes novos e um lake
 existente precisa ser reconstruído em um target novo.
+
+## Adendo 2026-09-12 — superfície da API congelada em v0.1.1
+
+Funções de importação públicas, sem alias:
+
+| Função | O que faz |
+| --- | --- |
+| `import_dataset(nome, scopes=...)` | qualquer dataset do FTP DATASUS; `scopes` vem de `available()` ou `scopes_for()` |
+| `import_cnes_estabelecimentos(...)` | CNES-ST mais o refresh da view `aux_cnes` |
+| `import_cnes_master(...)` | nomes de estabelecimentos pela API pública, upsert idempotente |
+| `import_ibge_populacao(years=, product=)` | população IBGE (antes `import_ibge_pop`) |
+
+Removidos: `import_sim`, `import_sinasc`, `import_sih` (eram aliases de uma
+linha e escondiam `available()` e `policy`). `available()` e
+`available_releases()` aceitam `ufs` e `months`, os mesmos seletores de
+`scopes_for()`. Detalhes em `reports/2026-09-12-entrega-v0.1.1.md`.
