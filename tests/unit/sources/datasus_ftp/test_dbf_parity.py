@@ -124,7 +124,7 @@ def test_mixed_families_preserve_existing_output(monkeypatch, tmp_path, batch_ro
     raw = make_dbf([("X", "N", 3, 0)], [b"   1", b" 1.5"])
     monkeypatch.setenv("OMNISUS_DBF_BACKEND", "rust")
     monkeypatch.setattr(parse, "BATCH_ROWS", batch_rows)
-    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda _: raw)
+    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda _: raw)
     target = tmp_path / "previous.parquet"
     target.write_bytes(b"previous")
     with pytest.raises((TypeError, ValueError)):
@@ -143,7 +143,7 @@ def test_corruption_never_publishes_partial_file(monkeypatch, tmp_path, corrupt)
     raw = make_dbf([("X", "N", 3, 0)], records, declared_rows=3 if corrupt == "truncated" else 2)
     monkeypatch.setenv("OMNISUS_DBF_BACKEND", "rust")
     monkeypatch.setattr(parse, "BATCH_ROWS", 1)
-    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda _: raw)
+    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda _: raw)
     target = tmp_path / "previous.parquet"
     target.write_bytes(b"previous")
     with pytest.raises((parse.DbfIntegrityError, ValueError)):

@@ -47,7 +47,7 @@ def test_late_native_parse_error_preserves_prior_publication(monkeypatch, tmp_pa
         before = lake.publications()
         broken = make_dbf([("X", "N", 3, 0)], [b" 123", b" bad"])
         monkeypatch.setattr(parse, "BATCH_ROWS", 1)
-        monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda _: broken)
+        monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda _: broken)
         with pytest.raises(ValueError):
             ingest_raw(dataset, scope, b"changed", lake, policy="replace")
         assert lake.connect().execute("SELECT count(*) FROM lake.sim_obitos").fetchone() == (3311,)

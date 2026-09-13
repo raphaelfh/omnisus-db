@@ -102,7 +102,7 @@ def dbc_bytes_to_parquet(
     from omnisus_db.sources.datasus_ftp import parse
 
     dic = load_dicionario(dictionary if dictionary is not None else dataset)
-    dbf_bytes = parse.datasus_dbc.decompress_bytes(raw)
+    dbf_bytes = parse.dbc.decompress_bytes(raw)
     parse._check_dbf_length(dbf_bytes, dataset=dataset)
     physical = physical_arrow_types(dbf_bytes)
     empty_schema = physical_arrow_schema(dbf_bytes)

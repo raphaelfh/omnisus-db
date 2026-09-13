@@ -28,7 +28,7 @@ def fake_decompress(monkeypatch):
 
     def _install(dbf_bytes: bytes) -> None:
         monkeypatch.setattr(
-            "omnisus_db.sources.datasus_ftp.parse.datasus_dbc.decompress_bytes",
+            "omnisus_db.sources.datasus_ftp.parse.dbc.decompress_bytes",
             lambda _: dbf_bytes,
         )
 

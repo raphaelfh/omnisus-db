@@ -7,6 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from omnisus_db.sources.datasus_ftp.dbc import InvalidDbcError
 from omnisus_db.sources.datasus_ftp.parse import dbc_bytes_to_lazyframe
 
 
@@ -42,12 +43,8 @@ def test_parse_unknown_dataset_raises() -> None:
         dbc_bytes_to_lazyframe(b"x", dataset="bogus")
 
 
-def test_parse_empty_bytes_returns_empty_lazyframe() -> None:
-    """Empty DBC content should not crash; should return empty LazyFrame."""
-    # An empty DBC doesn't decompress meaningfully; this should raise rather
-    # than silently return data. We expect *some* exception (datasus_dbc
-    # decompression error).
-    with pytest.raises(Exception):  # noqa: B017 — bubbles from datasus_dbc
+def test_parse_empty_bytes_raises_invalid_dbc() -> None:
+    with pytest.raises(InvalidDbcError, match="missing DBC header"):
         dbc_bytes_to_lazyframe(b"", dataset="sim_obitos")
 
 

@@ -29,7 +29,6 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-import datasus_dbc
 import duckdb
 import polars as pl
 import pyarrow.parquet as pq
@@ -157,7 +156,7 @@ def assert_rust_used(mode):
 def historical_parquet(raw, target, args):
     """Reproduce the old accumulating Polars parser solely for historical probes."""
     dic = load_dicionario(args.dataset)
-    dbf = datasus_dbc.decompress_bytes(raw)
+    dbf = parse.dbc.decompress_bytes(raw)
     parse._check_dbf_length(dbf, dataset=args.dataset)
     batches, buffer, count = [], [], 0
     records = parse._stream_records(dbf, encoding=dic.encoding)
@@ -199,7 +198,7 @@ def worker(args):
             raise RuntimeError("Benchmark requires locally cached DuckLake and SQLite extensions")
     raw = None if args.phase == "lake_publication" else Path(args.input).read_bytes()
     if args.dbf:
-        parse.datasus_dbc.decompress_bytes = lambda _: raw
+        parse.dbc.decompress_bytes = lambda _: raw
     with tempfile.TemporaryDirectory(prefix="dbf-bench-") as directory:
         tempfile.tempdir = directory
         root = Path(directory)
@@ -340,7 +339,7 @@ def corpus(directory, repeat):
     cases = []
     for name, dataset, ano, mes in FIXTURES:
         fixture = ROOT / "tests/fixtures/dbc" / f"{name}.dbc"
-        data = datasus_dbc.decompress_bytes(fixture.read_bytes())
+        data = parse.dbc.decompress_bytes(fixture.read_bytes())
         nrec, header, length = parse._read_dbf_geometry(data)
         kinds = Counter()
         for offset in range(32, header, 32):
@@ -409,7 +408,6 @@ def environment(cpu_description=None):
     for name in (
         "omnisus-db",
         "omnisus-db-dbf",
-        "datasus-dbc",
         "dbfread2",
         "pyarrow",
         "polars",

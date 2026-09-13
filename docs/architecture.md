@@ -46,7 +46,7 @@ unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas.md).
 
 ```text
 bounded concurrent FTP fetches -> one parse/write consumer
-  -> datasus_dbc.decompress_bytes -> complete DBF bytes
+  -> dbc.decompress_bytes (Python, or optional Rust) -> complete DBF bytes
   -> Python dbfread2 or optional Rust reader -> bounded Arrow batches -> temporary IPC spool
   -> reconcile batch schemas -> temporary Parquet (Snappy)
   -> managed transaction: schema + scope policy + data + manifest -> COMMIT

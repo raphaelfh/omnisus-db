@@ -13,10 +13,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-import datasus_dbc as datasus_dbc  # Retain the public decompression monkeypatch seam.
 import polars as pl
 from dbfread2 import DBF
 
+from omnisus_db.sources.datasus_ftp import dbc as dbc  # Decompression monkeypatch seam.
 from omnisus_db.sources.datasus_ftp.dbf_contract import (
     DbfIntegrityError as DbfIntegrityError,
 )
@@ -73,7 +73,8 @@ def dbc_bytes_to_lazyframe(
         FileNotFoundError: if no dictionary can be loaded.
         DbfIntegrityError: if the decompressed DBF is truncated or the parsed
             record count diverges from the header's declared count.
-        Exception: bubbles from datasus_dbc / dbfread2 on bad input.
+        InvalidDbcError: if the DBC payload is malformed or truncated.
+        Exception: bubbles from dbfread2 on a malformed DBF.
     """
     from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 
