@@ -14,6 +14,15 @@
   convert the `TIMESTAMPTZ` results and Windows has none.
 - The acervo notebook helper closes its temporary DBF before reading it, which
   Windows requires.
+- **SIM `idade` decodes the right unit.** The first digit is 0 = minutes,
+  1 = hours, 2 = days, 3 = months, 4 = years, 5 = 100 + years. `000` and
+  9xx mean unknown, and `400` means under one year with no finer unit
+  (`Estrutura_SIM_Anterior.pdf` on the DATASUS FTP). The decoder had followed
+  `Estrutura_do_SIM_2025.pdf`, whose list is shifted by one, so `310` read as
+  "10 dias" instead of "10 meses" and unit 0 read as "Ignorada". Checked
+  against `dtobito - dtnasc` on SIM AC 2022. A value of 99 under units 0–5 is
+  now a real age: `499` reads as "99 anos", not "Ignorada". This changes
+  display only. Stored `idade` values are unchanged.
 
 ## v0.2.0 — 2026-09-12
 
