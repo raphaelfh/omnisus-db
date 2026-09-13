@@ -8,7 +8,7 @@ from types import ModuleType
 from typing import Literal
 
 Backend = Literal["python", "rust", "auto"]
-API_VERSION = 1
+API_VERSION = 2
 
 
 def requested_backend(backend: Backend | None, *, variable: str, label: str) -> str:

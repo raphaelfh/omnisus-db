@@ -16,7 +16,7 @@ from omnisus_db.sources.datasus_ftp import dbc, native
 FIXTURES = Path(__file__).resolve().parents[3] / "fixtures"
 GOLDEN = json.loads((FIXTURES / "dbc" / "golden.json").read_text(encoding="utf-8"))
 VECTOR = (FIXTURES / "blast" / "test.pk").read_bytes()
-BACKENDS = ["python"]
+BACKENDS = ["python", pytest.param("rust", marks=pytest.mark.rust_dbf)]
 
 
 def framed(body: bytes) -> bytes:
@@ -76,6 +76,14 @@ def test_every_truncation_is_reported_where_input_ends(backend):
 def test_arbitrary_bytes_decode_or_raise_invalid(body, frame):
     raw = framed(body) if frame else body
     assert isinstance(outcome(raw, "python"), bytes | str)
+
+
+@pytest.mark.rust_dbf
+@settings(max_examples=500, deadline=None)
+@given(body=st.binary(max_size=2048), frame=st.booleans())
+def test_backends_agree_on_bytes_and_messages(body, frame):
+    raw = framed(body) if frame else body
+    assert outcome(raw, "rust") == outcome(raw, "python")
 
 
 class Recorder:

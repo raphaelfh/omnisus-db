@@ -129,8 +129,8 @@ def assert_rust_used(mode):
     import omnisus_db_dbf as native
     from omnisus_db_dbf import _native
 
-    if native.API_VERSION != 1:
-        raise AssertionError("Expected native API_VERSION=1")
+    if native.API_VERSION != 2:
+        raise AssertionError("Expected native API_VERSION=2")
     original = native.open_reader
     calls = {
         "open_reader_calls": 0,

@@ -26,8 +26,8 @@ def _native_available():
         if exc.name == "omnisus_db_dbf":
             return False
         raise
-    if omnisus_db_dbf.API_VERSION != 1:
-        raise pytest.UsageError("Incompatible Rust DBF API")
+    if omnisus_db_dbf.API_VERSION != 2:
+        raise pytest.UsageError("Incompatible native API")
     return True
 
 
