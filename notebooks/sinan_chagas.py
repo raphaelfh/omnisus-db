@@ -1,6 +1,5 @@
 """Trilha reproduzível: notificações preliminares de Chagas aguda."""
 
-# ruff: noqa: B018, N803
 import marimo
 
 __generated_with = "0.23.16"

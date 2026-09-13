@@ -1,6 +1,4 @@
 """Inventário DATASUS → seleção de arquivos reais → DuckLake → SQL e exportação."""
-# Expressões finais são saídas visuais; marimo injeta as classes importadas.
-# ruff: noqa: B018, N803
 
 import marimo
 

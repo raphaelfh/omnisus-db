@@ -1,5 +1,4 @@
 """Medicamentos: APAC no lake e observação explícita de estoque BNAFAR/Hórus."""
-# ruff: noqa: N803
 
 import marimo
 

@@ -1795,7 +1795,6 @@ dependencies = [
     { name = "duckdb" },
     { name = "frictionless" },
     { name = "httpx" },
-    { name = "marimo" },
     { name = "obstore" },
     { name = "pandera" },
     { name = "polars" },
@@ -1813,6 +1812,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "hypothesis" },
+    { name = "marimo" },
     { name = "moto", extra = ["s3", "server"] },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -1845,7 +1845,7 @@ requires-dist = [
     { name = "frictionless", specifier = ">=5.19.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.168.0" },
-    { name = "marimo", specifier = ">=0.23.16" },
+    { name = "marimo", marker = "extra == 'dev'", specifier = ">=0.23.16,<0.25" },
     { name = "marimo", marker = "extra == 'notebooks'", specifier = ">=0.23.16,<0.25" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1,<2.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.7" },
@@ -2528,7 +2528,7 @@ name = "pyzmq"
 version = "27.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "implementation_name == 'pypy'" },
+    { name = "cffi", marker = "python_full_version < '3.15' and implementation_name == 'pypy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e7/8d/5b3d5631c2f4b4b8862f64cd0c9eb777b5710eeb5125b4be8dd0a200a4c0/pyzmq-27.2.0.tar.gz", hash = "sha256:54d4259d1bfae24ecdb5ca79f7acc2eac6c286a02d6a0ae617797cb45f0726d3", size = 292316, upload-time = "2026-08-20T19:08:21.19Z" }
 wheels = [

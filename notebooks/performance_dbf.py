@@ -1,6 +1,4 @@
 """Explore the measured Python/Rust DBF benchmarks without rerunning them."""
-# marimo injects imports and displays final expressions.
-# ruff: noqa: N803
 
 import marimo
 

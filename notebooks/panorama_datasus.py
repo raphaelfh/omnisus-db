@@ -1,6 +1,4 @@
 """Learn all 18 DATASUS portal categories with a persisted, real sample archive."""
-# marimo injects imported classes and uses final expressions as visual outputs.
-# ruff: noqa: B018, N803
 
 import marimo
 

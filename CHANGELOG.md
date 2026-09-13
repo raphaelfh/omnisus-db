@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- **marimo is no longer installed with the package.** A base install pulls
+  only what imports need. The notebooks need the extra:
+  `uv sync --locked --extra notebooks` (or `pip install ".[notebooks]"`).
+
 ### Fixed
 
 - **Imports work on Windows.** Staging memory-mapped each spooled `.arrow`

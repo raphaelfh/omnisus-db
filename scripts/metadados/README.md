@@ -28,7 +28,7 @@ uv run --locked python scripts/metadados/consultar.py --arrow
 uv run --locked python scripts/metadados/atualizar_catalogo.py --check-local
 
 # Abrir a demonstração
-uv run --locked marimo edit notebooks/metadados_cli.py
+uv run --locked --extra notebooks marimo edit notebooks/metadados_cli.py
 ```
 
 `consultar.py` usa `jsonschema`; o modo `--arrow` também usa `pyarrow`.
