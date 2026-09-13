@@ -41,8 +41,12 @@ def decode_for(d: Dataset, name: str) -> ScopeKey | None:
     """Inverse of :func:`scope_to_filename` for one row.
 
     ``None`` when ``name`` is not one of this row's files. Case-insensitive,
-    like the server. A 2-letter prefix never swallows a 3-letter one
-    (``AD`` on ``ATDRR2401.dbc`` fails because ``TR`` is not two digits).
+    like the server. A shorter prefix never swallows a longer family's file:
+    ``AD`` does not even reach ``ATDRR2401.dbc``'s groups (the literal prefix
+    differs at the second letter), and a prefix that *is* a head of the name
+    is still rejected by the fixed-width groups — matching ``ATDRR2401.dbc``
+    as a two-letter ``AT`` row takes ``DR`` as the UF and then needs two
+    digits where ``R2`` stands.
     """
     prefix = re.escape(d.prefix)
     if d.geography == "national":

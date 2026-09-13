@@ -41,7 +41,7 @@ def test_loader_caches_parsed_yaml() -> None:
     assert a is b  # lru_cache
 
 
-def test_load_sim_do_has_expected_extensions() -> None:
+def test_load_sim_obitos_has_expected_extensions() -> None:
     dic = load_dicionario("sim_obitos")
     assert dic.encoding == "cp1252"
     assert dic.partitions == ["ano", "uf"]
@@ -51,7 +51,7 @@ def test_load_sim_do_has_expected_extensions() -> None:
     assert dic.decode("sexo", 99) == 99
 
 
-def test_load_sim_do_arrow_schema_round_trip() -> None:
+def test_load_sim_obitos_arrow_schema_round_trip() -> None:
     dic = load_dicionario("sim_obitos")
     schema = dic.arrow_schema
     # Required fields present

@@ -8,7 +8,7 @@ Three layers over one primitive (spec §4.1):
 
 ``available`` and ``crawl`` are the same mechanism at two levels of
 interpretation — the only difference is whether filenames get decoded. The
-registry names the eleven directories that matter, so the oracle path never
+registry names every directory that matters, so the oracle path never
 recurses: no queue, no thread pool, no locks.
 
 This module has no dependency on ``Lake``.
@@ -291,7 +291,8 @@ def available_releases(
     for this row only, so other datasets sharing the directory are skipped and
     an ad-hoc ``Dataset`` is discovered like a registered one. A scope found
     in two directories is a server inconsistency and raises: it is never
-    resolved by preference.
+    resolved by preference. ``years`` filters before that check, so a duplicate
+    of a year outside the requested range is not reported.
     """
     d = resolve(dataset)
     wanted = set(years) if years is not None else None

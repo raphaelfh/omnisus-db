@@ -1,6 +1,6 @@
 """End-to-end: BPA-I fixture -> generic runner -> lake -> query.
 
-Uses the runner directly (not a public ``import_sia_bi`` wrapper) because
+Uses the runner directly (not a public ``import_sia_bpa_individualizado`` wrapper) because
 ``omnisus_db/__init__.py`` currently carries unrelated uncommitted work;
 the public wrapper lands separately.
 """
@@ -18,7 +18,7 @@ from omnisus_db.sources.datasus_ftp._runner import import_scope
 
 
 @pytest.mark.integration
-def test_import_sia_bi_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+def test_import_sia_bpa_individualizado_monthly(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     fixture_bytes = dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes()
 
     async def fake_fetch(*, dataset, scope, **_kw):

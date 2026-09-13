@@ -67,7 +67,7 @@ def test_lake_context_manager(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _seed_cnes_st(lake: Lake) -> None:
+def _seed_cnes_estabelecimentos(lake: Lake) -> None:
     """Seed ``lake.cnes_estabelecimentos`` with two snapshots for the same CNES so that
     the view's ARG_MAX picks the latest tp_unid/codufmun.
 
@@ -96,7 +96,7 @@ def _seed_cnes_st(lake: Lake) -> None:
     )
 
 
-def test_ensure_aux_cnes_view_skips_when_cnes_st_missing(tmp_path: Path) -> None:
+def test_ensure_aux_cnes_view_skips_when_cnes_estabelecimentos_missing(tmp_path: Path) -> None:
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
         assert lake.ensure_aux_cnes_view() is False
         assert "aux_cnes" not in lake.tables()
@@ -104,7 +104,7 @@ def test_ensure_aux_cnes_view_skips_when_cnes_st_missing(tmp_path: Path) -> None
 
 def test_ensure_aux_cnes_view_picks_latest_snapshot_per_cnes(tmp_path: Path) -> None:
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
-        _seed_cnes_st(lake)
+        _seed_cnes_estabelecimentos(lake)
         assert lake.ensure_aux_cnes_view() is True
 
         rows = (
@@ -123,7 +123,7 @@ def test_ensure_aux_cnes_view_picks_latest_snapshot_per_cnes(tmp_path: Path) -> 
 
 def test_ensure_aux_cnes_view_is_idempotent(tmp_path: Path) -> None:
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
-        _seed_cnes_st(lake)
+        _seed_cnes_estabelecimentos(lake)
         assert lake.ensure_aux_cnes_view() is True
         # Refreshing twice must not raise (CREATE OR REPLACE).
         assert lake.ensure_aux_cnes_view() is True
@@ -136,7 +136,7 @@ def test_ensure_aux_cnes_view_reflects_new_snapshots(tmp_path: Path) -> None:
     re-querying it) must surface rows added to ``cnes_estabelecimentos`` afterwards.
     """
     with Lake.local(f"ducklake:{tmp_path}/v.ducklake") as lake:
-        _seed_cnes_st(lake)
+        _seed_cnes_estabelecimentos(lake)
         lake.ensure_aux_cnes_view()
 
         con = lake.connect()

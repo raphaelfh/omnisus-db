@@ -145,7 +145,7 @@ def test_lake_update_auxiliares(tmp_path: Path) -> None:
     assert result.exit_code == 0
 
 
-def test_import_sia_bi_via_cli(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+def test_import_sia_bpa_individualizado_via_cli(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     """The CLI must reach every registry row, not a hand-maintained subset."""
     fixture_bytes = dbc_fixture("sia_bi_rr_2024_01_mini").read_bytes()
 

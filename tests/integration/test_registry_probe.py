@@ -8,8 +8,8 @@ Network-bound and upstream-flaky, so it runs on a schedule, never on a PR.
 
 Marked BOTH ``integration`` and ``e2e`` deliberately. CI runs
 ``-m "not e2e and not perf"``, which does *not* deselect ``integration`` — so
-``integration`` alone would put eleven live FTP listings on every pull
-request. ``e2e`` is described in pyproject as "slow, manual/cron", which is
+``integration`` alone would put one live FTP listing per registry directory
+on every pull request. ``e2e`` is described in pyproject as "slow, manual/cron", which is
 exactly this, and it is already deselected. ``probe.yml`` selects with
 ``-m integration``, which matches regardless of the second marker.
 

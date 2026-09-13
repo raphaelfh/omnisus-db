@@ -12,12 +12,12 @@ from omnisus_db.sources.datasus_ftp.filenames import (
 )
 
 
-def test_decode_for_sim_do() -> None:
+def test_decode_for_sim_obitos() -> None:
     scope = decode_for(REGISTRY["sim_obitos"], "DOSP2024.dbc")
     assert scope == ScopeKey(uf="SP", ano=2024)
 
 
-def test_decode_for_sih_rd_monthly() -> None:
+def test_decode_for_sih_aih_reduzida_monthly() -> None:
     scope = decode_for(REGISTRY["sih_aih_reduzida"], "RDSP2401.dbc")
     assert scope == ScopeKey(uf="SP", ano=2024, mes=1)
 

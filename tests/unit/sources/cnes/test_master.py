@@ -27,7 +27,7 @@ def _api_response(cnes_int: int, *, nome_fantasia: str, razao: str) -> dict:
     }
 
 
-def _seed_cnes_st(lake: Lake, cnes_codes: list[str]) -> None:
+def _seed_cnes_estabelecimentos(lake: Lake, cnes_codes: list[str]) -> None:
     """Minimal cnes_estabelecimentos with one row per code so import_cnes_master() finds them."""
     con = lake.connect()
     con.execute(
@@ -48,7 +48,7 @@ def _seed_cnes_st(lake: Lake, cnes_codes: list[str]) -> None:
 def test_import_cnes_master_writes_table_and_refreshes_view(tmp_path: Path) -> None:
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["2789590", "0123456"])
+        _seed_cnes_estabelecimentos(lake, ["2789590", "0123456"])
 
     # API uses unpadded integer paths
     respx.get(_api_url("2789590")).mock(
@@ -101,7 +101,7 @@ def test_import_cnes_master_skips_404_and_network_failures(tmp_path: Path) -> No
     """One CNES returns 200, another 404, another times out — only the 200 lands."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1111111", "2222222", "3333333"])
+        _seed_cnes_estabelecimentos(lake, ["1111111", "2222222", "3333333"])
 
     respx.get(_api_url("1111111")).mock(
         return_value=httpx.Response(
@@ -130,7 +130,7 @@ def test_import_cnes_master_fallbacks_to_razao_when_nome_fantasia_empty(
 ) -> None:
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1234567"])
+        _seed_cnes_estabelecimentos(lake, ["1234567"])
 
     respx.get(_api_url("1234567")).mock(
         return_value=httpx.Response(
@@ -155,7 +155,7 @@ def test_import_cnes_master_fallbacks_to_razao_when_nome_fantasia_empty(
 def test_import_cnes_master_drops_records_with_no_usable_name(tmp_path: Path) -> None:
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["9999999"])
+        _seed_cnes_estabelecimentos(lake, ["9999999"])
 
     respx.get(_api_url("9999999")).mock(
         return_value=httpx.Response(
@@ -173,7 +173,9 @@ def test_import_cnes_master_drops_records_with_no_usable_name(tmp_path: Path) ->
         assert rows == 0
 
 
-def test_import_cnes_master_returns_zero_when_cnes_st_missing(tmp_path: Path) -> None:
+def test_import_cnes_master_returns_zero_when_cnes_estabelecimentos_missing(
+    tmp_path: Path,
+) -> None:
     """Without cnes_estabelecimentos (and without explicit codes), there's nothing to fetch."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     n = import_cnes_master(target=target)
@@ -203,7 +205,7 @@ def test_aux_cnes_view_works_without_cnes_master_loaded(tmp_path: Path) -> None:
     """The view degrades gracefully: nome is NULL when cnes_master doesn't exist yet."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1234567"])
+        _seed_cnes_estabelecimentos(lake, ["1234567"])
         assert lake.ensure_aux_cnes_view() is True
 
         rows = (
@@ -224,7 +226,7 @@ def test_import_cnes_master_only_missing_skips_already_fetched(tmp_path: Path) -
     """Re-running with only_missing=True (default) only fetches new codes."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1111111", "2222222"])
+        _seed_cnes_estabelecimentos(lake, ["1111111", "2222222"])
 
     # First run — both fetched
     respx.get(_api_url("1111111")).mock(
@@ -269,7 +271,7 @@ def test_import_cnes_master_only_missing_false_refetches_all(tmp_path: Path) -> 
     """only_missing=False forces re-fetching everything (e.g. names changed)."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1234567"])
+        _seed_cnes_estabelecimentos(lake, ["1234567"])
 
     respx.get(_api_url("1234567")).mock(
         return_value=httpx.Response(
@@ -300,7 +302,7 @@ def test_import_cnes_master_invokes_progress_callback(tmp_path: Path) -> None:
     """Progress callback fires once per CNES code processed (success or failure)."""
     target = f"ducklake:{tmp_path}/x.ducklake"
     with Lake.local(target) as lake:
-        _seed_cnes_st(lake, ["1111111", "2222222", "3333333"])
+        _seed_cnes_estabelecimentos(lake, ["1111111", "2222222", "3333333"])
 
     respx.get(_api_url("1111111")).mock(
         return_value=httpx.Response(

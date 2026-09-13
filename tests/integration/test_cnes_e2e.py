@@ -11,7 +11,7 @@ from omnisus_db.lake import Lake
 
 
 @pytest.mark.integration
-def test_import_cnes_st_e2e(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
+def test_import_cnes_estabelecimentos_e2e(monkeypatch, tmp_path: Path, dbc_fixture) -> None:
     fixture_bytes = dbc_fixture("cnes_rr_2024_01_mini").read_bytes()
 
     async def fake_fetch(*, dataset, scope, **_kw):
