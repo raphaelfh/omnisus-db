@@ -23,6 +23,8 @@ PERFIS = {
     "sinasc_nascidos_vivos": "sinasc_nascidos_vivos",
     "sih_aih_reduzida": "sih_aih_reduzida",
     "sia": "sia",
+    "cnes_estabelecimentos": "cnes_estabelecimentos",
+    "ibge_populacao": "ibge_populacao",
 }
 
 
