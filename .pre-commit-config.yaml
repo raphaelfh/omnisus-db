@@ -6,9 +6,9 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: end-of-file-fixer
-        exclude: ^tests/fixtures/dbc/.*\.dbc$
+        exclude: ^tests/fixtures/(dbc/.*\.dbc|blast/.*)$
       - id: trailing-whitespace
-        exclude: ^tests/fixtures/dbc/.*\.dbc$
+        exclude: ^tests/fixtures/(dbc/.*\.dbc|blast/.*)$
       - id: check-added-large-files
         args: [--maxkb=1024]
 
