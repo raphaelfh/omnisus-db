@@ -20,6 +20,7 @@ from omnisus_db.sources.datasus_ftp._runner import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_CONCURRENCY,
 )
+from omnisus_db.sources.datasus_ftp._runner import release_map as _release_map
 from omnisus_db.sources.datasus_ftp._runner import run_scopes as _run_scopes_ftp
 from omnisus_db.sources.datasus_ftp.datasets import Dataset, resolve
 from omnisus_db.sources.datasus_ftp.fetch import (
@@ -357,9 +358,11 @@ def outdated(
     itself. Read-only; pass the result to :func:`import_dataset` with
     ``policy="replace"`` and a ``run_id``. Scopes in the lake that the server
     no longer lists are a withdrawal, a different fact, and are not returned.
+    A row published in a single directory can never move, so it answers ``[]``
+    without listing anything — the same guard :func:`release_map` applies.
     """
     d = resolve(dataset)
-    current = available_releases(d, refresh=refresh)
+    current = _release_map(d, refresh=refresh)
     moved = {
         row["scope"]
         for row in lake.publications()

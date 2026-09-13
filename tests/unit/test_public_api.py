@@ -302,8 +302,17 @@ def test_outdated_lists_scopes_whose_release_moved(tmp_path, monkeypatch) -> Non
         ScopeKey(uf=None, ano=2025): "final",
         ScopeKey(uf=None, ano=2027): "prelim",
     }
-    monkeypatch.setattr("omnisus_db.available_releases", lambda *a, **k: server)
+    monkeypatch.setattr(
+        "omnisus_db.sources.datasus_ftp._runner.available_releases", lambda *a, **k: server
+    )
     with Lake.local(target) as lake:
-        assert odb.outdated("sinan_chagas", lake=lake) == [ScopeKey(uf=None, ano=2025)]
         # 2026 is in the lake but no longer on the server: a withdrawal, not an outdated release
+        assert odb.outdated("sinan_chagas", lake=lake) == [ScopeKey(uf=None, ano=2025)]
+
+
+def test_outdated_never_lists_a_row_published_in_one_directory(tmp_path) -> None:
+    """sia_bpa_individualizado has no preliminary directory, so nothing it
+    publishes can move and the answer is [] without a LIST. No listing is
+    faked here: the unit-test network guard turns any attempt into a failure."""
+    with Lake.local(f"ducklake:{tmp_path}/l.ducklake") as lake:
         assert odb.outdated("sia_bpa_individualizado", lake=lake) == []

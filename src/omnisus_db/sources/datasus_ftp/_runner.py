@@ -63,12 +63,12 @@ class _ProducerStoppedError(RuntimeError):
     """The producer exited without completing the input stream."""
 
 
-def release_map(d: Dataset) -> dict[ScopeKey, Release]:
+def release_map(d: Dataset, *, refresh: bool = False) -> dict[ScopeKey, Release]:
     """Where each published scope currently lives. Rows with a single
     directory need no listing: everything is ``final``."""
     if d.prelim_dir is None:
         return {}
-    return available_releases(d)
+    return available_releases(d, refresh=refresh)
 
 
 async def _next_fetched(
