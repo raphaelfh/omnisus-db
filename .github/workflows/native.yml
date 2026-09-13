@@ -27,7 +27,7 @@ jobs:
         working-directory: native/omnisus-db-dbf
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           architecture: x64
@@ -68,7 +68,7 @@ jobs:
       OMNISUS_NATIVE_SOURCE_ROOT: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         id: python
         with:
           python-version: ${{ matrix.python }}
@@ -157,7 +157,7 @@ jobs:
       OMNISUS_NATIVE_SOURCE_ROOT: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           architecture: x64
