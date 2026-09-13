@@ -78,16 +78,19 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
   seguintes com a quantidade (Estrutura do SIM 2025, p. 2).
 - O documento lista as unidades 1 = minuto, 2 = hora, 3 = mês, 4 = ano e
   5 = idade maior que 100 anos, e 9 = ignorado (Estrutura do SIM 2025, p. 2).
+- A unidade 3 é mês: o documento dá para ela a faixa "de 1 a menos de 12 meses
+  completos", com quantidade de 01 a 11 (Estrutura do SIM 2025, p. 2). Em SIM Roraima
+  2022, os 123 registros com unidade 3 tinham quantidade de 01 a 11
+  (`reports/2026-09-13-guia-pesquisador-validacao.md`, §4.3).
 - Em óbito fetal, `idade` não deve ser preenchida (Estrutura do SIM 2025, p. 2).
 - `sexo` usa M ou 1 = masculino, F ou 2 = feminino, e I, 0 ou 9 = ignorado
   (Estrutura do SIM 2025, p. 2).
 - O dicionário declara `sexo` como inteiro, embora o documento liste letras; a
   divergência está aberta em `docs/dicionario/exemplos/sim_obitos.sexo.json`
   (questão `legacy-logical-type`).
-- A causa básica pode mudar depois da investigação: `causabas_o` guarda a causa
-  básica informada antes da resseleção (Estrutura do SIM 2025, p. 6), e `altcausa`
-  indica correção ou alteração da causa após a investigação
-  (Estrutura do SIM 2025, p. 8).
+- `causabas_o` guarda a causa básica informada antes da resseleção
+  (Estrutura do SIM 2025, p. 6). Em outro campo, `altcausa` indica se houve correção
+  ou alteração da causa do óbito após investigação (Estrutura do SIM 2025, p. 8).
 - `tp_altera` traz códigos como "CausaBas em branco", "CausaBas com ausência do 4
   caractere" e "CausaBas inválida para o Sexo Feminino" (Estrutura do SIM 2025, p. 9).
 - `codmunres` (residência) e `codmunocor` (ocorrência) respondem a perguntas
@@ -100,9 +103,7 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
   (Estrutura do SIM 2025, p. 9); `semagestac` traz as semanas com dois algarismos
   (p. 4).
 - `peso` é o peso ao nascer em gramas (Estrutura do SIM 2025, p. 4).
-- O documento é a edição atualizada em 07/2025 (Estrutura do SIM 2025, p. 1), e sua
-  validade para arquivos de anos anteriores não foi estabelecida
-  (`docs/dicionario/exemplos/sim_obitos.sexo.json`, questão `edition-applicability`).
+- O documento é a edição atualizada em 07/2025 (Estrutura do SIM 2025, p. 1).
 - O documento não descreve `numerodo` nem `contador`, que o dicionário da biblioteca
   declara (Estrutura do SIM 2025, p. 1–9;
   `src/omnisus_db/data/dicionarios/sim_obitos.yaml`).
@@ -118,10 +119,16 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
   registros era fetal (`reports/evidence/2026-09-10/marimo-real/verification.json`,
   `filter_2022_non_fetal` e `empty_fetal_selection`). Não conte óbitos fetais com esta
   base sem conferir `tipobito` nos seus dados.
-- A unidade "dias" de `idade`: o documento dá a faixa de 01 a 29 dias, mas não um
-  código de unidade para dias, e usa 3 para mês (p. 2); o decodificador de exibição da
-  biblioteca lê 3 como dias (`src/omnisus_db/transforms/dictionaries.py`,
-  `_IDADE_SIM_UNITS`). Confira a distribuição do primeiro dígito antes de converter.
+- A unidade dos dias em `idade`: o documento dá a faixa "de 24 horas e 29 dias", com
+  quantidade de 01 a 29, mas nenhum código de unidade para ela (p. 2). O decodificador
+  de exibição da biblioteca lê a unidade 3 como dias
+  (`src/omnisus_db/transforms/dictionaries.py`, `_IDADE_SIM_UNITS`), o que diverge do
+  documento; a correção está registrada fora deste guia
+  (`reports/2026-09-13-guia-pesquisador-validacao.md`, §4.3). Confira a distribuição do
+  primeiro dígito antes de converter.
+- Se a edição de 07/2025 vale para arquivos de anos anteriores: o exemplo auditado do
+  campo `sexo` deixa aberta a confirmação de uma referência aplicável a 2023
+  (`docs/dicionario/exemplos/sim_obitos.sexo.json`, questão `edition-applicability`).
 - Se um arquivo `DOUFAAAA` reúne óbitos de residentes na UF ou óbitos ocorridos na UF:
   o documento não explica o diretório `DORES`. Compare o prefixo de `codmunres` e de
   `codmunocor` com a UF do arquivo; a consulta `residencia_e_ocorrencia` do notebook faz

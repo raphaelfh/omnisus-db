@@ -8,8 +8,9 @@ diretório final, ora no preliminar.
 
 ## O que um registro representa
 
-- Uma linha é uma notificação do SINAN com sua investigação: os campos de 1 a 30 vêm da
-  ficha de notificação individual, e os demais do dicionário do agravo
+- O dicionário do agravo diz que o número de notificação e os campos de 1 a 30
+  correspondem aos mesmos campos da ficha de notificação, exceto a data de diagnóstico,
+  e descreve os campos da investigação a partir do campo 31, data da investigação
   (Dicionário Chagas v5, p. 1).
 - `tp_not` é o tipo de notificação: 1 = negativa, 2 = individual, 3 = surto,
   4 = agregado (Dicionário Notificação Individual v5, p. 1).

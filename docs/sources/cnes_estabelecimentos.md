@@ -68,9 +68,10 @@ p. 1–2) não estão no catálogo.
 
 ## Armadilhas
 
-- Uma linha não é um estabelecimento ao longo do tempo: cada arquivo corresponde a um
-  mês da competência (Informe CNES 2017-06, p. 2), e somar linhas de várias
-  competências conta o mesmo `cnes` (p. 3) uma vez por competência importada.
+- Cada arquivo ST é de um mês da competência (Informe CNES 2017-06, p. 2), e o
+  documento não declara chave nem diz quantas vezes um `cnes` aparece por arquivo
+  (p. 3–11; veja Em aberto). Não some linhas de várias competências como se fossem
+  estabelecimentos.
 - A consulta `estabelecimentos_por_tipo` do notebook mostra, lado a lado, linhas e
   códigos CNES distintos por competência (`notebooks/bases/cnes_estabelecimentos.py`).
 - `tp_unid` é o "Tipo de unidade (estabelecimento)", com 2 caracteres, e o documento

@@ -10,8 +10,8 @@ Saúde e arquivos publicados pelo DATASUS, um por UF e ano.
 
 - O dicionário da biblioteca descreve a base como declarações de nascidos vivos
   (`src/omnisus_db/data/dicionarios/sinasc_nascidos_vivos.yaml`, campo `title`).
-- O documento oficial identifica cada registro pelo número da DN (`numerodn`),
-  sequencial por UF informante e por ano (Estrutura do SINASC para CD, p. 1).
+- O primeiro campo dos arquivos é o número da DN (`numerodn`), sequencial por UF
+  informante e por ano (Estrutura do SINASC para CD, p. 1).
 - Os arquivos são DBF compactados no formato DBC (Estrutura do SINASC para CD, p. 1).
 - A importação grava as colunas do arquivo com nomes em minúsculas e acrescenta
   `ano`, `uf` e `_source_release` a cada linha
@@ -73,9 +73,10 @@ publicados = odb.available_releases("sinasc_nascidos_vivos", ufs=["RR"], refresh
 - `numerodn` é sequencial por UF informante e por ano (Estrutura do SINASC para CD,
   p. 1), e o dicionário não declara chave primária para a base
   (`src/omnisus_db/data/dicionarios/sinasc_nascidos_vivos.yaml`, sem `primaryKey`).
-- O documento traz duas estruturas, a atual e uma "até 2005", com tamanhos diferentes
-  para alguns campos: `codestab` tem 7 caracteres na atual e 9 na antiga, e
-  `codanomal` tem 20 na atual e 4 na antiga
+- O documento traz duas estruturas: a primeira, "Estrutura do SINASC para o CD-ROM",
+  sem período no título (p. 1), e a segunda, "Estrutura do SINASC para o CD-ROM até
+  2005" (p. 3). Alguns campos mudam de tamanho: `codestab` tem 7 caracteres na primeira
+  e 9 na segunda, e `codanomal` tem 20 na primeira e 4 na segunda
   (Estrutura do SINASC para CD, p. 1–4).
 - Em `estcivmae`, o código 5 (união consensual) aparece só na estrutura até 2005,
   marcado como de versões anteriores (Estrutura do SINASC para CD, p. 1 e p. 3).
@@ -97,8 +98,14 @@ publicados = odb.available_releases("sinasc_nascidos_vivos", ufs=["RR"], refresh
 - O comprimento do código de município nos dados: o documento declara 7 caracteres
   (p. 1), e o dicionário liga `codmunres` a `aux_municipios` com a indicação `lpad_6`.
   Confira nos seus dados antes de juntar com outra base.
-- Qual das duas estruturas vale para cada ano entre 1996 e 2005, e se a estrutura
-  atual descreve os arquivos recentes: o documento não traz data de edição.
+- Se `numerodn` identifica um registro sozinho: o documento o descreve como sequencial
+  por UF informante e por ano (p. 1), e o dicionário não declara chave primária. Compare
+  `count(*)` com `count(DISTINCT numerodn)` antes de usá-lo como chave.
+- Onde passa a fronteira entre as duas estruturas: o título da segunda diz "até 2005"
+  (p. 3), mas o documento não diz se 2005 já usa a primeira, se uma única estrutura vale
+  para todos os anos até 2005 (o código 5 de `estcivmae` é marcado "versões
+  anteriores", p. 3) nem se a primeira descreve os arquivos recentes; o documento não
+  traz data de edição.
 
 ## Como usar
 

@@ -113,6 +113,10 @@ publicados = odb.available_releases("sinan_hanseniase", refresh=True)
 - A categoria 9 de `tpalta_n` não está disponível para digitação e só aparece em casos
   migrados do Sinan Windows ou notificados até a versão 1.3
   (Dicionário Hanseníase v5, p. 8).
+- Pelo Anexo I, toda notificação de hanseníase entra como confirmada: a classificação
+  final 1 = confirmado é marcada com (*), "Categoria atribuída pelo sistema ao incluir
+  notificação no sistema", e só passa a descartado por erro diagnóstico
+  (Dicionário Notificação Individual v5, p. 20 e nota de rodapé na p. 22).
 - O Anexo I do dicionário da notificação dá para hanseníase a classificação final
   descartado "se o campo tp_administiva = 5 erro diagnostico" (Dicionário Notificação
   Individual v5, p. 20), enquanto o tipo de saída usa 8 = erro diagnóstico
@@ -125,7 +129,7 @@ publicados = odb.available_releases("sinan_hanseniase", refresh=True)
   p. 2), e o arquivo observado ainda traz `baciloscop`
   (`src/omnisus_db/data/dicionarios/sinan_hanseniase.yaml`).
 - `nu_lesoes` era limitado a 20 lesões até a versão 1.3 (Dicionário Hanseníase v5, p. 2).
-- `dose_receb` é o número de doses supervisionadas recebidas, não o total de doses
+- `dose_receb` é o número de doses supervisionadas recebidas sob supervisão
   (Dicionário Hanseníase v5, p. 7).
 - O documento descreve número do prontuário, número de notificação atual e CEP
   (Dicionário Hanseníase v5, p. 1, 4 e 5), que não estão no arquivo observado
@@ -138,15 +142,21 @@ publicados = odb.available_releases("sinan_hanseniase", refresh=True)
 
 ### Em aberto
 
-- Como selecionar casos confirmados: o arquivo não tem `classi_fin`
-  (`sinan_hanseniase.yaml`), e o Anexo I só a descreve para hanseníase com uma nota de
-  revisão pendente (p. 17 e p. 20). Declare no estudo que usou `modoentr` e `tpalta_n`.
+- Como marcar os descartados: o arquivo não tem `classi_fin`
+  (`sinan_hanseniase.yaml`), e a regra do Anexo I para descartar usa
+  "tp_administiva = 5" (Dicionário Notificação Individual v5, p. 20), enquanto o tipo de
+  saída codifica erro diagnóstico como 8 (Dicionário Hanseníase v5, p. 7), num anexo
+  com a nota "Falta concluir revisão" (p. 17). Declare no estudo que usou `modoentr` e
+  `tpalta_n`.
 - Como identificar pessoas únicas: transferências geram nova notificação vinculada
   (p. 3–4), e o arquivo não tem o número de notificação atual
   (`sinan_hanseniase.yaml`). Não trate linhas como pessoas.
 - Em que data os campos de acompanhamento foram lidos: o documento diz que são
   atualizados ao longo do tratamento (p. 3–8), mas não diz quando o DATASUS extrai o
-  arquivo. Um ano preliminar pode mudar quando for republicado.
+  arquivo.
+- Se um ano preliminar muda quando é republicado: a regra de fechamento em dois anos
+  que o relatório de 2026-09-12 cita descreve Chagas, não hanseníase (§1.2, item 3), e
+  a data de modificação no FTP prova reescrita, não mudança de conteúdo (§1.2, item 4).
 - Se o ano do arquivo segue a notificação ou o diagnóstico: nas duas amostras `nu_ano`
   coincide com o ano do arquivo (relatório de 2026-09-12, §1.3), o que não separa as
   duas hipóteses; na tuberculose, o ano do arquivo segue `DT_DIAG` (mesmo relatório,

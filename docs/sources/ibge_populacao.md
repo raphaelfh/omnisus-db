@@ -51,9 +51,10 @@ alimenta o SIDRA.
   agregado e o nível (documentação da API de agregados, "Localidades por agregado").
 - Como esse endpoint não recebe período, a biblioteca só aceita a edição mais recente
   de cada agregado (`src/omnisus_db/sources/ibge/fetch.py`, `fetch_pop_by_year`).
-- As estimativas para o TCU foram feitas segundo a situação político-administrativa
-  vigente em 1º de julho de cada ano de referência (Estimativas para o TCU, p. 8,
-  nota de 1992).
+- Na linha de 1992, a nota diz que as estimativas foram realizadas segundo as
+  situações político-administrativas vigentes em 1º de julho dos respectivos anos de
+  referência (Estimativas para o TCU, p. 8). As notas de 2012 e 2008 (p. 7) e de 2004
+  (p. 8) registram municípios instalados a partir do ano seguinte ao de referência.
 
 ## Cobertura e modalidade
 

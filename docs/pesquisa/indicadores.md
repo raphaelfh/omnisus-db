@@ -32,8 +32,9 @@ seções seguintes mostram onde isso costuma falhar.
 ## Residência, ocorrência e notificação
 
 Cada base guarda mais de um município por registro, e cada um responde a uma pergunta
-diferente. Uma taxa de base populacional pede o município de residência, como os
-"óbitos de residentes" da RIPSA (RIPSA 2008, p. 84).
+diferente. As fichas lidas da RIPSA contam eventos de residentes: óbitos de residentes
+na taxa bruta de mortalidade (RIPSA 2008, p. 84) e nascidos vivos de mães residentes na
+proporção de baixo peso ao nascer (RIPSA 2008, p. 218).
 
 | Base | Residência | Outro município | Fonte |
 | --- | --- | --- | --- |
@@ -77,8 +78,12 @@ uma diferença real.
 
 ## Conferir o código do município antes de juntar
 
-O IBGE usa 7 dígitos; os códigos das bases do DATASUS podem vir com 6. O notebook da
-população conta os dígitos dos dois lados antes de juntar
+O IBGE usa 7 dígitos (`src/omnisus_db/data/dicionarios/ibge_populacao.yaml`, padrão de
+`codigo_ibge`); os códigos das bases do DATASUS podem vir com 6: o SIH e o SINAN os
+declaram com 6 caracteres (tabela acima), e o `codmunres` do SIM de Roraima 2022 veio
+com 6 na validação
+([relatório, §4.1](https://github.com/raphaelfh/omnisus-db/blob/main/reports/2026-09-13-guia-pesquisador-validacao.md)).
+O notebook da população conta os dígitos dos dois lados antes de juntar
 (`notebooks/bases/ibge_populacao.py`, consultas `digitos_codigo_ibge` e
 `digitos_codmunres_sim`):
 
@@ -157,8 +162,8 @@ with odb.LakeReader(alvo, snapshot_id=snapshot_id) as leitor:
 - **Óbitos fetais.** Os 3246 registros de Roraima 2022 tinham `tipobito = '2'`, não
   fetal ([relatório, §4.2](https://github.com/raphaelfh/omnisus-db/blob/main/reports/2026-09-13-guia-pesquisador-validacao.md));
   confira `tipobito` nos seus dados antes de comparar com outra taxa.
-- **Data de referência e ano calendário.** Os óbitos se distribuem pelo ano de 2022; a
-  população do censo refere-se a uma única data, gravada pela biblioteca como
+- **Data de referência e ano calendário.** O numerador da taxa bruta conta os óbitos
+  do ano considerado (RIPSA 2008, p. 84); a população do censo refere-se a uma única data, gravada pela biblioteca como
   2022-08-01 e ainda não conferida na página do IBGE
   ([perfil da população, Em aberto](../sources/ibge_populacao.md#em-aberto)). A RIPSA
   usa a data de referência do censo nos anos censitários (RIPSA 2008, p. 58). Cuidado

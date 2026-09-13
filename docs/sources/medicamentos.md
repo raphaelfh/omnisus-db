@@ -52,9 +52,10 @@ Dispensação:
 
 - A BNAFAR consolida posições de estoque, movimentações e dispensações realizadas pelos
   estabelecimentos de saúde (página BNAFAR, lida em 2026-09-13).
-- A dispensação chega à BNAFAR pelo registro REDFM, via RNDS, enviado por municípios e
-  estados pelo serviço de interoperabilidade SI-BNAFAR (FAQ BNAFAR, atualizada em
-  16/10/2025).
+- Pela FAQ, estados, Distrito Federal e municípios enviam os dados à BNAFAR por
+  sistemas como Hórus, e-SUS AF e o serviço web de envio, entre outros, e os dados da
+  Farmácia Popular são incorporados diretamente pelo Ministério da Saúde
+  (FAQ BNAFAR, atualizada em 16/10/2025).
 - O portal BNAFAR abriu uma página de login, e o "Rol de dados" exigiu autenticação;
   nenhuma fonte pública de eventos de dispensação foi confirmada
   (relatório de 2026-09-12, Parte 2 e §3.6).
@@ -95,9 +96,10 @@ Dispensação:
 
 ## Armadilhas
 
-- Uma linha de APAC não é uma dose nem uma dispensação: o layout do arquivo de
-  medicamentos não tem campo de quantidade de medicamento
-  (Informe SIASUS 2019-07, p. 7).
+- As informações dos arquivos de APAC referem-se a atendimentos ambulatoriais
+  (Informe SIASUS 2019-07, p. 5), e o layout do arquivo de medicamentos não tem campo
+  de quantidade de medicamento (p. 7). Não leia linhas como doses nem como
+  dispensações.
 - Somar `ap_vl_ap` soma o valor total aprovado das APAC, não quantidades
   (Informe SIASUS 2019-07, p. 5 e p. 7).
 - Contar linhas conta registros: o documento diz que a APAC gera um registro por código

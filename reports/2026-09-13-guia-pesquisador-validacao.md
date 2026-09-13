@@ -214,4 +214,145 @@ A única coisa que "não funcionou" foi de ferramental de sessão, não da bibli
 
 ## Revisão adversarial das afirmações
 
-A ser preenchida pelo Task 21.
+### Método
+
+Em 2026-09-13, três revisores independentes, cada um com contexto novo e sem acesso à
+redação, leram as seções "O que um registro representa", "Datas e geografia" e
+"Armadilhas" (com "Em aberto") dos nove perfis em `docs/sources/` e a página
+`docs/pesquisa/indicadores.md`, na versão do commit a0c0211. Lote A: SIM, SINASC e SIH.
+Lote B: SIA, CNES, população do IBGE e indicadores. Lote C: SINAN Chagas, SINAN
+hanseníase e medicamentos. Para cada frase com fato, o revisor abriu a página citada do
+documento ou o arquivo do repositório e classificou a frase como sustentada, não
+sustentada ou sem citação.
+
+Os PDFs usados foram conferidos por SHA-256 contra `docs/dicionario/fontes/registro.json`,
+sem divergência. Os que não estão no registro (Dicionário Hanseníase v5, RIPSA 2008,
+Metodologia do Censo 2010) conferiram com os hashes da seção 6 deste relatório e das
+páginas que os citam. As páginas web do lote C (página BNAFAR, FAQ BNAFAR, catálogo MGDI
+Farmácia Popular) foram baixadas de novo em forma bruta e lidas; as três responderam
+HTTP 200. No lote B, os metadados dos agregados 202, 4714 e 6579 e a documentação da API
+de agregados foram lidos de novo. Antes de cada mudança abaixo, a passagem citada foi
+aberta outra vez.
+
+### Totais por página
+
+| Página | Sustentadas | Não sustentadas | Sem citação |
+| --- | ---: | ---: | ---: |
+| `docs/sources/sim_obitos.md` | 36 | 2 | 0 |
+| `docs/sources/sinasc_nascidos_vivos.md` | 26 | 1 | 0 |
+| `docs/sources/sih_aih_reduzida.md` | 39 | 1 | 0 |
+| `docs/sources/sia.md` | 44 | 0 | 0 |
+| `docs/sources/cnes_estabelecimentos.md` | 35 | 1 | 0 |
+| `docs/sources/ibge_populacao.md` | 29 | 1 | 0 |
+| `docs/pesquisa/indicadores.md` | 42 | 1 | 2 |
+| `docs/sources/sinan_chagas.md` | 38 | 1 | 0 |
+| `docs/sources/sinan_hanseniase.md` | 40 | 1 | 1 |
+| `docs/sources/medicamentos.md` | 34 | 2 | 0 |
+| **Total** | **363** | **11** | **3** |
+
+### Frases não sustentadas ou sem citação, e o que foi feito
+
+Nenhuma citação foi trocada por outra mais fraca. Resultado: 1 citação corrigida, 10
+frases restringidas ao que a fonte diz, 3 movidas para "Em aberto", nenhuma apagada.
+
+1. **SIM, `causabas_o`** (não sustentada). A frase ligava `causabas_o` à investigação; a
+   p. 6 diz só "Causa básica informada antes da resseleção". **Restringida:** a p. 6
+   sustenta `causabas_o`, e `altcausa` (p. 8) aparece como campo separado, sem ligação
+   entre os dois.
+2. **SIM, validade da edição de 07/2025 para anos anteriores** (não sustentada). A
+   questão `edition-applicability` de `sim_obitos.sexo.json` trata só de 2023.
+   **Movida para "Em aberto"** e restringida a 2023. Em "Armadilhas" fica só a data da
+   edição (p. 1).
+3. **SINASC, "o documento identifica cada registro pelo número da DN"** (não
+   sustentada). A p. 1 só lista `NUMERODN`, sequencial por UF informante e por ano.
+   **Restringida** a "o primeiro campo dos arquivos é o número da DN". Entrou em "Em
+   aberto" a pergunta sobre `numerodn` servir de chave sozinho.
+4. **SIH, "uma linha é uma AIH, identificada por `n_aih`, e não um paciente"** (não
+   sustentada). A p. 1 não diz o que é uma linha. **Movida para "Em aberto"** como "O
+   que uma linha representa", com os fatos citados (`n_aih`, p. 1; ausência do CNS no
+   layout RD, p. 1–4) e a consulta `aih_distintas`.
+5. **CNES, "somar competências conta o mesmo `cnes` uma vez por competência"** (não
+   sustentada). Nada diz que há uma linha por `cnes` em cada arquivo. **Restringida:**
+   cada arquivo é de um mês da competência (p. 2), e o documento não declara chave
+   (p. 3–11). O resto virou recomendação e remete ao "Em aberto" que já existia.
+6. **IBGE, situação político-administrativa em 1º de julho para todas as estimativas**
+   (não sustentada). A regra está só na nota de 1992. **Restringida** à nota de 1992
+   (p. 8), com as notas de 2012 e 2008 (p. 7) e de 2004 (p. 8), que registram
+   municípios instalados no ano seguinte.
+7. **Indicadores, "uma taxa de base populacional pede o município de residência"** (não
+   sustentada). A frase fazia de uma ficha só uma regra geral. **Restringida:** as
+   fichas lidas contam eventos de residentes, com óbitos de residentes na p. 84 e
+   nascidos vivos de mães residentes na p. 218.
+8. **Indicadores, "o IBGE usa 7 dígitos; os códigos das bases do DATASUS podem vir com
+   6"** (sem citação). **Citação corrigida:** 7 dígitos em `ibge_populacao.yaml`; 6
+   caracteres declarados por SIH e SINAN na tabela da própria página; SIM RR 2022 com 6
+   dígitos na §4.1 deste relatório.
+9. **Indicadores, "os óbitos se distribuem pelo ano de 2022"** (sem citação). Não foi
+   verificada a distribuição mensal. **Restringida** a "o numerador da taxa bruta conta
+   os óbitos do ano considerado" (RIPSA 2008, p. 84).
+10. **SINAN Chagas, "uma linha é uma notificação … os campos de 1 a 30 vêm da ficha"**
+    (não sustentada). A frase omitia a exceção e dava como fato a unidade da linha.
+    **Restringida** ao que a p. 1 diz: o número de notificação e os campos de 1 a 30
+    correspondem aos da ficha, exceto a data de diagnóstico, e a investigação começa no
+    campo 31.
+11. **SINAN hanseníase, `dose_receb` "não o total de doses"** (não sustentada).
+    **Restringida** à descrição da p. 7, "número de doses supervisionadas recebidas sob
+    supervisão".
+12. **SINAN hanseníase, "um ano preliminar pode mudar quando for republicado"** (sem
+    citação). **Movida para "Em aberto"** como pergunta própria. A regra de dois anos do
+    relatório de 2026-09-12 (§1.2, item 3) descreve Chagas, e a data de modificação no
+    FTP prova reescrita, não mudança (§1.2, item 4).
+13. **Medicamentos, "a dispensação chega pelo REDFM, enviado pelo SI-BNAFAR"** (não
+    sustentada). A FAQ não liga o REDFM ao SI-BNAFAR. **Restringida:** estados, DF e
+    municípios enviam dados por Hórus, e-SUS AF, o serviço web de envio e outros
+    sistemas, e a Farmácia Popular é incorporada pelo Ministério da Saúde. Os registros
+    REPE/RESMPE/REDFM e o papel do SI-BNAFAR continuam nas "Armadilhas", onde já estavam
+    sustentados.
+14. **Medicamentos, "uma linha de APAC não é uma dose nem uma dispensação"** (não
+    sustentada). A conclusão vinha só da falta de campo de quantidade. **Restringida**
+    aos fatos (atendimentos ambulatoriais, p. 5; sem campo de quantidade, p. 7), com a
+    recomendação separada.
+
+### Itens "Em aberto" que os documentos resolviam em parte
+
+- **SIM, unidade 3 de `idade`.** A p. 2 dá "se 3 = mês", com faixa de 01 a 11 meses, e
+  nesta validação os 123 registros de SIM RR 2022 com unidade 3 foram de 01 a 11 (§4.3).
+  **Isso foi para "Armadilhas".** Em "Em aberto" ficou só o que falta resolver: a faixa
+  de 24 horas a 29 dias não tem código de unidade no documento, e o decodificador de
+  exibição da biblioteca lê 3 como dias. A correção do decodificador está registrada à
+  parte, fora deste branch.
+- **SINASC, estruturas.** O título da p. 3 é "Estrutura do SINASC para o CD-ROM até
+  2005", e o da p. 1 não traz período. **Isso foi para "Armadilhas".** Em "Em aberto"
+  ficaram três perguntas: se 2005 já usa a primeira estrutura, se uma estrutura só vale
+  para todos os anos até 2005 (o código 5 de `estcivmae` é "versões anteriores") e se a
+  primeira descreve os arquivos recentes.
+- **SINAN hanseníase, casos confirmados.** A nota de rodapé da p. 22 do Dicionário
+  Notificação Individual v5 diz que a categoria marcada com (*) é "atribuída pelo sistema
+  ao incluir notificação no sistema". Com a p. 20, isso mostra que toda notificação de
+  hanseníase entra confirmada e só passa a descartada por erro diagnóstico. **Isso foi
+  para "Armadilhas".** Em "Em aberto" ficou a divergência entre "tp_administiva = 5" no
+  anexo (p. 20) e o código 8 de erro diagnóstico no tipo de saída (Dicionário Hanseníase
+  v5, p. 7), num anexo marcado "Falta concluir revisão" (p. 17).
+
+### IBGE: afirmações que continuam abertas por HTTP 403
+
+Duas páginas do IBGE devolveram HTTP 403 a buscas automatizadas em 2026-09-13 e não foram
+lidas: a página do produto Estimativas de População e a página de períodos de referência
+do Censo Demográfico 2022. Por isso ficam em "Em aberto" em
+`docs/sources/ibge_populacao.md`, à espera de conferência manual por navegador:
+
+- a data de referência do censo 2022, que a biblioteca grava como 2022-08-01, com a nota
+  "noite de 31/07/2022 para 01/08/2022";
+- se os valores do agregado 6579 são os mesmos das estimativas para o TCU descritas na
+  nota técnica do DATASUS, incluindo as populações judiciais.
+
+As referências de "Detalhes técnicos" do perfil que apontam para essas duas páginas
+também não foram conferidas.
+
+Os revisores levantaram ainda evidências que não mudaram nenhum veredito e ficaram fora
+desta rodada. O `codmunres` de SIM RR 2022 tem 6 dígitos (§4.1), e o perfil do SIM ainda
+não cita isso no item de comprimento do código. O perfil do SIA também não cita o formato
+AAAAMMDD de `inicio`/`fim` (§4.5) nem os meses anteriores em `dt_atend` (§4.4). No
+Chagas, `classi_fin` pode ficar em branco em casos não encerrados (Dicionário Chagas v5,
+p. 10). Na p. 5 do Informe SIASUS há a frase sobre o incremento frequência referir-se ao
+total de APAC.

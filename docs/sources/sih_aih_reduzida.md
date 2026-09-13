@@ -71,9 +71,6 @@ p. 4–5), não estão no catálogo.
 
 ## Armadilhas
 
-- Uma linha é uma AIH, identificada por `n_aih` (Informe SIH 2016-03, p. 1), e não um
-  paciente: o layout RD não traz o número do Cartão Nacional de Saúde do paciente
-  (p. 1–4).
 - Há AIH de tipos diferentes em `ident` (Informe SIH 2016-03, p. 1) e um sequencial
   próprio para a AIH de longa permanência (p. 3).
 - A consulta `aih_distintas` do notebook compara o número de linhas com o número de
@@ -117,6 +114,11 @@ p. 4–5), não estão no catálogo.
 
 ### Em aberto
 
+- O que uma linha representa: o documento traz o número da AIH (`n_aih`,
+  Informe SIH 2016-03, p. 1), mas não diz que cada linha é uma AIH distinta, e o layout
+  RD não traz o número do Cartão Nacional de Saúde do paciente (p. 1–4). Não trate
+  linhas como pacientes, e compare linhas com valores distintos de `n_aih` (consulta
+  `aih_distintas`) antes de contar AIH.
 - Se uma internação longa aparece em mais de uma linha: o documento traz o tipo da AIH
   e o sequencial de longa permanência (p. 1 e p. 3), mas não diz como uma internação se
   divide em AIH. Não conte internações como linhas sem olhar `ident`, `seq_aih5` e
