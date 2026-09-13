@@ -24,6 +24,7 @@ ESPERADOS = {
     "bases/medicamentos.py",
     "bases/sim_obitos.py",
     "bases/sinan.py",
+    "bases/sinasc_nascidos_vivos.py",
     "desenvolvimento/api_cenarios.py",
     "desenvolvimento/metadados_cli.py",
     "desenvolvimento/performance_dbf.py",
