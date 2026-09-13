@@ -34,9 +34,10 @@ and the short-name aliases are gone, so 0.1.0 callers break.
 - `scripts/gen_dicionario.py`: physical-inventory YAML from one DBC file.
 - Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow
   batches, with exact integer/string semantics and a shared staging writer.
-  `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend; Python remains the
-  default. Unsupported metadata can fall back before parsing, while corrupt data
-  and late failures remain errors. Native wheels have independent build/install
+  `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend. The default is
+  `auto`: Rust when the extension is installed, otherwise Python. Unsupported
+  metadata can fall back before parsing, while corrupt data and late failures
+  remain errors. Native wheels have independent build/install
   checks, fixture parity tests and resource benchmarks.
 - **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**
   `requires-python` was `>=3.13` for no recorded reason — there is no 3.13-only

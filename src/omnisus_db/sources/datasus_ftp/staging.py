@@ -172,7 +172,11 @@ def dbc_bytes_to_parquet(
         output = root / "output.parquet"
         with pq.ParquetWriter(output, schema) as writer:
             for number in range(batches):
-                with pa.memory_map(str(root / f"{number}.arrow"), "r") as source:
+                # Read into memory, not pa.memory_map: a zero-copy table keeps the
+                # mapping alive past the with-block, and Windows refuses to unlink
+                # a mapped file ("[WinError 5] Access is denied"). One batch at a
+                # time, so memory stays bounded by a record batch.
+                with pa.OSFile(str(root / f"{number}.arrow"), "rb") as source:
                     table = pa.ipc.open_file(source).read_all()
                     aligned = pa.Table.from_arrays(
                         [
