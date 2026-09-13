@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 import polars as pl
@@ -217,3 +218,79 @@ def test_writer_failure_closes_native_reader_and_preserves_target(
     assert len(opened) == 1
     with pytest.raises(StopIteration):
         next(opened[0])
+
+
+def _dictionary_with_a_date(tmp_path, extra_fields=()):
+    """Ad-hoc dicionario declaring dt_x as a date, written to a temp YAML."""
+    import yaml
+
+    fields = [{"name": "dt_x", "type": "date"}, {"name": "v", "type": "string"}]
+    fields.extend({"name": name, "type": "string"} for name in extra_fields)
+    path = tmp_path / "adhoc.yaml"
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "name": "adhoc",
+                "title": "Ad-hoc",
+                "encoding": "latin-1",
+                "x-version": "1.0.0",
+                "x-source-format": "dbc",
+                "x-partitions": ["ano"],
+                "schema": {"fields": fields},
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _adhoc_dataset(dictionary):
+    from omnisus_db.sources.datasus_ftp.datasets import Dataset
+
+    return Dataset(
+        name="adhoc",
+        prefix="AD0",
+        ftp_dir="/dissemin/publicos/X",
+        cadence="yearly",
+        partition_by=("ano", "uf"),
+        coverage=((2000, 1), None),
+        dictionary=dictionary,
+    )
+
+
+def test_a_column_blank_in_one_year_takes_the_declared_type(monkeypatch, tmp_path):
+    """A DATE column that is empty in the older file must not pin the lake column
+    to the type of "nothing" and reject the next year's real dates
+    (sinan_hanseniase: dt_transrm is blank in every record of HANSBR23)."""
+    import omnisus_db as odb
+    from omnisus_db.sources._base import ScopeKey
+    from omnisus_db.sources.datasus_ftp._runner import ingest_raw
+    from tests.support.dbf import make_dbf
+
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    fields = [("DT_X", "D", 8, 0), ("V", "C", 1, 0)]
+    blank = make_dbf(fields, [b" " + b" " * 8 + b"a", b" " + b" " * 8 + b"b"])
+    dated = make_dbf(fields, [b" 20240115c"])
+    d = _adhoc_dataset(_dictionary_with_a_date(tmp_path))
+
+    with odb.Lake.local(f"ducklake:{tmp_path}/lake.ducklake") as lake:
+        ingest_raw(d, ScopeKey(uf="RR", ano=2023), blank, lake, policy="append")
+        ingest_raw(d, ScopeKey(uf="RR", ano=2024), dated, lake, policy="append")
+
+        assert len(lake.publications()) == 2
+        frame = lake.connect().sql("SELECT dt_x, ano FROM lake.adhoc ORDER BY ano").pl()
+        assert frame["dt_x"].dtype == pl.Date
+        assert frame["dt_x"].to_list() == [None, None, date(2024, 1, 15)]
+
+
+def test_an_undeclared_blank_column_stays_null_typed(monkeypatch, tmp_path):
+    """Only declared columns are typed from the dicionario; extra fields are
+    still preserved exactly as the file presented them."""
+    records(monkeypatch, [{"DT_X": None, "EXTRA": None}])
+    target = tmp_path / "output.parquet"
+    dbc_bytes_to_parquet(
+        b"x", target, dataset="adhoc", dictionary=_dictionary_with_a_date(tmp_path), ano=2023
+    )
+    schema = pl.read_parquet_schema(target)
+    assert schema["dt_x"] == pl.Date
+    assert schema["extra"] == pl.Null

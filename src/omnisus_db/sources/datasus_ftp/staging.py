@@ -49,6 +49,26 @@ def _merge_schema(existing: pa.Schema, incoming: pa.Schema) -> pa.Schema:
     return pa.schema(list(fields.values()))
 
 
+def _declared_type_for_null_columns(schema: pa.Schema, declared: pa.Schema) -> pa.Schema:
+    """Give a column that is blank in *this* file the dictionary's type.
+
+    A DATE column that happens to be empty in one year would otherwise stage as
+    Arrow ``null``, pin the lake column to that type, and make the next year's
+    real dates an unsafe schema change (``sinan_hanseniase``: ``dt_transrm`` is
+    blank in all of HANSBR23). Every value is null, so the declared type is
+    vacuously correct. Columns the dictionary does not declare stay ``null``.
+    """
+    declared_types = {field.name: field.type for field in declared}
+    return pa.schema(
+        [
+            pa.field(field.name, declared_types[field.name])
+            if pa.types.is_null(field.type) and field.name in declared_types
+            else field
+            for field in schema
+        ]
+    )
+
+
 def dbc_bytes_to_parquet(
     raw: bytes,
     path: Path | str,
@@ -134,6 +154,7 @@ def dbc_bytes_to_parquet(
                     index = schema.get_field_index(name)
                     field = pa.field(name, dtype)
                     schema = schema.set(index, field) if index >= 0 else schema.append(field)
+        schema = _declared_type_for_null_columns(schema, dic.arrow_schema)
         output = root / "output.parquet"
         with pq.ParquetWriter(output, schema) as writer:
             for number in range(batches):
