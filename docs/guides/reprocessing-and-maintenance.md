@@ -44,6 +44,30 @@ changes but do not audit arbitrary edits that preserve counts. External SQL
 writes remain outside the managed contract. IBGE has a separate publication
 model described in its [source documentation](../sources/ibge_populacao.md).
 
+## Quando um ano passa de preliminar a final
+
+For a dataset with a `prelim_dir` (SIM, SINASC, SINAN), DATASUS eventually
+moves a year from the preliminary directory to the final one under the same
+name. Nothing in the lake changes by itself: `outdated(dataset, lake=lake)`
+compares the release recorded on each active publication with what the server
+lists today and returns only the scopes that moved.
+
+```python
+import omnisus_db as odb
+
+with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
+    moved = odb.outdated("sim_obitos", lake=lake)
+    odb.import_dataset(
+        "sim_obitos", scopes=moved, target=odb.DEFAULT_TARGET,
+        policy="replace", run_id="sim-final-2026",
+    )
+```
+
+`outdated` is read-only; pass its result to `import_dataset` with
+`policy="replace"` and an explicit `run_id`, the same contract as any other
+replacement. A scope the server no longer lists at all is a withdrawal, a
+different fact, and `outdated` does not return it.
+
 ## Inspect an interrupted run
 
 Choose and retain `run_id` before starting an import. A failed COMMIT can have

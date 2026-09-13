@@ -122,3 +122,29 @@ usa esse formato, ele passa a funcionar.
 
 - U2: aguardando agenda de curadoria; brainstorm próprio quando houver.
 - Identificação da revisão instalada: adiado.
+
+## Adendo 2026-09-12 — nomes
+
+Toda linha do registro foi renomeada para o nome legível do DATASUS; não existe
+alias e os lakes existentes precisam ser reconstruídos em um target novo (ver
+"Migrate a legacy lake" em `docs/guides/reprocessing-and-maintenance.md`):
+
+| Antes | Depois |
+| --- | --- |
+| `sim_do` | `sim_obitos` |
+| `sinasc_nv` | `sinasc_nascidos_vivos` |
+| `sih_rd` | `sih_aih_reduzida` |
+| `sia_bi` | `sia_bpa_individualizado` |
+| `sia_am` | `sia_apac_medicamentos` |
+| `sia_aq` | `sia_apac_quimioterapia` |
+| `sia_atd` | `sia_apac_tratamento_dialitico` |
+| `sia_ad` | `sia_apac_laudos_diversos` |
+| `sia_abo` | `sia_apac_cirurgia_bariatrica` |
+| `sia_ps` | `sia_psicossocial` |
+| `cnes_st` | `cnes_estabelecimentos` |
+| `sinan_chagas_prelim` | `sinan_chagas` |
+| `ibge_pop` | `ibge_populacao` |
+| `import_cnes_st` | `import_cnes_estabelecimentos` |
+
+Não existe alias nenhum; as tabelas do lake carregam os nomes novos e um lake
+existente precisa ser reconstruído em um target novo.

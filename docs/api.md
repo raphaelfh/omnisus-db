@@ -9,8 +9,20 @@ current checkout. Their availability and return types differ from the historical
 Ask the server what exists before deciding what to import.
 
 ::: omnisus_db.available
+::: omnisus_db.available_releases
 ::: omnisus_db.browse
 ::: omnisus_db.FtpEntry
+
+## Releases
+
+Some datasets publish final and preliminary files under the same names in two
+directories (a row's `prelim_dir`). `available_releases` reports which
+directory each scope came from; `outdated` compares that against what a lake
+has published and returns the scopes whose release moved, to be re-imported
+with `import_dataset(..., policy="replace")`. See
+[reprocessing and maintenance](guides/reprocessing-and-maintenance.md).
+
+::: omnisus_db.outdated
 
 ## Planning
 

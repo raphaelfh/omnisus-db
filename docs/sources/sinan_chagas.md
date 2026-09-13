@@ -1,11 +1,13 @@
 # SINAN — Chagas aguda
 
-`sinan_chagas` importa notificações nacionais do diretório
-`/dissemin/publicos/SINAN/DADOS/PRELIM`, arquivos `CHAGBRYY.dbc`.
-O inventário consultado em 10/09/2026 continha 2023, 2024 e 2025.
-Disponibilidade deve ser consultada novamente antes de cada estudo.
-Arquivos finais de 2000–2022 existem em outro diretório e **não são parte deste
-contrato**. A modalidade preliminar não é convertida silenciosamente em final.
+`sinan_chagas` importa notificações nacionais de Chagas aguda, arquivos
+`CHAGBRYY.dbc`, publicados em **dois diretórios**:
+`/dissemin/publicos/SINAN/DADOS/FINAIS` (edição final, 2000–2022 hoje) e
+`/dissemin/publicos/SINAN/DADOS/PRELIM` (edição preliminar, 2023– hoje).
+Disponibilidade e modalidade devem ser consultadas novamente antes de cada
+estudo: um ano migra de `prelim` para `final` quando o DATASUS o republica no
+outro diretório, e a biblioteca não converte uma modalidade na outra
+silenciosamente.
 
 ## Descobrir, selecionar e publicar
 
@@ -32,15 +34,23 @@ O recorte nacional é `ScopeKey(uf=None, ano=2023)`. Não aceita filtros de UF o
 mês na aquisição. Use `sg_uf_not` (notificação) ou os campos de residência
 originais na consulta, conforme a pergunta científica.
 
+Cada arquivo é buscado no diretório em que foi listado e a linha registra a
+modalidade em `_source_release` (`final` ou `prelim`), ao lado de
+`_source_ano`. Anos finais e preliminares convivem na mesma tabela; a coluna
+diz qual é qual, e `lake.publications()` repete a modalidade por publicação.
+
 ## Contrato de integridade e publicação
 
 - O arquivo inteiro passa pela verificação de tamanho e contagem DBF, pelo
   staging Arrow/Parquet e pela mesma transação dos importadores estaduais.
-- Exige as colunas `id_agravo`, `nu_ano`, `sg_uf_not`; cada registro precisa
-  informar `id_agravo=B571` e `nu_ano` igual ao ano pedido. Erros rejeitam o
-  arquivo inteiro; não há descarte silencioso de linhas.
-- `_source_ano` identifica o ano do arquivo e é reservado à biblioteca. Não
-  sobrescreve `ano`, `uf` nem os campos originais, se estiverem presentes.
+- A identidade da fonte é declarada no YAML (`x-identity`) e verificada por
+  moda, não por registro: o `nu_ano` mais frequente deve ser o ano do arquivo
+  e o `id_agravo` mais frequente deve ser `B571`; registros isolados fora do
+  ano são preservados. Erros de moda rejeitam o arquivo inteiro; não há
+  descarte silencioso de linhas.
+- `_source_ano` e `_source_release` identificam o ano e a modalidade do
+  arquivo e são reservados à biblioteca. Não sobrescrevem `ano`, `uf` nem os
+  campos originais, se estiverem presentes.
 - `replace` valida antes de substituir exatamente o ano nacional; dados e
   manifesto são publicados atomicamente. Misturar publicação nacional e
   estadual na mesma tabela é rejeitado.
@@ -54,6 +64,21 @@ originais na consulta, conforme a pergunta científica.
 Uma falha de commit pode ter resultado desconhecido. Reabra o lake, consulte
 `lake.publications(run_id=...)` e reconcilie antes de repetir a escrita. O lock
 continua local/cooperativo; isso não estabelece recuperação distribuída.
+
+## Quando o ano deixa de ser preliminar
+
+```python
+with odb.Lake.local("ducklake:./chagas.ducklake") as lake:
+    moved = odb.outdated("sinan_chagas", lake=lake)
+odb.import_dataset("sinan_chagas", scopes=moved, target="ducklake:./chagas.ducklake",
+                   policy="replace", run_id="chagas-final-2026")
+```
+
+`outdated()` compara a modalidade publicada no lake com a modalidade listada
+hoje no servidor e devolve apenas os escopos que se moveram. A substituição é
+sempre explícita: `replace` valida antes de substituir exatamente aquele ano
+nacional, e dados e manifesto são publicados atomicamente. Nada é atualizado
+por conta própria.
 
 ## Interpretação e reprodução
 

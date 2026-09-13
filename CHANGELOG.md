@@ -11,6 +11,8 @@
 
 ### Added
 
+- `sinan_hanseniase` (SINAN HANS, 2001–, final and preliminary).
+- `scripts/gen_dicionario.py`: physical-inventory YAML from one DBC file.
 - Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow
   batches, with exact integer/string semantics and a shared staging writer.
   `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend; Python remains the
@@ -140,6 +142,27 @@
 
 ### Changed
 
+- **Every dataset is renamed to its readable DATASUS name** (`sim_do` → `sim_obitos`,
+  `sinasc_nv` → `sinasc_nascidos_vivos`, `sih_rd` → `sih_aih_reduzida`,
+  `sia_bi` → `sia_bpa_individualizado`, `sia_am` → `sia_apac_medicamentos`,
+  `sia_aq` → `sia_apac_quimioterapia`, `sia_atd` → `sia_apac_tratamento_dialitico`,
+  `sia_ad` → `sia_apac_laudos_diversos`, `sia_abo` → `sia_apac_cirurgia_bariatrica`,
+  `sia_ps` → `sia_psicossocial`, `cnes_st` → `cnes_estabelecimentos`,
+  `sinan_chagas_prelim` → `sinan_chagas`, `ibge_pop` → `ibge_populacao`;
+  `import_cnes_st` → `import_cnes_estabelecimentos`). No aliases are kept.
+  Lake tables carry the new names: rebuild existing lakes into a new target.
+- Final and preliminary DATASUS directories are one dataset: rows declare
+  `prelim_dir`, `available_releases()` shows where each scope is, every row
+  carries `_source_release`, `publications()` exposes `release`, and
+  `outdated()` lists the scopes whose year moved to final (re-import with
+  `policy="replace"`). SIM and SINASC 2025–2026 preliminary files are now
+  discoverable.
+- Source identity is declared in the dictionary (`x-identity`) and checked
+  by one rule for every row; the Chagas-specific validator is gone.
+- Staging now types an all-blank column by its dictionary-declared type, so a
+  year where a declared DATE column is empty no longer pins the lake column to
+  INTEGER and reject the next year (found by the hanseníase pilot, `HANSBR23`
+  `dt_transrm`).
 - `Lake` shares its read surface (`connect`, `tables`, `snapshots`,
   `publications`, `attempts`, `close`) with `LakeReader` through
   `omnisus_db.lake.session.Session`. Behaviour is unchanged, except that
@@ -279,7 +302,9 @@
   and the attach failed. The DSN is now rebuilt by hand; only the `storage`
   parameter is removed.
 
-`get_config` is kept as a compatibility wrapper over `resolve`.
+`get_config` was a compatibility wrapper over `resolve`; it was removed together
+with `ALIASES` when every dataset was renamed to its readable DATASUS name (see
+`### Changed` above) — there is no compatibility surface.
 
 ## v0.1.0 — 2026-05-02
 

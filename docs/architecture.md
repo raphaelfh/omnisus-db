@@ -8,21 +8,39 @@ repository; these working documents are not published to this site.
 
 ## Registry and importers
 
-National preliminary SINAN Chagas uses `ScopeKey(uf=None, ano=year)` and a
-reserved `_source_ano` publication column. It preserves original geography and
-dates instead of assigning an artificial UF. Its source validator verifies
-agravo/year before the shared transaction. State scopes keep their existing
-manifest identity. National and state publications cannot share a table.
-FTP publication manifests also retain the acquired source URI; older rows have
+A dataset row may declare `prelim_dir` alongside its `ftp_dir` — DATASUS
+publishes some families (SIM, SINASC, SINAN) as final and preliminary files
+under the same names in two directories, and the layout does not change at
+that boundary. `directories()` returns every directory a row is published in;
+`available_releases()` reads all of them and reports which release (`final`
+or `prelim`) each scope came from, raising if the server lists the same scope
+in both. Every FTP-imported row carries the reserved `_source_release` column
+next to `_source_ano`/`ano`/`uf`/`mes`, and `Lake.publications()` exposes the
+same fact as `release`. `outdated(dataset, lake=lake)` compares the release
+recorded on each active publication with what the server lists today and
+returns the scopes whose release moved, to be re-imported with
+`policy="replace"`.
+
+National SINAN datasets (`sinan_chagas`, `sinan_hanseniase`) use
+`ScopeKey(uf=None, ano=year)` and a reserved `_source_ano` publication column.
+They preserve original geography and dates instead of assigning an artificial
+UF. Source identity is declared per row in the dictionary's `x-identity` block
+(`year_column`, and optionally `code_column`/`code`) and checked once, by the
+*mode* of those columns over the whole file, before the shared transaction —
+not a per-record rule, so records that carry an off-year or mismatched code
+are preserved rather than dropped. State scopes keep their existing manifest
+identity. National and state publications cannot share a table. FTP
+publication manifests also retain the acquired source URI; older rows have
 unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas.md).
 
 - **`Dataset`** is an immutable, keyword-only DATASUS FTP registry row. It holds
   identity, FTP location, cadence, partitioning, coverage and a dictionary path.
-  The registry includes SIM-DO, SINASC-NV, SIH-RD, SIA/APAC and CNES-ST. Callers
-  can also construct a `Dataset` with their own dictionary.
+  The registry includes SIM, SINASC, SIH, SIA/APAC, CNES estabelecimentos and
+  the SINAN Chagas/Hanseníase pilots. Callers can also construct a `Dataset`
+  with their own dictionary.
 - **Importers** orchestrate fetching, parsing and writing. IBGE population and
   CNES master data use dedicated HTTP importers; they are not FTP registry rows.
-  CNES-ST's named importer additionally refreshes the `aux_cnes` view.
+  CNES estabelecimentos' named importer additionally refreshes the `aux_cnes` view.
 
 ## DATASUS data flow
 

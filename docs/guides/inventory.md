@@ -40,6 +40,22 @@ omnisus-db inventory sim_obitos
 omnisus-db inventory --path /dissemin/publicos/SINAN --depth 2
 ```
 
+## `available_releases` — which directory is each scope in?
+
+Some datasets (SIM, SINASC, SINAN) publish preliminary files beside the final
+ones under the same names, in a second directory declared as the row's
+`prelim_dir`. `available_releases(dataset)` reads every directory the row
+declares and returns, per scope, which one (`final` or `prelim`) it came from;
+`available()` still returns just the scopes, with no release information. The
+CLI table shows the same fact in a `Release` column:
+
+```bash
+omnisus-db inventory sim_obitos
+```
+
+A scope listed in both directories is a server inconsistency and raises,
+rather than being resolved by preference.
+
 ## Building the lake from what exists
 
 The point of all this. `--plan inventory` asks the server first and imports only

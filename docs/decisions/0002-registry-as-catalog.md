@@ -59,3 +59,18 @@ correct: it surfaces a real schema break instead of hiding it.
 - Tier 3 tests (spec §6) validate each row's `ftp_dir` and `coverage` against
   the live server on a schedule, because centralizing facts centralizes the
   blast radius of a wrong one.
+
+## Amendment 2026-09-12 — release directories share a row; names are readable
+
+DATASUS publishes preliminary files beside the final ones under the same
+names (SIM, SINASC, SINAN, e-SUS Notifica; verified live 2026-09-11/12) and
+the layout does not change at that boundary. Decision 2 splits rows on
+*schema*, so a publication status is not a new row: the row declares
+`prelim_dir`, discovery reads both directories, every lake row carries
+`_source_release`, and `outdated()` names the scopes whose release moved.
+Eras with different columns in different directories still split.
+
+Row names are `<sistema>_<conteúdo>` in full Portuguese words matching the
+DATASUS file-type description. `ALIASES` and `get_config()` were removed;
+there is no compatibility surface. Spec:
+`docs/superpowers/specs/2026-09-12-datasus-release-directories-design.md`.

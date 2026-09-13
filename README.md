@@ -49,10 +49,14 @@ odb.available("sim_obitos")                      # scopes you can import
 odb.browse("/dissemin/publicos/SINAN")       # any FTP path, decoded or not
 ```
 
-National preliminary Chagas notifications are available as `sinan_chagas`.
-Use `available()` and `policy="skip_same"` for repeatable imports; filter record
-geography after acquisition. The [Marimo walkthrough](notebooks/sinan_chagas.py)
-covers discovery, a saved plan, publication, recovery and aggregate analysis.
+National Chagas and Hanseníase SINAN notifications are available as
+`sinan_chagas` and `sinan_hanseniase`, both final and preliminary: DATASUS
+publishes some datasets in two directories under the same filenames, and
+`available_releases()`/`outdated()` tell you which release each scope is in
+and which ones moved. Use `available()` and `policy="skip_same"` for
+repeatable imports; filter record geography after acquisition. The
+[Marimo walkthrough](notebooks/sinan_chagas.py) covers discovery, a saved plan,
+publication, recovery and aggregate analysis.
 
 The [medication walkthrough](notebooks/medicamentos.py) uses SIA-AM/APAC and a
 separate bounded BNAFAR/Hórus stock query. Stock observations are partial and
