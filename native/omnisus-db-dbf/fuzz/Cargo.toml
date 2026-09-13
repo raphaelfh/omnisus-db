@@ -18,3 +18,9 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "dbc"
+path = "fuzz_targets/dbc.rs"
+test = false
+doc = false
+bench = false

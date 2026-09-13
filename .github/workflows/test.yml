@@ -62,25 +62,15 @@ jobs:
     # The real "does it install for a user": build the wheel, then install it
     # where NOTHING may be built from source. Everything else in CI is green
     # only because the runners ship a Rust toolchain that users do not have.
-    #
-    # 3.12 must pass — that is the declared floor and what `pip install
-    # omnisus-db` resolves to for a user without cargo.
-    #
-    # 3.13 is expected to fail and does not block: datasus-dbc 0.1.3 publishes
-    # cp313 wheels only for manylinux aarch64/armv7l/ppc64le/s390x, so on 3.13
-    # the install still falls back to the sdist. It runs anyway so the gap
-    # stays visible and turns green on its own when upstream ships wheels.
+    # Every supported Python must pass; DBC decompression is pure Python unless
+    # the optional native wheel is installed.
     name: wheel-only install (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ !matrix.required }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: ubuntu-latest, python: "3.12", required: true }
-          - { os: macos-latest, python: "3.12", required: true }
-          - { os: windows-latest, python: "3.12", required: true }
-          - { os: ubuntu-latest, python: "3.13", required: false }
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7

@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import datasus_dbc
 import pytest
 
+from omnisus_db.sources.datasus_ftp import dbc
 from omnisus_db.sources.datasus_ftp.dbf_batches import open_dbf_batches
 from omnisus_db.sources.datasus_ftp.parse import BATCH_ROWS
 from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
@@ -25,7 +25,7 @@ def test_bench_dbf_to_arrow(benchmark, dbc_fixture, backend, fixture_name, datas
     if backend == "rust":
         pytest.importorskip("omnisus_db_dbf")
     fixture: Path = dbc_fixture(fixture_name)
-    dbf = datasus_dbc.decompress_bytes(fixture.read_bytes())
+    dbf = dbc.decompress_bytes(fixture.read_bytes())
     encoding = load_dicionario(dataset).encoding
 
     def run() -> int:

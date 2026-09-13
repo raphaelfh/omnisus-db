@@ -1,0 +1,15 @@
+{
+  "cnes_rr_2024_01_mini.dbc": {"length": 523654, "sha256": "7916570b76062725713b90797a0eb0de6ce332eec602ce7b87a76389c1338a92"},
+  "sia_abo_sp_2024_01_mini.dbc": {"length": 346301, "sha256": "85b003ec202c17327e85d3e4460f5c466ce8f6103eda9f5f5cb1200bcfc34aa7"},
+  "sia_ad_rr_2024_01_mini.dbc": {"length": 172362, "sha256": "1749359b2a70212b4c12d791a5a6313a4fdc52038fc2bab9c7ede3c23a654298"},
+  "sia_am_rr_2024_01_mini.dbc": {"length": 534914, "sha256": "8340db4848de88e94e4444f6b81e5a8a4175c45d82bb438d5cc97b17d994fe21"},
+  "sia_aq_rr_2024_01_mini.dbc": {"length": 8471, "sha256": "fa6398c04d3da11a8e83751e78392d1b60e5e5d52981b24bff78af38d1a9b692"},
+  "sia_atd_rr_2024_01_mini.dbc": {"length": 110588, "sha256": "3e0c784d768dbeb153659458aa20a67001dfa0d65292299aa68cc622b9ad4954"},
+  "sia_bi_rr_2024_01_mini.dbc": {"length": 2965441, "sha256": "aea355019bc1a73fd57af6b651f5c9b28033e168b64af4c01d9e801a75bc9f66"},
+  "sia_ps_rr_2024_01_mini.dbc": {"length": 387244, "sha256": "f436facdec49b24712ad6d3d3cead0857f649e434c835a734529b183a146b7dc"},
+  "sih_rr_2024_01_mini.dbc": {"length": 2610877, "sha256": "3edb49b8016f75981d60015afee5cf4b633f62962cbe4d378a394ece675a80ec"},
+  "sim_rr_2023_mini.dbc": {"length": 1625208, "sha256": "43cf972da5531b91c4b54476be517c0b365e079fedccc8588e613eaa9141bf66"},
+  "sinan_chagas_br_2023.dbc": {"length": 2767316, "sha256": "4399207106ed1afb0cbebc84796ca3bc493c81eae5b322ed0f0ffdb0befcfee8"},
+  "sinan_hanseniase_br_2026.dbc": {"length": 2704444, "sha256": "51e9fba5eaa6d999a11086d0f1987b96ba0f5acf8572b6e5cc5e4e5db5863bf6"},
+  "sinasc_rr_2022_mini.dbc": {"length": 2934370, "sha256": "d6d6cdc3fc35f2e3b4c2cad2ed7781fee40941e08c158b4e50f2eb7a03155e24"}
+}

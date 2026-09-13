@@ -25,7 +25,7 @@ def _load(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, "gen_dicionario", module)
     spec.loader.exec_module(module)
-    monkeypatch.setattr(module.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr(module.dbc, "decompress_bytes", lambda raw: raw)
     return module
 
 
@@ -38,7 +38,7 @@ def test_fields_of_maps_every_dbf_type_the_generator_claims_to_know(
         [b" 2026" + b"    1" + b"  1.50" + b"20260101"],
     )
 
-    assert module.fields_of(module.datasus_dbc.decompress_bytes(dbf)) == [
+    assert module.fields_of(module.dbc.decompress_bytes(dbf)) == [
         {"name": "nu_ano", "type": "string"},
         {"name": "qt", "type": "integer"},
         {"name": "vl", "type": "number"},

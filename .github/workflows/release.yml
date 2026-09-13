@@ -8,23 +8,23 @@ jobs:
   gate:
     # Publishing is gated on the wheel-only install (spec §7.1.1 and §7.2):
     # we must not ship a package users cannot install without a Rust toolchain.
-    # Run at the declared floor (3.12), which is what pip resolves to for a
-    # user without cargo. No continue-on-error — this is the point of a gate.
-    name: wheel-only install (${{ matrix.os }})
+    # Every supported Python, every OS. No continue-on-error; this is the gate.
+    name: wheel-only install (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
-      - run: uv python install 3.12
+      - run: uv python install ${{ matrix.python }}
       - run: uv build --wheel
       - name: Install it, binary dependencies only
         shell: bash
         run: |
-          uv venv -p 3.12 .gate
+          uv venv -p ${{ matrix.python }} .gate
           uv pip install --python .gate --only-binary=:all: dist/*.whl
       - name: Import the installed package
         shell: bash

@@ -46,7 +46,7 @@ unknown (NULL) URIs. See [the Chagas contract](sources/sinan_chagas.md).
 
 ```text
 bounded concurrent FTP fetches -> one parse/write consumer
-  -> datasus_dbc.decompress_bytes -> complete DBF bytes
+  -> dbc.decompress_bytes (Python, or optional Rust) -> complete DBF bytes
   -> Python dbfread2 or optional Rust reader -> bounded Arrow batches -> temporary IPC spool
   -> reconcile batch schemas -> temporary Parquet (Snappy)
   -> managed transaction: schema + scope policy + data + manifest -> COMMIT
@@ -70,13 +70,15 @@ families and decimal changes fail before insertion. The staging parser also
 rejects incompatible values before Arrow inference can erase information.
 Previously coerced values require an explicit source rebuild to recover.
 
-### Optional native DBF reader
+### Optional native package
 
 `native/omnisus-db-dbf` builds a separate `omnisus_db_dbf` Python extension using
-PyO3 and Arrow. The main package keeps its pure-Python wheel. Set
-`OMNISUS_DBF_BACKEND=rust` to require native decoding, `python` to use dbfread2,
-or `auto` to use Rust when installed and the DBF metadata is supported. The
-default is `auto`, so installing the extension enables it automatically.
+PyO3 and Arrow, providing both the DBF reader and the DBC decompressor. The main
+package keeps its pure-Python wheel. Set `OMNISUS_DBF_BACKEND=rust` to require
+native DBF decoding, `python` to use dbfread2, or `auto` to use Rust when
+installed and the DBF metadata is supported. `OMNISUS_DBC_BACKEND` selects the
+DBC backend the same way (`rust`, `python` or `auto`). The default for both is
+`auto`, so installing the extension enables them automatically.
 
 The native reader supports C/N fields and the DBF layouts covered by the committed
 fixtures. It preserves empty strings, strict encodings and int64 precision.

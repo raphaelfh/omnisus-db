@@ -1,8 +1,9 @@
 """Run with pytest in a clean wheel environment, outside the source checkout.
 
-Copy this file and tests/fixtures/dbf beside it, set OMNISUS_NATIVE_SOURCE_ROOT
-to the checkout, and use an empty pytest.ini. No main-package imports or DBF
-builders are needed: these tests consume the committed synthetic corpus.
+Copy this file, tests/fixtures/dbf and tests/fixtures/blast beside it, set
+OMNISUS_NATIVE_SOURCE_ROOT to the checkout, and use an empty pytest.ini. No
+main-package imports or DBF builders are needed: these tests consume the
+committed synthetic corpus.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ def test_installed_distribution() -> None:
         assert not path.resolve().is_relative_to(source), f"Smoke input is inside checkout: {path}"
 
     distribution = importlib.metadata.distribution("omnisus-db-dbf")
-    assert dbf.API_VERSION == 1
+    assert dbf.API_VERSION == 2
     assert dbf.__version__ == distribution.version
     files = distribution.files
     assert files, "Installed wheel has no file inventory"
@@ -49,8 +50,7 @@ def test_installed_distribution() -> None:
     wheel_metadata = distribution.read_text("WHEEL")
     assert wheel_metadata is not None
     assert "Root-Is-Purelib: false" in wheel_metadata
-    python_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
-    assert f"Tag: {python_tag}-{python_tag}-" in wheel_metadata
+    assert "Tag: cp312-abi3-" in wheel_metadata
     assert importlib.util.find_spec("datasus_dbc") is None
     assert importlib.util.find_spec("omnisus_db") is None
 
@@ -107,3 +107,11 @@ def test_unsupported_seed_fails_during_open() -> None:
     data = (Path(__file__).parent / "dbf" / "unsupported-date.dbf").read_bytes()
     with pytest.raises(dbf.UnsupportedDbfError):
         dbf.open_reader(data, encoding="cp1252", batch_rows=1)
+
+
+def test_decompress_dbc_vector() -> None:
+    blast = Path(__file__).parent / "blast"
+    raw = bytes(8) + (10).to_bytes(2, "little") + bytes(4) + (blast / "test.pk").read_bytes()
+    assert dbf.decompress_dbc(raw) == raw[:10] + (blast / "test.txt").read_bytes()
+    with pytest.raises(dbf.InvalidDbcError):
+        dbf.decompress_dbc(raw[:-1])

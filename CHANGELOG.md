@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+
+- **Installs from wheels on Python 3.13 and 3.14.** DBC decompression no
+  longer uses `datasus-dbc`, which has no 3.13 wheels for macOS, Windows or
+  Linux x86_64 and made `pip install` need Rust there. `omnisus-db` now ports
+  zlib's `blast.c` to pure Python, byte-exact with `datasus-dbc` on every test
+  fixture. The optional `omnisus-db-dbf` wheel carries the same decoder in Rust
+  (API version 2, one abi3 wheel for 3.12+) and is used automatically when
+  installed; `OMNISUS_DBC_BACKEND=python|rust|auto` chooses explicitly.
+  Malformed payloads raise `InvalidDbcError`, a `ValueError`.
+
 ### Fixed
 
 - **Imports work on Windows.** Staging memory-mapped each spooled `.arrow`

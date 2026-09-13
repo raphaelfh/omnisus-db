@@ -1,8 +1,9 @@
 # omnisus-db-dbf
 
-Optional DBF → Arrow extension for `omnisus-db`. The main package keeps its
-Python build backend and does not require Rust. This package is not published
-yet; install a locally built wheel when testing the native backend.
+Optional DBF → Arrow reader and DBC decompressor for `omnisus-db`.
+The main package keeps its Python build backend and does not require Rust.
+This package is not published yet; install a locally built wheel when testing
+the native backend.
 
 ```sh
 python -m pip install maturin==1.12.6
@@ -21,13 +22,22 @@ finally:
     reader.close()
 ```
 
+```python
+from omnisus_db_dbf import decompress_dbc
+
+dbf_bytes = decompress_dbc(dbc_bytes)  # raises InvalidDbcError on bad input
+```
+
+`decompress_dbc` releases the GIL and returns the same bytes as the pure-Python
+decoder in `omnisus_db.sources.datasus_ftp.dbc`.
+
 The reader owns a copy of the input bytes. Parsing and Arrow builders release the
 GIL; the official `arrow-pyarrow` bridge exports each batch with owned buffers.
 Returned batches remain valid after `close()` or reader destruction. Closing is
 idempotent, as is exhaustion. A decoding or conversion error closes the reader.
 No Python object is created per record.
 
-API version 1 supports DBF versions 0x03 and 0x30, C/N fields, and strict latin-1,
+API version 2 supports DBF versions 0x03 and 0x30, C/N fields, and strict latin-1,
 cp1252, ASCII and UTF-8. Python codec aliases are resolved at open. Character
 padding strips only trailing spaces and NUL bytes. Numeric fields attempt exact
 int64 before float64, accept Python numeric underscores and decimal comma, and
@@ -41,6 +51,7 @@ the responsibility of the shared Python integrity layer before opening a reader.
 only. Corruption raises `InvalidDbfError`; content errors retain ValueError,
 TypeError, or UnicodeDecodeError categories. Automatic backend fallback belongs
 to the main package and is only allowed before iteration begins.
+API version 2 adds `decompress_dbc`.
 
 ## Reproducible development
 
@@ -65,13 +76,12 @@ python -m pytest native/omnisus-db-dbf/tests/test_bindings.py
 Default Cargo features enable Python linking for Rust tests. `extension-module`
 is enabled only by Maturin, avoiding Python symbol linker conflicts in tests.
 Use `--no-default-features` for pure Rust checks and fuzzing without Python.
-Supported distribution targets are normal CPython 3.12/3.13 on Linux x86_64,
-Windows x86_64 and macOS arm64/x86_64, subject to the corresponding wheel CI gates.
-The initial package does not use abi3 and does not claim free-threaded support.
+Wheels use the stable ABI (abi3, CPython 3.12 and later) on Linux x86_64, Windows
+x86_64 and macOS arm64/x86_64. Free-threaded CPython is not supported.
 
 The package version has one source, Cargo.toml; API_VERSION is independent.
 Future native release tags use `dbf-v*`. Build/test wheels and sdist first, then
 publish those same artifacts only through a separately authorized release.
 Do not add a root-package dependency extra until the native version exists in
 the package index. Building an sdist requires Rust; installing a supported wheel
-does not. The existing datasus-dbc CPython 3.13 wheel limitation is independent.
+does not.
