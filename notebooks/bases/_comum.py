@@ -17,6 +17,7 @@ from uuid import uuid4
 
 import omnisus_db as odb
 from omnisus_db.lake.publication import scope_fields
+from omnisus_db.lake.sql import qualified
 
 LIMITE_BYTES = 25 * 1024 * 1024
 """Teto do arquivo comprimido baixado nos recortes didáticos."""
@@ -109,7 +110,7 @@ def conferir(
     conferencia = []
     for escopo in escopos:
         where, args = filtro_escopo(escopo)
-        sql = f'SELECT count(*) FROM "{leitor.alias}"."{dataset}" WHERE {where}'
+        sql = f"SELECT count(*) FROM {qualified(leitor.alias, dataset)} WHERE {where}"
         (no_lake,) = leitor.connect().execute(sql, args).fetchone()
         publicadas = sum(p["rows"] for p in ativas if p["scope"] == escopo)
         conferencia.append(
