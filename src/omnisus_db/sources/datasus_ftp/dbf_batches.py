@@ -13,10 +13,67 @@ from typing import Any, Literal
 import pyarrow as pa
 import structlog
 
-from omnisus_db.sources.datasus_ftp.dbf_contract import DbfIntegrityError
+from omnisus_db.sources.datasus_ftp.dbf_contract import (
+    DbfFieldDescriptor,
+    DbfIntegrityError,
+    _read_field_descriptors,
+)
 
 Backend = Literal["python", "rust", "auto"]
 logger = structlog.get_logger(__name__)
+
+_PHYSICAL_TYPES: dict[str, pa.DataType] = {
+    "C": pa.string(),
+    "V": pa.string(),
+    "M": pa.string(),
+    "D": pa.date32(),
+    "L": pa.bool_(),
+    "F": pa.float64(),
+    "O": pa.float64(),
+    "I": pa.int64(),
+    "+": pa.int64(),
+    "T": pa.timestamp("us"),
+    "@": pa.timestamp("us"),
+}
+"""Arrow type each DBF field type yields once a record carries a value.
+
+This mirrors what the readers actually emit — the Python backend infers from
+dbfread2's Python objects (``D`` -> ``datetime.date`` -> ``date32``, ``L`` ->
+``bool``, text -> ``string``), the Rust backend builds ``StringBuilder`` for
+``C`` and integer/float builders for ``N`` — not what a dictionary declares.
+``N`` is resolved from the descriptor's decimal count, see :func:`_arrow_type`.
+"""
+
+
+def _arrow_type(field: DbfFieldDescriptor) -> pa.DataType | None:
+    """The type a populated batch of this field would have; None if unknown."""
+    if field.kind == "N":
+        return pa.float64() if field.decimals else pa.int64()
+    return _PHYSICAL_TYPES.get(field.kind)
+
+
+def physical_arrow_types(dbf_bytes: bytes) -> dict[str, pa.DataType]:
+    """Type per header field (lowercased), skipping field types we cannot map."""
+    types = {}
+    for field in _read_field_descriptors(dbf_bytes):
+        arrow = _arrow_type(field)
+        if arrow is not None:
+            types[field.name.lower()] = arrow
+    return types
+
+
+def physical_arrow_schema(dbf_bytes: bytes) -> pa.Schema:
+    """Every header field, in file order — the schema of a zero-record file.
+
+    Unmappable field types fall back to ``string``: with no records there is
+    nothing to disagree with, and string is what such a column staged as before.
+    """
+    return pa.schema(
+        [
+            pa.field(field.name.lower(), _arrow_type(field) or pa.string())
+            for field in _read_field_descriptors(dbf_bytes)
+        ]
+    )
 
 
 def _family(value: Any) -> type:

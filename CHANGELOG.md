@@ -159,10 +159,14 @@
   discoverable.
 - Source identity is declared in the dictionary (`x-identity`) and checked
   by one rule for every row; the Chagas-specific validator is gone.
-- Staging now types an all-blank column by its dictionary-declared type, so a
-  year where a declared DATE column is empty no longer pins the lake column to
-  INTEGER and reject the next year (found by the hanseníase pilot, `HANSBR23`
-  `dt_transrm`).
+- Staging now types an all-blank column from its own DBF field descriptor — the
+  type a sibling file stages when the column is populated — so a year where a
+  DATE column is empty no longer pins the lake column to INTEGER and rejects
+  the next year (found by the hanseníase pilot, `HANSBR23` `dt_transrm`). The
+  curated dictionary is not used for this: it states semantics, and where the
+  two disagree (`sih_aih_reduzida.rubrica`, an `N` field declared `string`) the
+  declared type would reject the next month instead. A file with no records at
+  all is typed from the same descriptors.
 - `Lake` shares its read surface (`connect`, `tables`, `snapshots`,
   `publications`, `attempts`, `close`) with `LakeReader` through
   `omnisus_db.lake.session.Session`. Behaviour is unchanged, except that

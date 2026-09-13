@@ -258,7 +258,7 @@ def _adhoc_dataset(dictionary):
     )
 
 
-def test_a_column_blank_in_one_year_takes_the_declared_type(monkeypatch, tmp_path):
+def test_a_column_blank_in_one_year_takes_its_descriptor_type(monkeypatch, tmp_path):
     """A DATE column that is empty in the older file must not pin the lake column
     to the type of "nothing" and reject the next year's real dates
     (sinan_hanseniase: dt_transrm is blank in every record of HANSBR23)."""
@@ -283,14 +283,64 @@ def test_a_column_blank_in_one_year_takes_the_declared_type(monkeypatch, tmp_pat
         assert frame["dt_x"].to_list() == [None, None, date(2024, 1, 15)]
 
 
-def test_an_undeclared_blank_column_stays_null_typed(monkeypatch, tmp_path):
-    """Only declared columns are typed from the dicionario; extra fields are
-    still preserved exactly as the file presented them."""
-    records(monkeypatch, [{"DT_X": None, "EXTRA": None}])
+def test_an_undeclared_blank_column_takes_its_descriptor_type(monkeypatch, tmp_path):
+    """The header types every field, so a blank column the dicionario never
+    mentions is typed too — as the integer its ``N`` descriptor stages."""
+    from tests.support.dbf import make_dbf
+
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    raw = make_dbf(
+        [("DT_X", "D", 8, 0), ("V", "C", 1, 0), ("EXTRA", "N", 3, 0)],
+        [b" " + b" " * 8 + b"a" + b"   "],
+    )
     target = tmp_path / "output.parquet"
     dbc_bytes_to_parquet(
-        b"x", target, dataset="adhoc", dictionary=_dictionary_with_a_date(tmp_path), ano=2023
+        raw, target, dataset="adhoc", dictionary=_dictionary_with_a_date(tmp_path), ano=2023
     )
     schema = pl.read_parquet_schema(target)
     assert schema["dt_x"] == pl.Date
-    assert schema["extra"] == pl.Null
+    assert schema["extra"] == pl.Int64
+
+
+def test_a_blank_column_the_dictionary_mistypes_still_accepts_the_next_file(monkeypatch, tmp_path):
+    """Curated dictionaries state semantics, not physical types: ``rubrica`` is
+    an ``N`` field sih_aih_reduzida declares as ``string``. Typing a blank
+    column from the dicionario would pin the lake to VARCHAR and make the next
+    month's integers an unsafe schema change."""
+    import omnisus_db as odb
+    from omnisus_db.sources._base import ScopeKey
+    from omnisus_db.sources.datasus_ftp._runner import ingest_raw
+    from tests.support.dbf import make_dbf
+
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    fields = [("DT_X", "D", 8, 0), ("V", "C", 1, 0), ("N_X", "N", 4, 0)]
+    blank = make_dbf(fields, [b" " + b" " * 8 + b"a" + b"    "])
+    numbered = make_dbf(fields, [b" " + b" " * 8 + b"b" + b"  42"])
+    d = _adhoc_dataset(_dictionary_with_a_date(tmp_path, extra_fields=("n_x",)))
+
+    with odb.Lake.local(f"ducklake:{tmp_path}/lake.ducklake") as lake:
+        ingest_raw(d, ScopeKey(uf="RR", ano=2023), blank, lake, policy="append")
+        ingest_raw(d, ScopeKey(uf="RR", ano=2024), numbered, lake, policy="append")
+
+        assert len(lake.publications()) == 2
+        frame = lake.connect().sql("SELECT n_x FROM lake.adhoc ORDER BY ano").pl()
+        assert frame["n_x"].dtype.is_integer()
+        assert frame["n_x"].to_list() == [None, 42]
+
+
+def test_an_empty_file_is_typed_from_its_header(monkeypatch, tmp_path):
+    """A zero-record file has no values to disagree with its descriptors, so
+    every column is typed from the same source as a blank column's."""
+    from tests.support.dbf import make_dbf
+
+    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    raw = make_dbf([("V", "C", 1, 0), ("N_X", "N", 4, 0), ("DT_X", "D", 8, 0)], [])
+    target = tmp_path / "output.parquet"
+    result = dbc_bytes_to_parquet(
+        raw, target, dataset="adhoc", dictionary=_dictionary_with_a_date(tmp_path), ano=2023
+    )
+    schema = pl.read_parquet_schema(target)
+    assert result.rows == 0
+    assert schema["v"] == pl.String
+    assert schema["n_x"] == pl.Int64
+    assert schema["dt_x"] == pl.Date

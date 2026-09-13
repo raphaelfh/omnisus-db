@@ -1,10 +1,25 @@
 """DBF integrity and semantic publication identity shared by both backends."""
 
+from dataclasses import dataclass
+
 import structlog
 
 logger = structlog.get_logger(__name__)
 
 _DELETED_FLAG = 0x2A  # b"*"
+_DESCRIPTOR_SIZE = 32
+_TERMINATORS = (0x0D, 0x0A, 0x00)
+
+
+@dataclass(frozen=True)
+class DbfFieldDescriptor:
+    """One field as the DBF header declares it, before any record is read."""
+
+    name: str
+    kind: str
+    """Single-letter DBF type: ``C``, ``N``, ``D``, ``L``, ``M``, ..."""
+    width: int
+    decimals: int
 
 
 class DbfIntegrityError(Exception):
@@ -29,6 +44,33 @@ def _read_dbf_geometry(dbf_bytes: bytes) -> tuple[int, int, int] | None:
     if hdr_len <= 32 or rec_len <= 0:
         return None
     return nrec, hdr_len, rec_len
+
+
+def _read_field_descriptors(dbf_bytes: bytes) -> list[DbfFieldDescriptor]:
+    """Field descriptors from the DBF header, in file order.
+
+    The header declares every field's physical type whether or not any record
+    carries a value, which is what makes a column that is blank in one file
+    typeable from the file itself. Empty when the header is too malformed to
+    interpret (the parser surfaces its own error).
+    """
+    geometry = _read_dbf_geometry(dbf_bytes)
+    if geometry is None:
+        return []
+    _, hdr_len, _ = geometry
+    limit = min(hdr_len - 1, len(dbf_bytes))
+    fields = []
+    for start in range(32, limit - _DESCRIPTOR_SIZE + 1, _DESCRIPTOR_SIZE):
+        block = dbf_bytes[start : start + _DESCRIPTOR_SIZE]
+        if block[0] in _TERMINATORS:
+            break
+        name = block[:11].split(b"\0")[0].decode("ascii", "replace").strip()
+        if not name:
+            break
+        fields.append(
+            DbfFieldDescriptor(name=name, kind=chr(block[11]), width=block[16], decimals=block[17])
+        )
+    return fields
 
 
 def _check_dbf_length(dbf_bytes: bytes, *, dataset: str) -> None:

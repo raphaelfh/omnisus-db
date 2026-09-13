@@ -16,7 +16,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from omnisus_db.sources.datasus_ftp.datasets import Release
-from omnisus_db.sources.datasus_ftp.dbf_batches import open_dbf_batches
+from omnisus_db.sources.datasus_ftp.dbf_batches import (
+    open_dbf_batches,
+    physical_arrow_schema,
+    physical_arrow_types,
+)
 from omnisus_db.transforms.dictionaries import load_dicionario
 
 
@@ -49,20 +53,28 @@ def _merge_schema(existing: pa.Schema, incoming: pa.Schema) -> pa.Schema:
     return pa.schema(list(fields.values()))
 
 
-def _declared_type_for_null_columns(schema: pa.Schema, declared: pa.Schema) -> pa.Schema:
-    """Give a column that is blank in *this* file the dictionary's type.
+def _physical_type_for_null_columns(
+    schema: pa.Schema, physical: dict[str, pa.DataType]
+) -> pa.Schema:
+    """Give a column that is blank in *this* file its own DBF descriptor's type.
 
     A DATE column that happens to be empty in one year would otherwise stage as
     Arrow ``null``, pin the lake column to that type, and make the next year's
     real dates an unsafe schema change (``sinan_hanseniase``: ``dt_transrm`` is
-    blank in all of HANSBR23). Every value is null, so the declared type is
-    vacuously correct. Columns the dictionary does not declare stay ``null``.
+    blank in all of HANSBR23). Every value is null, so any type is vacuously
+    correct for *this* file; the one that keeps the lake column usable is the
+    type a sibling file stages when the column is populated — which is the
+    physical type in the DBF header, not the type the curated dictionary
+    declares. The two disagree: ``sih_aih_reduzida.rubrica`` is an ``N`` field
+    the parser stages as int64 while the dicionario declares ``string``, and
+    typing it from the dictionary would pin the lake to VARCHAR and reject the
+    next month's integers. Declared types are semantics; descriptors are what
+    sibling files actually stage. Fields whose type we cannot map stay ``null``.
     """
-    declared_types = {field.name: field.type for field in declared}
     return pa.schema(
         [
-            pa.field(field.name, declared_types[field.name])
-            if pa.types.is_null(field.type) and field.name in declared_types
+            pa.field(field.name, physical[field.name])
+            if pa.types.is_null(field.type) and field.name in physical
             else field
             for field in schema
         ]
@@ -92,6 +104,8 @@ def dbc_bytes_to_parquet(
     dic = load_dicionario(dictionary if dictionary is not None else dataset)
     dbf_bytes = parse.datasus_dbc.decompress_bytes(raw)
     parse._check_dbf_length(dbf_bytes, dataset=dataset)
+    physical = physical_arrow_types(dbf_bytes)
+    empty_schema = physical_arrow_schema(dbf_bytes)
     path = Path(path)
     parsed = 0
     batches = 0
@@ -142,7 +156,7 @@ def dbc_bytes_to_parquet(
         parse._check_record_count(dbf_bytes, parsed, dataset=dataset)
         del dbf_bytes
         if not batches:
-            schema = pa.schema([(field["name"].lower(), pa.string()) for field in dic.fields])
+            schema = empty_schema
             for name, value, dtype in [
                 ("ano", ano, pa.uint16()),
                 ("uf", uf, pa.string()),
@@ -154,7 +168,7 @@ def dbc_bytes_to_parquet(
                     index = schema.get_field_index(name)
                     field = pa.field(name, dtype)
                     schema = schema.set(index, field) if index >= 0 else schema.append(field)
-        schema = _declared_type_for_null_columns(schema, dic.arrow_schema)
+        schema = _physical_type_for_null_columns(schema, physical)
         output = root / "output.parquet"
         with pq.ParquetWriter(output, schema) as writer:
             for number in range(batches):
