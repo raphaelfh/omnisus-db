@@ -21,6 +21,8 @@ SECOES = [
 PERFIS = {
     "sim_obitos": "sim_obitos",
     "sinasc_nascidos_vivos": "sinasc_nascidos_vivos",
+    "sih_aih_reduzida": "sih_aih_reduzida",
+    "sia": "sia",
 }
 
 
