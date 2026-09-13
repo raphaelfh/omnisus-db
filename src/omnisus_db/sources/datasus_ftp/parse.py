@@ -16,7 +16,6 @@ from typing import Any
 import polars as pl
 from dbfread2 import DBF
 
-from omnisus_db.sources.datasus_ftp import dbc as dbc  # Decompression monkeypatch seam.
 from omnisus_db.sources.datasus_ftp.dbf_contract import (
     DbfIntegrityError as DbfIntegrityError,
 )

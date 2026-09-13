@@ -106,10 +106,20 @@ def _explode(data: bytes, start: int) -> bytes:
 
     def decode(table: tuple[list[int], list[int]]) -> int:
         # Codes are stored bit-reversed and inverted relative to canonical order.
+        # The hot path: bits are read inline rather than through bits(1).
+        nonlocal position, buffer, available
         count, symbols = table
         code = first = index = 0
         for length in range(1, _MAXBITS + 1):
-            code |= bits(1) ^ 1
+            if not available:
+                if position == len(data):
+                    raise InvalidDbcError(f"truncated DBC stream at byte {position}")
+                buffer = data[position]
+                position += 1
+                available = 8
+            code |= (buffer & 1) ^ 1
+            buffer >>= 1
+            available -= 1
             if code < first + count[length]:
                 return symbols[index + code - first]
             index += count[length]

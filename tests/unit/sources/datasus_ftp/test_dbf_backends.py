@@ -8,6 +8,7 @@ import pytest
 
 from omnisus_db.sources.datasus_ftp import native as native_loader
 from tests.support.dbf import make_dbf
+from tests.support.native import missing_module
 
 
 def batches_module():
@@ -62,10 +63,6 @@ def test_invalid_backend_is_not_silently_python(monkeypatch):
         batches_module().open_dbf_batches(b"", encoding="latin-1", batch_rows=1),
     ):
         pass
-
-
-def missing_module(name):
-    raise ModuleNotFoundError("module absent", name=name)
 
 
 @pytest.mark.parametrize("backend", [None, "auto", "rust"])

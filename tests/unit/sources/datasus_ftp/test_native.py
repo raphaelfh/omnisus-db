@@ -5,10 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from omnisus_db.sources.datasus_ftp import dbc, dbf_batches, native
-
-
-def missing(name):
-    raise ModuleNotFoundError("module absent", name=name)
+from tests.support.native import missing_module
 
 
 @pytest.mark.parametrize("value", ["python", "rust", "auto"])
@@ -36,18 +33,18 @@ def test_python_never_imports(monkeypatch):
 
 
 def test_auto_without_package_is_none(monkeypatch):
-    monkeypatch.setattr(native, "import_module", lambda _: missing("omnisus_db_dbf"))
+    monkeypatch.setattr(native, "import_module", lambda _: missing_module("omnisus_db_dbf"))
     assert native.load_native("auto") is None
 
 
 def test_rust_without_package_raises(monkeypatch):
-    monkeypatch.setattr(native, "import_module", lambda _: missing("omnisus_db_dbf"))
+    monkeypatch.setattr(native, "import_module", lambda _: missing_module("omnisus_db_dbf"))
     with pytest.raises(ImportError, match="omnisus-db-dbf"):
         native.load_native("rust")
 
 
 def test_missing_transitive_dependency_is_not_hidden(monkeypatch):
-    monkeypatch.setattr(native, "import_module", lambda _: missing("pyarrow"))
+    monkeypatch.setattr(native, "import_module", lambda _: missing_module("pyarrow"))
     with pytest.raises(ModuleNotFoundError):
         native.load_native("auto")
 
@@ -80,7 +77,7 @@ def _dbf_selector():
     ("import_module", "match", "expected_error"),
     [
         (lambda _: SimpleNamespace(API_VERSION=99), "API", ImportError),
-        (lambda _: missing("pyarrow"), None, ModuleNotFoundError),
+        (lambda _: missing_module("pyarrow"), None, ModuleNotFoundError),
     ],
 )
 def test_selectors_do_not_hide_loader_errors_under_auto(

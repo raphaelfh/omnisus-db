@@ -10,7 +10,7 @@ from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 
 def records(monkeypatch, values, batch=2):
     monkeypatch.setenv("OMNISUS_DBF_BACKEND", "python")
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda _: b"fake")
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda _: b"fake")
     monkeypatch.setattr(parse, "_stream_records", lambda *_args, **_kwargs: iter(values))
     monkeypatch.setattr(parse, "BATCH_ROWS", batch)
 
@@ -99,7 +99,7 @@ def test_empty_staging_preserves_partition_schema(monkeypatch, tmp_path):
 def test_staging_stamps_source_release(monkeypatch, tmp_path):
     from tests.support.dbf import make_dbf
 
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     raw = make_dbf([("NU_ANO", "C", 4, 0)], [b" 2025"])
     out = tmp_path / "s.parquet"
     dbc_bytes_to_parquet(raw, out, dataset="sinan_chagas", source_ano=2025, release="prelim")
@@ -177,7 +177,7 @@ def test_writer_failure_closes_native_reader_and_preserves_target(
     raw = make_dbf([("X", "C", 1, 0)], [b" a", b" b", b" c"])
     monkeypatch.setenv("OMNISUS_DBF_BACKEND", "rust")
     monkeypatch.setattr(parse, "BATCH_ROWS", 1)
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda _: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda _: raw)
     native_open = omnisus_db_dbf.open_reader
     opened = []
 
@@ -267,7 +267,7 @@ def test_a_column_blank_in_one_year_takes_its_descriptor_type(monkeypatch, tmp_p
     from omnisus_db.sources.datasus_ftp._runner import ingest_raw
     from tests.support.dbf import make_dbf
 
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     fields = [("DT_X", "D", 8, 0), ("V", "C", 1, 0)]
     blank = make_dbf(fields, [b" " + b" " * 8 + b"a", b" " + b" " * 8 + b"b"])
     dated = make_dbf(fields, [b" 20240115c"])
@@ -288,7 +288,7 @@ def test_an_undeclared_blank_column_takes_its_descriptor_type(monkeypatch, tmp_p
     mentions is typed too — as the integer its ``N`` descriptor stages."""
     from tests.support.dbf import make_dbf
 
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     raw = make_dbf(
         [("DT_X", "D", 8, 0), ("V", "C", 1, 0), ("EXTRA", "N", 3, 0)],
         [b" " + b" " * 8 + b"a" + b"   "],
@@ -312,7 +312,7 @@ def test_a_blank_column_the_dictionary_mistypes_still_accepts_the_next_file(monk
     from omnisus_db.sources.datasus_ftp._runner import ingest_raw
     from tests.support.dbf import make_dbf
 
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     fields = [("DT_X", "D", 8, 0), ("V", "C", 1, 0), ("N_X", "N", 4, 0)]
     blank = make_dbf(fields, [b" " + b" " * 8 + b"a" + b"    "])
     numbered = make_dbf(fields, [b" " + b" " * 8 + b"b" + b"  42"])
@@ -333,7 +333,7 @@ def test_an_empty_file_is_typed_from_its_header(monkeypatch, tmp_path):
     every column is typed from the same source as a blank column's."""
     from tests.support.dbf import make_dbf
 
-    monkeypatch.setattr(parse.dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     raw = make_dbf([("V", "C", 1, 0), ("N_X", "N", 4, 0), ("DT_X", "D", 8, 0)], [])
     target = tmp_path / "output.parquet"
     result = dbc_bytes_to_parquet(

@@ -12,6 +12,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from omnisus_db.sources.datasus_ftp import dbc, native
+from tests.support.native import missing_module
 
 FIXTURES = Path(__file__).resolve().parents[3] / "fixtures"
 GOLDEN = json.loads((FIXTURES / "dbc" / "golden.json").read_text(encoding="utf-8"))
@@ -128,10 +129,6 @@ def fake_native(decompress):
     )
 
 
-def missing(_):
-    raise ModuleNotFoundError("module absent", name="omnisus_db_dbf")
-
-
 def test_unknown_backend_is_rejected(monkeypatch):
     monkeypatch.setenv("OMNISUS_DBC_BACKEND", "typo")
     with pytest.raises(ValueError, match=r"^DBC backend must be python, rust or auto$"):
@@ -163,7 +160,7 @@ def test_native_error_is_raised_as_invalid_dbc_error_without_python_retry(monkey
 
 
 def test_auto_without_package_decodes_in_python_and_says_why(monkeypatch):
-    monkeypatch.setattr(native, "import_module", missing)
+    monkeypatch.setattr(native, "import_module", lambda _: missing_module("omnisus_db_dbf"))
     log = Recorder()
     monkeypatch.setattr(dbc, "logger", log)
     assert dbc.decompress_bytes(framed(VECTOR), backend="auto").endswith(b"AIAIAIAIAIAIA")
@@ -183,7 +180,7 @@ def test_auto_without_package_decodes_in_python_and_says_why(monkeypatch):
 
 @pytest.mark.parametrize(("backend", "hinted"), [("auto", True), ("python", False)])
 def test_speed_hint_only_when_python_was_not_chosen(monkeypatch, backend, hinted):
-    monkeypatch.setattr(native, "import_module", missing)
+    monkeypatch.setattr(native, "import_module", lambda _: missing_module("omnisus_db_dbf"))
     monkeypatch.setattr(dbc, "HINT_BYTES", 10)
     log = Recorder()
     monkeypatch.setattr(dbc, "logger", log)
