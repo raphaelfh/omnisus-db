@@ -79,6 +79,12 @@ build-backend = "hatchling.build"
 # is what the two-file sed dance in RELEASE.md existed to keep in step (I4).
 path = "src/omnisus_db/_version.py"
 
+# The sdist is what PyPI keeps forever. Without this list hatch packs the whole
+# checkout (reports, notebooks, fixtures, scratch dirs), which was 3.9 MB for a
+# 170 KB wheel.
+[tool.hatch.build.targets.sdist]
+only-include = ["src/omnisus_db", "README.md", "CHANGELOG.md", "LICENSE"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/omnisus_db"]
 

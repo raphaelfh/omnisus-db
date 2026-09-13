@@ -32,3 +32,7 @@ tests/.cache/
 
 # Docs build
 site/
+
+# Tool scratch directories
+.hypothesis/
+.playwright-mcp/
