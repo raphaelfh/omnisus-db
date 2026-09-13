@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Imports work on Windows.** Staging memory-mapped each spooled `.arrow`
+  batch and deleted it while the table still held the mapping, which Windows
+  refuses (`WinError 5`). Batches are now read into memory one at a time.
+- The listing cache expires when a listing's age equals its TTL. Windows'
+  clock ticks about every 16 ms, so `ttl_hours=0` never expired there.
+- `expire_snapshots` and `cleanup_files` work on Windows. `tzdata` is now a
+  Windows-only dependency, because pyarrow needs a time-zone database to
+  convert the `TIMESTAMPTZ` results and Windows has none.
+- The acervo notebook helper closes its temporary DBF before reading it, which
+  Windows requires.
+
 ## v0.2.0 — 2026-09-12
 
 A minor bump, not a patch: every dataset and import function was renamed

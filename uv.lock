@@ -1807,6 +1807,7 @@ dependencies = [
     { name = "structlog" },
     { name = "tomli-w" },
     { name = "typer" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 
 [package.optional-dependencies]
@@ -1872,6 +1873,7 @@ requires-dist = [
     { name = "tomli-w", specifier = ">=1.2.0" },
     { name = "typer", specifier = ">=0.27.2" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12.20260906" },
+    { name = "tzdata", marker = "sys_platform == 'win32'", specifier = ">=2026.3" },
 ]
 provides-extras = ["dev", "docs", "notebooks", "postgres"]
 

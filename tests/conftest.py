@@ -41,7 +41,7 @@ def pytest_sessionstart(session):
         for name, _dataset in DBC_CASES:
             if not (root / "dbc" / f"{name}.dbc").is_file():
                 raise pytest.UsageError(f"Required DBC fixture missing: {name}")
-        for entry in json.loads((root / "dbf" / "manifest.json").read_text()):
+        for entry in json.loads((root / "dbf" / "manifest.json").read_text(encoding="utf-8")):
             seed = root / "dbf" / entry["file"]
             if (
                 not seed.is_file()

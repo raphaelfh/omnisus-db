@@ -40,10 +40,13 @@ def read_dbf(payload: bytes, directory: Path, *, limit: int = 200):
         # DATASUS sometimes leaves a null in the field-descriptor terminator.
         payload = payload[: header - 1] + b"\r" + payload[header:]
     directory.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=directory, suffix=".dbf") as tmp:
+    # delete=False and close before reading: Windows refuses to reopen a
+    # NamedTemporaryFile that is still open, and DBF opens the path itself.
+    with tempfile.NamedTemporaryFile(dir=directory, suffix=".dbf", delete=False) as tmp:
         tmp.write(payload)
-        tmp.flush()
-        table = DBF(tmp.name, encoding="latin-1", keep_raw=True, ignore_missing_memo=True)
+    tmp_path = Path(tmp.name)
+    try:
+        table = DBF(str(tmp_path), encoding="latin-1", keep_raw=True, ignore_missing_memo=True)
         columns = [
             {
                 "nome": f.name,
@@ -57,6 +60,8 @@ def read_dbf(payload: bytes, directory: Path, *, limit: int = 200):
         rows = []
         for record in islice(table, limit):
             rows.append({k: v.decode("latin-1").strip(" \x00") or None for k, v in record.items()})
+    finally:
+        tmp_path.unlink(missing_ok=True)
     frame = pl.DataFrame(rows, schema={c["nome"]: pl.String for c in columns})
     if frame.height != min(limit, declared - deleted):
         raise ValueError("DBF terminou antes da amostra esperada")
