@@ -63,3 +63,16 @@ def test_every_bases_notebook_has_a_profile():
         p.stem for p in (ROOT / "notebooks/bases").glob("*.py") if not p.name.startswith("_")
     }
     assert set(PERFIS.values()) == notebooks
+
+
+COMECE_AQUI = ROOT / "docs/pesquisa/index.md"
+
+
+@pytest.mark.parametrize("notebook", sorted(set(PERFIS.values())))
+def test_start_page_links_every_bases_notebook(notebook):
+    assert f"{GITHUB}notebooks/bases/{notebook}.py" in COMECE_AQUI.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("perfil", sorted(PERFIS))
+def test_start_page_links_every_profile(perfil):
+    assert f"../sources/{perfil}.md" in COMECE_AQUI.read_text(encoding="utf-8")

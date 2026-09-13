@@ -49,20 +49,6 @@ odb.available("sim_obitos")                      # scopes you can import
 odb.browse("/dissemin/publicos/SINAN")       # any FTP path, decoded or not
 ```
 
-National Chagas and Hanseníase SINAN notifications are available as
-`sinan_chagas` and `sinan_hanseniase`, both final and preliminary: DATASUS
-publishes some datasets in two directories under the same filenames, and
-`available_releases()`/`outdated()` tell you which release each scope is in
-and which ones moved. Use `available()` and `policy="skip_same"` for
-repeatable imports; filter record geography after acquisition. The
-[Marimo walkthrough](notebooks/bases/sinan.py) covers discovery, a saved plan,
-publication, recovery and aggregate analysis.
-
-The [medication walkthrough](notebooks/bases/medicamentos.py) uses SIA-AM/APAC and a
-separate bounded BNAFAR/Hórus stock query. Stock observations are partial and
-are not dispensing events or managed lake publications. See the
-[source contract](docs/sources/medicamentos.md) for access and coverage limits.
-
 See the [documentation site](https://raphaelfh.github.io/omnisus-db/) for guides,
 the dataset catalogue and the API reference. To build it locally:
 
@@ -70,22 +56,18 @@ the dataset catalogue and the API reference. To build it locally:
 uv sync --locked --extra docs && uv run mkdocs serve
 ```
 
-## Notebooks: learning path
+## Para pesquisadores
 
-Start with the [notebook guide](notebooks/README.md):
-
-| Order | Notebook | Purpose |
-| --- | --- | --- |
-| 1 | [DATASUS panorama](notebooks/explorar/panorama_datasus.py) | Real samples from all 18 portal categories; explore tables, fields and provenance |
-| 2 | [Inventory and selection](notebooks/explorar/inventario_dados_reais.py) | Discover files and import a selected scope into DuckLake |
-| 3 | [SIM analysis](notebooks/bases/sim_obitos.py) | Query complete SIM/Roraima files, check quality and create aggregates |
-| 4 | [API scenarios](notebooks/desenvolvimento/api_cenarios.py) | Learn transactions, rollback and library behavior |
+O [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) mostra qual
+base responde a cada pergunta, o que um registro representa e como citar o resultado.
+Cada base tem um notebook com as mesmas seis etapas em
+[`notebooks/bases/`](notebooks/bases/): SIM, SINASC, SIH, SIA, CNES, população IBGE,
+SINAN (Chagas aguda e hanseníase) e medicamentos.
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/explorar/panorama_datasus.py
+uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
-The panorama reuses the latest local archive and downloads a new one on request.
-See the [data map and full column inventory](reports/2026-09-10-mapa-datasus/README.md).
-One sample per portal category does not cover every subtype, year or state.
+Abrir um notebook não baixa nada. Outros notebooks, para explorar o DATASUS e
+para quem desenvolve a biblioteca, estão no [índice](notebooks/README.md).
