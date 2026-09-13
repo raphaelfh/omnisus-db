@@ -4,27 +4,27 @@
 
 ### Integração completa por produto
 
-- [SINAN Chagas aguda](sinan_chagas.py): descoberta de arquivos nacionais,
+- [SINAN Chagas aguda](bases/sinan.py): descoberta de arquivos nacionais,
   inspeção do contrato, plano salvo, publicação explícita, recuperação e
   análise agregada. Preserva a modalidade preliminar e exporta proveniência.
   Nenhum download ocorre ao abrir o notebook.
-- [Medicamentos](medicamentos.py): SIA-AM/APAC pelo importador existente,
+- [Medicamentos](bases/medicamentos.py): SIA-AM/APAC pelo importador existente,
   interpretação de registros e valores aprovados e consulta HTTP separada de
   estoque BNAFAR/Hórus. Estoque e APAC não são apresentados como eventos de
   dispensação da assistência básica. Plano, resultados e proveniência são salvos.
 
 | Ordem | Notebook | Finalidade | Dados |
 | --- | --- | --- | --- |
-| 1 | [Panorama DATASUS](panorama_datasus.py) | Conhecer as **18 categorias** do portal, suas tabelas e colunas | Amostras reais de todas as categorias |
-| 2 | [Inventário e seleção](inventario_dados_reais.py) | Filtrar arquivos e importar um recorte das bases suportadas | Arquivos completos escolhidos no FTP |
-| 3 | [Análise SIM](api_dados_reais.py) | Aprender filtros, qualidade, agregações e consultas | SIM/RR 2022–2023 completos |
-| 4 | [Cenários da API](api_cenarios.py) | Estudar transações, rollback e comportamento da biblioteca | Cenários sintéticos identificados e importações reais opcionais |
-| 5 | [Performance Python/Rust](performance_dbf.py) | Comparar tempo, memória e disco por corpus e etapa | Benchmarks locais versionados, com sete rodadas por backend |
-| 6 | [Metadados pelo terminal](metadados_cli.py) | Executar consultas CLI, inspecionar evidências e consumir JSON por coluna | Dicionário documental SIM/SEXO e inventário real de 1.326 campos |
+| 1 | [Panorama DATASUS](explorar/panorama_datasus.py) | Conhecer as **18 categorias** do portal, suas tabelas e colunas | Amostras reais de todas as categorias |
+| 2 | [Inventário e seleção](explorar/inventario_dados_reais.py) | Filtrar arquivos e importar um recorte das bases suportadas | Arquivos completos escolhidos no FTP |
+| 3 | [Análise SIM](bases/sim_obitos.py) | Aprender filtros, qualidade, agregações e consultas | SIM/RR 2022–2023 completos |
+| 4 | [Cenários da API](desenvolvimento/api_cenarios.py) | Estudar transações, rollback e comportamento da biblioteca | Cenários sintéticos identificados e importações reais opcionais |
+| 5 | [Performance Python/Rust](desenvolvimento/performance_dbf.py) | Comparar tempo, memória e disco por corpus e etapa | Benchmarks locais versionados, com sete rodadas por backend |
+| 6 | [Metadados pelo terminal](desenvolvimento/metadados_cli.py) | Executar consultas CLI, inspecionar evidências e consumir JSON por coluna | Dicionário documental SIM/SEXO e inventário real de 1.326 campos |
 
 Os nomes existentes foram preservados para manter os comandos e referências.
 Os auxiliares de aquisição, leitura e relatório ficam juntos em
-[`_acervo/`](_acervo/README.md). Downloads e HTMLs ficam em `data/lake/`,
+[`_acervo/`](explorar/_acervo/README.md). Downloads e HTMLs ficam em `data/lake/`,
 ignorados pelo Git; relatórios de metadados ficam em `reports/`.
 
 ## Metadados por coluna pelo terminal
@@ -126,7 +126,7 @@ uv run --locked --extra dev ruff check notebooks/explorar/_acervo notebooks/expl
 
 ## Análise da API com dados reais já preparados
 
-O [notebook de análise real](api_dados_reais.py) usa os arquivos completos
+O [notebook de análise real](bases/sim_obitos.py) usa os arquivos completos
 `DORR2022.dbc` e `DORR2023.dbc`, obtidos do FTP DATASUS pela API da biblioteca.
 Na execução de 10/09/2026 foram importados **3.246 + 3.311 = 6.557 registros**.
 O lake já preparado neste workspace é reutilizado ao abrir, sem novo download
@@ -159,7 +159,7 @@ Detalhes em [validação com dados reais](../reports/2026-09-10-notebook-dados-r
 
 ## Inventário e download com dados reais
 
-O notebook [`inventario_dados_reais.py`](inventario_dados_reais.py) consulta o FTP
+O notebook [`inventario_dados_reais.py`](explorar/inventario_dados_reais.py) consulta o FTP
 DATASUS atualizado, mostra o inventário com nome, tamanho, ano e UF, permite
 selecionar até três arquivos e importa a seleção em um DuckLake novo. Depois,
 reabre o lake, confere a contagem, mostra 50 registros e o esquema, e exporta
@@ -266,7 +266,7 @@ A avaliação anterior está em
 
 ## Performance do leitor DBF: Python e Rust
 
-[`performance_dbf.py`](performance_dbf.py) apresenta o relatório
+[`performance_dbf.py`](desenvolvimento/performance_dbf.py) apresenta o relatório
 [`rust-dbf-performance.json`](../reports/rust-dbf-performance.json) com filtros
 por corpus, etapa e métrica. Os gráficos mostram medianas e rodadas individuais;
 as tabelas permitem baixar os valores. A análise separa DBF → Arrow,
