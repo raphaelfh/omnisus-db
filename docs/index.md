@@ -45,8 +45,8 @@ report = odb.import_dataset(
 print(f"Rows imported: {report.rows}; failed: {len(report.failed)}; skipped: {len(report.skipped)}")
 
 if report.ok:
-    with odb.Lake.local(odb.DEFAULT_TARGET) as lake:
-        df = lake.connect().sql(
+    with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+        df = reader.connect().sql(
             "SELECT count(*) AS obitos FROM lake.sim_obitos WHERE ano = 2024"
         ).pl()
         print(df)

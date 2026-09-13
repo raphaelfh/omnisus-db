@@ -489,7 +489,7 @@ async def execute_live_import(
 @app.cell
 def _(live_target, mo, odb):
     # A célula só recebe o destino depois que o escritor terminou e fechou o lake.
-    with odb.Lake.local(live_target) as _read_lake:
+    with odb.LakeReader(live_target) as _read_lake:
         _tables = _read_lake.tables()
         _snapshots = _read_lake.snapshots()
     mo.vstack(
@@ -511,7 +511,7 @@ def _(mo):
     **Consultar dados importados:** mantenha a conexão aberta até materializar o resultado.
 
     ```python
-    with odb.Lake.local(live_target) as lake:
+    with odb.LakeReader(live_target) as lake:
         df = lake.connect().execute(
             "SELECT uf, ano, count(*) AS registros FROM lake.sim_obitos "
             "WHERE uf = ? GROUP BY uf, ano", ["RR"]
@@ -526,7 +526,7 @@ def _(mo):
     O nome do master é enriquecimento atual, sem garantia histórica.
 
     ```python
-    with odb.Lake.local(live_target) as lake:
+    with odb.LakeReader(live_target) as lake:
         codes = [row[0] for row in lake.connect().sql(
             "SELECT DISTINCT cnes FROM lake.cnes_estabelecimentos "
             "WHERE cnes IS NOT NULL ORDER BY cnes LIMIT 3"

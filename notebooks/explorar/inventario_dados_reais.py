@@ -298,8 +298,8 @@ def _(dataset, mo, odb, pasta, relatorio, target):
     mo.stop(not relatorio.ok, mo.md("Nenhum escopo confirmado para consultar."))
     # O nome da tabela vem exclusivamente do registro de datasets da biblioteca.
     tabela_sql = f'lake."{dataset.name}"'
-    with odb.Lake.local(target) as _lake:
-        _conn = _lake.connect()
+    with odb.LakeReader(target) as _leitor:
+        _conn = _leitor.connect()
         total = _conn.sql(f"SELECT count(*) FROM {tabela_sql}").fetchone()[0]
         assert total == relatorio.rows, "A contagem persistida diverge do relatório de importação."
         amostra = _conn.sql(f"SELECT * FROM {tabela_sql} LIMIT 50").pl()
