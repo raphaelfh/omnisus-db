@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from omnisus_db.sources.datasus_ftp import native
+from omnisus_db.sources.datasus_ftp import dbc, dbf_batches, native
 
 
 def missing(name):
@@ -62,3 +62,35 @@ def test_compatible_module_is_returned(monkeypatch):
     module = SimpleNamespace(API_VERSION=native.API_VERSION)
     monkeypatch.setattr(native, "import_module", lambda _: module)
     assert native.load_native("rust") is module
+
+
+def _dbc_selector():
+    dbc.decompress_bytes(b"", backend="auto")
+
+
+def _dbf_selector():
+    with dbf_batches.open_dbf_batches(
+        b"", encoding="latin-1", batch_rows=1, backend="auto"
+    ) as batches:
+        list(batches)
+
+
+@pytest.mark.parametrize("selector", [_dbc_selector, _dbf_selector])
+@pytest.mark.parametrize(
+    ("import_module", "match", "expected_error"),
+    [
+        (lambda _: SimpleNamespace(API_VERSION=99), "API", ImportError),
+        (lambda _: missing("pyarrow"), None, ModuleNotFoundError),
+    ],
+)
+def test_selectors_do_not_hide_loader_errors_under_auto(
+    monkeypatch, selector, import_module, match, expected_error
+):
+    """A selector must let load_native's errors propagate, never swallow them into Python."""
+    monkeypatch.setattr(native, "import_module", import_module)
+    if match is not None:
+        with pytest.raises(expected_error, match=match):
+            selector()
+    else:
+        with pytest.raises(expected_error):
+            selector()

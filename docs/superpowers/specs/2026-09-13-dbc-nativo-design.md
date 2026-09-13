@@ -181,6 +181,12 @@ These rulings override the sections above where they disagree.
   before.
 - **zlib license:** both ports are altered versions of `blast.c`, so each
   source file carries the `blast.h` notice and says it was altered.
+- **Three §7 items were deliberately not built.** No per-test timeout on the
+  Python bad-input tests: every decoder loop iteration consumes at least one
+  input bit, so decoding terminates. No Python-vs-Rust perf benchmark: it was
+  informative only, and the golden and parity tests carry correctness.
+  Truncation is checked at every offset of zlib's 8-byte vector instead of
+  every prefix of a fixture: same code path, a fraction of the runtime.
 
 ## 10. Out of scope
 

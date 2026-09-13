@@ -35,6 +35,7 @@ import pyarrow.parquet as pq
 
 from omnisus_db.sources.datasus_ftp import parse
 from omnisus_db.sources.datasus_ftp.dbf_batches import open_dbf_batches
+from omnisus_db.sources.datasus_ftp.native import API_VERSION
 from omnisus_db.sources.datasus_ftp.staging import dbc_bytes_to_parquet
 from omnisus_db.transforms.dictionaries import load_dicionario
 
@@ -129,8 +130,8 @@ def assert_rust_used(mode):
     import omnisus_db_dbf as native
     from omnisus_db_dbf import _native
 
-    if native.API_VERSION != 2:
-        raise AssertionError("Expected native API_VERSION=2")
+    if native.API_VERSION != API_VERSION:
+        raise AssertionError(f"Expected native API_VERSION={API_VERSION}")
     original = native.open_reader
     calls = {
         "open_reader_calls": 0,
