@@ -1,4 +1,4 @@
-name: native DBF
+name: native package
 
 on:
   push:
@@ -42,12 +42,11 @@ jobs:
       - run: cargo test --locked --no-default-features
 
   wheels:
-    name: wheel (${{ matrix.platform.target }}, py${{ matrix.python }})
+    name: wheel (${{ matrix.platform.target }})
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.12", "3.13"]
         platform:
           - runner: ubuntu-24.04
             architecture: x64
@@ -71,7 +70,7 @@ jobs:
       - uses: actions/setup-python@v7
         id: python
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.12"
           architecture: ${{ matrix.platform.architecture }}
       - uses: astral-sh/setup-uv@v7
       - uses: dtolnay/rust-toolchain@1.98.1
@@ -87,32 +86,30 @@ jobs:
           args: >-
             --manifest-path native/omnisus-db-dbf/Cargo.toml
             --release --locked --out dist/native
-            --interpreter ${{ runner.os == 'Linux' && format('python{0}', matrix.python) || 'python' }}
-      - name: Native wheel only, binary dependencies only
-        # This gate blocks on EVERY cell, independently of datasus-dbc wheels.
-        # No cache means a previously source-built dependency cannot mask a gap.
-        env:
-          NATIVE_GATE: ${{ runner.temp }}/native-gate
-          NATIVE_SMOKE: ${{ runner.temp }}/native-smoke
+            --interpreter ${{ runner.os == 'Linux' && 'python3.12' || 'python' }}
+      - name: Native wheel only, binary dependencies only, on every supported Python
+        # One abi3 wheel serves 3.12 and later. No cache, so a source build cannot mask a gap.
         run: |
-          uv venv --python '${{ steps.python.outputs.python-path }}' "$NATIVE_GATE"
-          uv pip install --python "$NATIVE_GATE" --no-cache --only-binary=:all: \
-            dist/native/*.whl 'pyarrow==25.0.1' 'pytest==9.1.1'
-          mkdir -p "$NATIVE_SMOKE"
-          cp scripts/smoke_native_wheel.py "$NATIVE_SMOKE/"
-          cp -R tests/fixtures/dbf "$NATIVE_SMOKE/dbf"
-          touch "$NATIVE_SMOKE/pytest.ini"
-          cd "$NATIVE_SMOKE"
-          uv run --no-project --no-sync --python "$NATIVE_GATE" \
-            python -I -m pytest -q -c pytest.ini smoke_native_wheel.py
+          smoke="$RUNNER_TEMP/native-smoke"
+          mkdir -p "$smoke"
+          cp scripts/smoke_native_wheel.py "$smoke/"
+          cp -R tests/fixtures/dbf tests/fixtures/blast "$smoke/"
+          touch "$smoke/pytest.ini"
+          for python in 3.12 3.13 3.14; do
+            gate="$RUNNER_TEMP/native-gate-$python"
+            uv venv --python "$python" "$gate"
+            uv pip install --python "$gate" --no-cache --only-binary=:all: \
+              dist/native/*.whl 'pyarrow==25.0.1' 'pytest==9.1.1'
+            (cd "$smoke" && uv run --no-project --no-sync --python "$gate" \
+              python -I -m pytest -q -c pytest.ini smoke_native_wheel.py)
+          done
       - name: Build the main Python wheel
         # Outside dist/: on Linux maturin-action builds in a root container, so
         # dist/ is root-owned and the runner user cannot create dist/main.
         run: |
           uv build --wheel --out-dir main-dist
           python -c "from pathlib import Path; wheels = list(Path('main-dist').glob('*.whl')); assert len(wheels) == 1 and wheels[0].name.endswith('-py3-none-any.whl'), wheels"
-      - name: Install the full stack from wheels on Python 3.12
-        if: matrix.python == '3.12'
+      - name: Install the full stack from wheels
         env:
           STACK_GATE: ${{ runner.temp }}/native-stack-gate
         run: |
@@ -120,17 +117,6 @@ jobs:
           main_wheels=(main-dist/*.whl)
           uv pip install --python "$STACK_GATE" --no-cache --only-binary=:all: \
             "${main_wheels[0]}[dev]" dist/native/*.whl
-      - name: Install the development stack on Python 3.13
-        if: matrix.python == '3.13'
-        # Upstream datasus-dbc lacks some cp313 wheels. Source builds are allowed
-        # here; the separate native binary-only gate above remains mandatory.
-        env:
-          STACK_GATE: ${{ runner.temp }}/native-stack-gate
-        run: |
-          uv venv --python '${{ steps.python.outputs.python-path }}' "$STACK_GATE"
-          main_wheels=(main-dist/*.whl)
-          uv pip install --python "$STACK_GATE" "${main_wheels[0]}[dev]" dist/native/*.whl
-          printf '%s\n' 'Python 3.13 full-stack tests allow source builds for the preexisting datasus-dbc wheel gap. The isolated native wheel gate is binary-only and blocking.' >> "$GITHUB_STEP_SUMMARY"
       - name: Require native parity and transactional tests against installed wheels
         # Disable the checkout's pythonpath=src so the installed main wheel is
         # exercised too. --no-sync prevents uv removing the optional local wheel.
@@ -143,7 +129,7 @@ jobs:
             tests/unit/lake/test_publication.py native/omnisus-db-dbf/tests/test_bindings.py -q
       - uses: actions/upload-artifact@v4
         with:
-          name: native-wheel-${{ matrix.platform.target }}-cp${{ matrix.python }}
+          name: native-wheel-${{ matrix.platform.target }}
           path: dist/native/*.whl
           if-no-files-found: error
 
@@ -202,7 +188,7 @@ jobs:
             dist/from-sdist/*.whl 'pyarrow==25.0.1' 'pytest==9.1.1'
           mkdir -p "$NATIVE_SMOKE"
           cp scripts/smoke_native_wheel.py "$NATIVE_SMOKE/"
-          cp -R tests/fixtures/dbf "$NATIVE_SMOKE/dbf"
+          cp -R tests/fixtures/dbf tests/fixtures/blast "$NATIVE_SMOKE/"
           touch "$NATIVE_SMOKE/pytest.ini"
           cd "$NATIVE_SMOKE"
           uv run --no-project --no-sync --python "$NATIVE_GATE" \
