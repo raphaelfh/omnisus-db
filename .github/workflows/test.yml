@@ -31,7 +31,7 @@ jobs:
           - { os: windows-latest, python: "3.13" }
           - { os: ubuntu-latest, python: "3.12" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -82,7 +82,7 @@ jobs:
           - { os: windows-latest, python: "3.12", required: true }
           - { os: ubuntu-latest, python: "3.13", required: false }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
       - run: uv python install ${{ matrix.python }}
       - name: Build the wheel
