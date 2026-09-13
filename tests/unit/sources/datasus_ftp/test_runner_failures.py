@@ -117,7 +117,9 @@ async def test_producer_failure_marks_rolled_back_write_as_determined(
                 _runner.run_scopes(
                     "sim_obitos", scopes=scopes, lake=lake, concurrency=1, batch_size=2
                 ),
-                timeout=2,
+                # A hang guard, not a speed check: without the native wheel the
+                # first scope's real DBC is decoded in pure Python on the runner.
+                timeout=30,
             )
         assert [(outcome.scope, outcome.status) for outcome in caught.value.report.outcomes] == [
             (scopes[0], "failed")
