@@ -6,7 +6,7 @@ These pages describe the repository version; the historical `v0.1.0` tag predate
 
 ## 1. Install
 
-Python 3.12 or newer is required. Python 3.12 and 3.13 are tested.
+Python 3.12 or newer is required. Python 3.12, 3.13 and 3.14 are tested.
 From the repository root:
 
 ```bash

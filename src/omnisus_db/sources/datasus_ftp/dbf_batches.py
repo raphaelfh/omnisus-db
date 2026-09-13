@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import datetime as dt
-import os
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from decimal import Decimal
-from importlib import import_module
-from typing import Any, Literal
+from typing import Any
 
 import pyarrow as pa
 import structlog
@@ -18,8 +16,8 @@ from omnisus_db.sources.datasus_ftp.dbf_contract import (
     DbfIntegrityError,
     _read_field_descriptors,
 )
+from omnisus_db.sources.datasus_ftp.native import Backend, load_native, requested_backend
 
-Backend = Literal["python", "rust", "auto"]
 logger = structlog.get_logger(__name__)
 
 _PHYSICAL_TYPES: dict[str, pa.DataType] = {
@@ -128,40 +126,25 @@ def open_dbf_batches(
     """
     if batch_rows <= 0:
         raise ValueError("batch_rows must be positive")
-    requested = backend if backend is not None else os.environ.get("OMNISUS_DBF_BACKEND", "auto")
-    if requested not in ("python", "rust", "auto"):
-        raise ValueError("DBF backend must be python, rust or auto")
-    native = None
+    requested = requested_backend(backend, variable="OMNISUS_DBF_BACKEND", label="DBF")
+    native = load_native(requested)
     reader = None
-    reason = None
-    if requested != "python":
-        try:
-            native = import_module("omnisus_db_dbf")
-        except ModuleNotFoundError as exc:
-            if exc.name != "omnisus_db_dbf":
-                raise
-            if requested == "rust":
-                raise ImportError(
-                    "Rust backend requires the optional omnisus-db-dbf package"
-                ) from exc
-            reason = "extension_not_installed"
-        if native is not None:
-            if getattr(native, "API_VERSION", None) != 1:
-                raise ImportError("Incompatible omnisus-db-dbf API; expected API_VERSION=1")
-            from omnisus_db.sources.datasus_ftp import parse
+    reason = "extension_not_installed" if native is None and requested == "auto" else None
+    if native is not None:
+        from omnisus_db.sources.datasus_ftp import parse
 
-            try:
-                reader = native.open_reader(
-                    parse._ensure_dbf_terminator(dbf_bytes),
-                    encoding=encoding,
-                    batch_rows=batch_rows,
-                )
-            except native.UnsupportedDbfError:
-                if requested == "rust":
-                    raise
-                reason = "unsupported_metadata"
-            except native.InvalidDbfError as exc:
-                raise DbfIntegrityError(str(exc)) from exc
+        try:
+            reader = native.open_reader(
+                parse._ensure_dbf_terminator(dbf_bytes),
+                encoding=encoding,
+                batch_rows=batch_rows,
+            )
+        except native.UnsupportedDbfError:
+            if requested == "rust":
+                raise
+            reason = "unsupported_metadata"
+        except native.InvalidDbfError as exc:
+            raise DbfIntegrityError(str(exc)) from exc
     actual = "rust" if reader is not None else "python"
     logger.debug(
         "datasus_ftp.dbf_backend",

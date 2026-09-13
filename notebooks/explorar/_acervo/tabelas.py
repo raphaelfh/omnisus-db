@@ -9,9 +9,10 @@ import zipfile
 from itertools import islice
 from pathlib import Path, PurePosixPath
 
-import datasus_dbc
 import polars as pl
 from dbfread2 import DBF
+
+from omnisus_db.sources.datasus_ftp.dbc import decompress_bytes
 
 MAX_EXPANDED_BYTES = 512 * 1024**2
 MAX_MEMBERS = 5000
@@ -130,7 +131,7 @@ def inspect_file(source: Path, output: Path, *, limit: int = 200) -> dict:
             )
             if predicted > MAX_EXPANDED_BYTES:
                 raise ValueError("DBC excede limite de expansão")
-            payload = datasus_dbc.decompress_bytes(payload)
+            payload = decompress_bytes(payload)
             ext = ".dbf"
         if len(payload) > MAX_EXPANDED_BYTES:
             raise ValueError("arquivo excede limite de expansão")

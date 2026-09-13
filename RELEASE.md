@@ -1,30 +1,33 @@
 # Release procedure
 
-## Optional native DBF package
+## Optional native package
 
-`native/omnisus-db-dbf` builds independently of the main Hatchling package. Its
-version has one home in `Cargo.toml`; Maturin exposes that version to Python.
-The pinned toolchain and `Cargo.lock` are committed. Build with:
+`native/omnisus-db-dbf` provides the Rust DBF reader and DBC decompressor. It
+builds independently of the main Hatchling package. Its version has one home
+in `Cargo.toml`; Maturin exposes that version to Python. The pinned toolchain
+and `Cargo.lock` are committed. Build with:
 
 ```bash
 uv build native/omnisus-db-dbf --wheel --out-dir dist/native
 uv build native/omnisus-db-dbf --sdist --out-dir dist/native
 ```
 
-The `native.yml` workflow produces tested artifacts on pull requests, main pushes,
-manual dispatch and `dbf-v*` tags. It does not publish packages. It checks native
-wheels on CPython 3.12/3.13 across Linux x86_64, Windows x86_64 and macOS arm64/x86_64,
-plus sdist reconstruction. Every native-only installation must use binary
-dependencies and pass outside the checkout. The existing `datasus-dbc` cp313 wheel
-gap is tracked separately; it must never make native extension checks nonblocking.
+One abi3 wheel per platform (Linux x86_64, Windows x86_64, macOS arm64/x86_64)
+serves CPython 3.12 and later; it is smoke-tested on 3.12, 3.13 and 3.14. The
+`native.yml` workflow produces tested artifacts on pull requests, main pushes,
+manual dispatch and `dbf-v*` tags. It does not publish packages. Every
+native-only installation must use binary dependencies and pass outside the
+checkout.
 
-Before a native PyPI release, configure its own Trusted Publisher and promote
-the artifacts that passed the complete matrix. Use `dbf-v<version>` for the native
-package; `v<version>` continues to identify the main package. Only after the
-native version is available in the index should the main package add a `rust`
-extra and update `uv.lock`; an unpublished dependency must not break base installs.
-Until then, install the locally built wheel directly. The main wheel stays
-`py3-none-any` and Python decoding remains available.
+`omnisus-db` does not depend on this package: it decodes DBF and DBC in pure
+Python without it. Before a native PyPI release, configure its own Trusted
+Publisher and promote the artifacts that passed the complete matrix. Use
+`dbf-v<version>` for the native package; `v<version>` continues to identify
+the main package. Only after the native version is available in the index
+should the main package add a `native` extra and update `uv.lock`; an
+unpublished dependency must not break base installs. Until then, install the
+locally built wheel directly. The main wheel stays `py3-none-any` and Python
+decoding remains available.
 
 ## Main Python package
 
@@ -71,31 +74,8 @@ To publish later, the PyPI account owner adds a pending Trusted Publisher
 `release.yml`, environment `pypi`) and re-runs only the failed job with
 `gh run rerun <run-id> --failed`.
 
-## The wheel gap, and why the floor is 3.12
+## Supported Python
 
-`datasus-dbc` publishes cp313 wheels only for manylinux
-aarch64/armv7l/ppc64le/s390x. On cp313 for any mainstream platform,
-`pip install omnisus-db` falls back to the sdist and needs a Rust toolchain.
-It does publish cp312 wheels for Linux, macOS and Windows.
-
-`requires-python` was `>=3.13` for no reason anyone recorded — there is no
-3.13-only syntax in the package, and the whole suite passes on 3.12. Lowering
-the floor to `>=3.12` is what unblocks release. Verified directly:
-
-```
-$ uv venv -p 3.12 .g
-$ uv pip install --only-binary=:all: dist/omnisus_db-0.1.0-py3-none-any.whl
-Installed 78 packages
-$ .g/bin/python -c "import omnisus_db; print(omnisus_db.__version__)"
-0.1.0
-```
-
-**This is a partial fix, and the CI comments say so.** A user who is already on
-3.13 still cannot install without cargo; they need 3.12, or they need upstream
-to ship wheels. `release.yml` gates on 3.12, where the install genuinely works.
-`test.yml` also runs the gate on 3.13 without blocking, so the remaining gap
-stays visible and turns green on its own the day upstream fixes it.
-
-The real fix is still worth doing: a PR to `datasus-dbc` adding cp313/cp314 for
-mainstream targets. Their matrix already builds cp313 for the exotic arches, so
-it is a cibuildwheel configuration change, not new work.
+`requires-python` is `>=3.12`. The wheel-only install gate in `test.yml` and
+`release.yml` installs the built wheel with `--only-binary=:all:` on 3.12, 3.13
+and 3.14 and must pass; no dependency needs a Rust toolchain.

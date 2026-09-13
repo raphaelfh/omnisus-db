@@ -57,12 +57,11 @@ def test_national_publication_replace_and_rollback(tmp_path):
 
 
 def test_identity_rejects_wrong_year_source(tmp_path, monkeypatch):
-    from omnisus_db.sources.datasus_ftp import parse
     from omnisus_db.sources.datasus_ftp._runner import ingest_raw
     from tests.support.dbf import make_dbf
 
     # Only compression is replaced: real DBF decoding and staging execute.
-    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     fields = [
         ("ID_AGRAVO", "C", 4, 0),
         ("NU_ANO", "C", 4, 0),
@@ -86,7 +85,7 @@ def test_synthetic_full_pipeline_and_corruption_preserve_publication(tmp_path, m
     from tests.support.dbf import make_dbf
 
     # Only compression is replaced: real DBF decoding, staging and DuckLake execute.
-    monkeypatch.setattr(parse.datasus_dbc, "decompress_bytes", lambda raw: raw)
+    monkeypatch.setattr("omnisus_db.sources.datasus_ftp.dbc.decompress_bytes", lambda raw: raw)
     fields = [
         ("ID_AGRAVO", "C", 4, 0),
         ("NU_ANO", "C", 4, 0),

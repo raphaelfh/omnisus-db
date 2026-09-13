@@ -159,10 +159,20 @@ def test_decode_row_applies_time_hhmm_display_transform() -> None:
 
 def test_decode_row_applies_idade_sim_display_transform() -> None:
     dic = load_dicionario("sim_obitos")
-    # SIM idade encoding: 1st digit = unit, 2nd-3rd = value.
+    # SIM idade encoding: 1st digit = unit, 2nd-3rd = value. Codes from
+    # Estrutura_SIM_Anterior.pdf; units measured against dtobito - dtnasc on
+    # SIM AC 2022 (4159 records): every unit-2 value equals the age in days
+    # and every unit-3 value the age in months.
+    assert dic.decode_row({"idade": "000"})["idade"] == "Ignorada"
+    assert dic.decode_row({"idade": "400"})["idade"] == "Menor de 1 ano"
+    assert dic.decode_row({"idade": "045"})["idade"] == "45 minutos"
+    assert dic.decode_row({"idade": "122"})["idade"] == "22 horas"
+    assert dic.decode_row({"idade": "229"})["idade"] == "29 dias"
+    assert dic.decode_row({"idade": "310"})["idade"] == "10 meses"
+    assert dic.decode_row({"idade": "301"})["idade"] == "1 mês"
     assert dic.decode_row({"idade": "469"})["idade"] == "69 anos"
-    assert dic.decode_row({"idade": "115"})["idade"] == "15 minutos"
-    assert dic.decode_row({"idade": "310"})["idade"] == "10 dias"
+    # 99 is a real age under unit 4; only unit 9 means unknown.
+    assert dic.decode_row({"idade": "499"})["idade"] == "99 anos"
     assert dic.decode_row({"idade": "501"})["idade"] == "101 anos"
     assert dic.decode_row({"idade": "999"})["idade"] == "Ignorada"
 

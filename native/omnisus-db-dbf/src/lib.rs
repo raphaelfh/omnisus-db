@@ -1,4 +1,5 @@
 mod arrow;
+pub mod dbc;
 pub mod decode;
 pub mod error;
 pub mod header;

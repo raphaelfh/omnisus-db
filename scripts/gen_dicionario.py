@@ -18,8 +18,9 @@ import argparse
 import datetime as dt
 from pathlib import Path
 
-import datasus_dbc
 import yaml
+
+from omnisus_db.sources.datasus_ftp import dbc
 
 _TYPES = {"C": "string", "D": "date", "L": "boolean", "M": "string", "F": "number"}
 
@@ -52,7 +53,7 @@ def main() -> None:
     ap.add_argument("--identity", nargs=3, metavar=("YEAR_COLUMN", "CODE_COLUMN", "CODE"))
     ap.add_argument("--out", type=Path, default=None)
     args = ap.parse_args()
-    dbf = datasus_dbc.decompress_bytes(args.dbc.read_bytes())
+    dbf = dbc.decompress_bytes(args.dbc.read_bytes())
     fields = fields_of(dbf)
     doc: dict = {
         "name": args.name,

@@ -1,4 +1,4 @@
-use crate::{decode::Encoding, error::Error, reader::Reader};
+use crate::{dbc, decode::Encoding, error::Error, reader::Reader};
 use arrow_pyarrow::IntoPyArrow;
 use pyo3::{
     create_exception,
@@ -18,6 +18,12 @@ create_exception!(
     InvalidDbfError,
     PyValueError,
     "DBF is malformed or truncated."
+);
+create_exception!(
+    omnisus_db_dbf,
+    InvalidDbcError,
+    PyValueError,
+    "DBC is malformed or truncated."
 );
 
 fn python_error(py: Python<'_>, error: Error) -> PyErr {
@@ -114,8 +120,21 @@ fn open_reader(
     Ok(DbfBatchReader { reader })
 }
 
+#[pyfunction]
+fn decompress_dbc<'py>(
+    py: Python<'py>,
+    data: &Bound<'py, PyBytes>,
+) -> PyResult<Bound<'py, PyBytes>> {
+    // Never hold a borrowed Python buffer across detach().
+    let owned = data.as_bytes().to_vec();
+    let out = py
+        .detach(move || dbc::decompress(&owned))
+        .map_err(|e| InvalidDbcError::new_err(e.to_string()))?;
+    Ok(PyBytes::new(py, &out))
+}
+
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add("API_VERSION", 1)?;
+    module.add("API_VERSION", 2)?;
     module.add("__version__", env!("CARGO_PKG_VERSION"))?;
     module.add(
         "UnsupportedDbfError",
@@ -123,6 +142,8 @@ pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     )?;
     module.add("InvalidDbfError", module.py().get_type::<InvalidDbfError>())?;
     module.add_class::<DbfBatchReader>()?;
+    module.add("InvalidDbcError", module.py().get_type::<InvalidDbcError>())?;
+    module.add_function(wrap_pyfunction!(decompress_dbc, module)?)?;
     module.add_function(wrap_pyfunction!(open_reader, module)?)?;
     Ok(())
 }

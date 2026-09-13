@@ -6,7 +6,9 @@ from types import SimpleNamespace
 import pyarrow as pa
 import pytest
 
+from omnisus_db.sources.datasus_ftp import native as native_loader
 from tests.support.dbf import make_dbf
+from tests.support.native import missing_module
 
 
 def batches_module():
@@ -63,15 +65,11 @@ def test_invalid_backend_is_not_silently_python(monkeypatch):
         pass
 
 
-def missing_module(name):
-    raise ModuleNotFoundError("module absent", name=name)
-
-
 @pytest.mark.parametrize("backend", [None, "auto", "rust"])
 def test_missing_optional_module(monkeypatch, backend):
     monkeypatch.delenv("OMNISUS_DBF_BACKEND", raising=False)
     module = batches_module()
-    monkeypatch.setattr(module, "import_module", missing_module)
+    monkeypatch.setattr(native_loader, "import_module", missing_module)
     data = make_dbf([("X", "C", 1, 0)], [b" a"])
     if backend == "rust":
         with (
@@ -86,26 +84,6 @@ def test_missing_optional_module(monkeypatch, backend):
             assert next(stream).to_pylist() == [{"X": "a"}]
 
 
-def test_missing_transitive_dependency_does_not_fallback(monkeypatch):
-    module = batches_module()
-    monkeypatch.setattr(module, "import_module", lambda _: missing_module("broken_dependency"))
-    with (
-        pytest.raises(ModuleNotFoundError),
-        module.open_dbf_batches(b"", encoding="latin-1", batch_rows=1, backend="auto"),
-    ):
-        pass
-
-
-def test_incompatible_api_does_not_fallback(monkeypatch):
-    module = batches_module()
-    monkeypatch.setattr(module, "import_module", lambda _: SimpleNamespace(API_VERSION=99))
-    with (
-        pytest.raises(ImportError, match="API"),
-        module.open_dbf_batches(b"", encoding="latin-1", batch_rows=1, backend="auto"),
-    ):
-        pass
-
-
 class UnsupportedDbfError(ValueError):
     pass
 
@@ -116,7 +94,7 @@ class InvalidDbfError(ValueError):
 
 def fake_native(open_reader):
     return SimpleNamespace(
-        API_VERSION=1,
+        API_VERSION=native_loader.API_VERSION,
         __version__="0.1.0",
         open_reader=open_reader,
         UnsupportedDbfError=UnsupportedDbfError,
@@ -131,7 +109,7 @@ def test_default_uses_native_when_installed(monkeypatch):
     def reader(*args, **kwargs):
         yield pa.record_batch({"X": ["native"]})
 
-    monkeypatch.setattr(module, "import_module", lambda _: fake_native(reader))
+    monkeypatch.setattr(native_loader, "import_module", lambda _: fake_native(reader))
     data = make_dbf([("X", "C", 1, 0)], [b" a"])
     with module.open_dbf_batches(data, encoding="latin-1", batch_rows=1) as stream:
         assert next(stream).to_pylist() == [{"X": "native"}]
@@ -143,7 +121,7 @@ def test_only_preflight_unsupported_can_fallback(monkeypatch):
     def unsupported(*args, **kwargs):
         raise UnsupportedDbfError("field D")
 
-    monkeypatch.setattr(module, "import_module", lambda _: fake_native(unsupported))
+    monkeypatch.setattr(native_loader, "import_module", lambda _: fake_native(unsupported))
     data = make_dbf([("X", "D", 8, 0)], [b" 20240101"])
     with module.open_dbf_batches(data, encoding="latin-1", batch_rows=1, backend="auto") as stream:
         assert str(next(stream).to_pylist()[0]["X"]) == "2024-01-01"
@@ -165,7 +143,9 @@ def test_late_native_error_cleans_and_never_restarts(monkeypatch, error):
         finally:
             closed.append(True)
 
-    monkeypatch.setattr(module, "import_module", lambda _: fake_native(lambda *a, **kw: reader()))
+    monkeypatch.setattr(
+        native_loader, "import_module", lambda _: fake_native(lambda *a, **kw: reader())
+    )
 
     def forbidden(*args, **kwargs):
         raise AssertionError("Python fallback after native iteration")

@@ -1,9 +1,10 @@
-# Native robustness target
+# Native robustness targets
 
 Run from `native/omnisus-db-dbf` with `cargo-fuzz` and a nightly Rust toolchain.
 The target enables AddressSanitizer, consumes at most 64 KiB per input, and
 exercises header preflight, iteration, repeated close, all four encodings and
-numeric parsing. It does not link Python.
+numeric parsing. The `dbc` target exercises DBC header checks and the
+imploded-stream decoder with the same input bound. Neither links Python.
 
 ```sh
 cargo install cargo-fuzz --version 0.13.2 --locked
@@ -11,6 +12,10 @@ rustup toolchain install nightly-2026-09-10 --profile minimal
 mkdir -p /tmp/omnisus-dbf-fuzz-corpus
 cp ../../tests/fixtures/dbf/*.dbf /tmp/omnisus-dbf-fuzz-corpus/
 cargo +nightly-2026-09-10 fuzz run dbf /tmp/omnisus-dbf-fuzz-corpus -- \
+  -max_total_time=30 -max_len=65536 -timeout=5 -rss_limit_mb=2048
+mkdir -p /tmp/omnisus-dbc-fuzz-corpus
+cp ../../tests/fixtures/dbc/sia_aq_rr_2024_01_mini.dbc ../../tests/fixtures/blast/test.pk /tmp/omnisus-dbc-fuzz-corpus/
+cargo +nightly-2026-09-10 fuzz run dbc /tmp/omnisus-dbc-fuzz-corpus -- \
   -max_total_time=30 -max_len=65536 -timeout=5 -rss_limit_mb=2048
 ```
 

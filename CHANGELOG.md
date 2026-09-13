@@ -17,6 +17,14 @@
 - **marimo is no longer installed with the package.** A base install pulls
   only what imports need. The notebooks need the extra:
   `uv sync --locked --extra notebooks` (or `pip install ".[notebooks]"`).
+- **Installs from wheels on Python 3.13 and 3.14.** DBC decompression no
+  longer uses `datasus-dbc`, which has no 3.13 wheels for macOS, Windows or
+  Linux x86_64 and made `pip install` need Rust there. `omnisus-db` now ports
+  zlib's `blast.c` to pure Python, byte-exact with `datasus-dbc` on every test
+  fixture. The optional `omnisus-db-dbf` wheel carries the same decoder in Rust
+  (API version 2, one abi3 wheel for 3.12+) and is used automatically when
+  installed; `OMNISUS_DBC_BACKEND=python|rust|auto` chooses explicitly.
+  Malformed payloads raise `InvalidDbcError`, a `ValueError`.
 
 ### Fixed
 
@@ -30,6 +38,15 @@
   convert the `TIMESTAMPTZ` results and Windows has none.
 - The acervo notebook helper closes its temporary DBF before reading it, which
   Windows requires.
+- **SIM `idade` decodes the right unit.** The first digit is 0 = minutes,
+  1 = hours, 2 = days, 3 = months, 4 = years, 5 = 100 + years. `000` and
+  9xx mean unknown, and `400` means under one year with no finer unit
+  (`Estrutura_SIM_Anterior.pdf` on the DATASUS FTP). The decoder had followed
+  `Estrutura_do_SIM_2025.pdf`, whose list is shifted by one, so `310` read as
+  "10 dias" instead of "10 meses" and unit 0 read as "Ignorada". Checked
+  against `dtobito - dtnasc` on SIM AC 2022. A value of 99 under units 0–5 is
+  now a real age: `499` reads as "99 anos", not "Ignorada". This changes
+  display only. Stored `idade` values are unchanged.
 
 ## v0.2.0 — 2026-09-12
 
