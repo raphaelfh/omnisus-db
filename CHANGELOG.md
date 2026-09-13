@@ -1,6 +1,9 @@
 # Changelog
 
-## v0.1.1 — 2026-09-12
+## v0.2.0 — 2026-09-12
+
+A minor bump, not a patch: every dataset and import function was renamed
+and the short-name aliases are gone, so 0.1.0 callers break.
 
 ### Removed
 

@@ -149,7 +149,7 @@ alias e os lakes existentes precisam ser reconstruídos em um target novo (ver
 Não existe alias nenhum; as tabelas do lake carregam os nomes novos e um lake
 existente precisa ser reconstruído em um target novo.
 
-## Adendo 2026-09-12 — superfície da API congelada em v0.1.1
+## Adendo 2026-09-12 — superfície da API congelada em v0.2.0
 
 Funções de importação públicas, sem alias:
 
@@ -163,4 +163,4 @@ Funções de importação públicas, sem alias:
 Removidos: `import_sim`, `import_sinasc`, `import_sih` (eram aliases de uma
 linha e escondiam `available()` e `policy`). `available()` e
 `available_releases()` aceitam `ufs` e `months`, os mesmos seletores de
-`scopes_for()`. Detalhes em `reports/2026-09-12-entrega-v0.1.1.md`.
+`scopes_for()`. Detalhes em `reports/2026-09-12-entrega-v0.2.0.md`.

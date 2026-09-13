@@ -95,7 +95,7 @@ def test_import_dataset_accepts_hand_built_scopes(
 
 def test_public_import_functions_are_the_readable_ones() -> None:
     """One generic FTP entry point plus the importers that carry behaviour of
-    their own. Short-name aliases (``import_sim`` …) were removed in 0.1.1."""
+    their own. Short-name aliases (``import_sim`` …) were removed in 0.2.0."""
     importers = sorted(name for name in odb.__all__ if name.startswith("import_"))
     assert importers == [
         "import_cnes_estabelecimentos",
