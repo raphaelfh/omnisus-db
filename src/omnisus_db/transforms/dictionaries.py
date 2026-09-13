@@ -100,11 +100,20 @@ def _decode_time_hhmm(value: Any) -> Any:
     return f"{m.group(1)}:{m.group(2)}"
 
 
-# DATASUS SIM age unit code → (singular, plural). 0/9 = ignored.
+# DATASUS SIM age unit code → (singular, plural). 000 and 9xx = ignored.
+# Estrutura_SIM_Anterior.pdf (DATASUS FTP SIM/CID10/DOCS, p. 1, row 07) gives
+# "000: Idade ignorada", "020: 20 minutos", "103: 3 horas", "204: 4 dias",
+# "305: 5 meses", "400: menor de 1 ano…", "505: 105 anos". The 2019 and 2025
+# structure docs drop 0 and "dia" and list 1=minuto, 2=hora, 3=mês, which the
+# data contradicts: on SIM AC 2022 (4159 records) with dtobito - dtnasc, units
+# 0 and 1 die on the birth date or the next day, all 102 unit-2 values equal
+# the age in days, all 115 unit-3 values the age in months, and units 4/5 the
+# age in years.
 _IDADE_SIM_UNITS: dict[str, tuple[str, str]] = {
-    "1": ("minuto", "minutos"),
-    "2": ("hora", "horas"),
-    "3": ("dia", "dias"),
+    "0": ("minuto", "minutos"),
+    "1": ("hora", "horas"),
+    "2": ("dia", "dias"),
+    "3": ("mês", "meses"),
     "4": ("ano", "anos"),
     "5": ("ano", "anos"),  # 5 = 100+ years
 }
@@ -114,7 +123,7 @@ def _decode_idade_sim(value: Any) -> Any:
     """SIM 3-digit encoded age → human-readable string.
 
     Encoding: 1st digit = unit, last 2 digits = numeric value.
-    ``469`` → ``69 anos``  ·  ``115`` → ``15 minutos``  ·  ``501`` → ``101 anos``.
+    ``469`` → ``69 anos``  ·  ``045`` → ``45 minutos``  ·  ``501`` → ``101 anos``.
     """
     if value is None:
         return value
@@ -125,14 +134,11 @@ def _decode_idade_sim(value: Any) -> Any:
     if len(s) != 3 or not s.isdigit():
         return value
     unit_code = s[0]
-    if unit_code in ("0", "9"):
+    if unit_code == "9" or s == "000":
         return "Ignorada"
-    try:
-        n = int(s[1:])
-    except ValueError:
-        return value
-    if n == 99:
-        return "Ignorada"
+    if s == "400":
+        return "Menor de 1 ano"
+    n = int(s[1:])
     unit = _IDADE_SIM_UNITS.get(unit_code)
     if unit is None:
         return value
