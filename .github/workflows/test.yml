@@ -32,7 +32,7 @@ jobs:
           - { os: ubuntu-latest, python: "3.12" }
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - name: Setup Python
@@ -83,7 +83,7 @@ jobs:
           - { os: ubuntu-latest, python: "3.13", required: false }
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv python install ${{ matrix.python }}
       - name: Build the wheel
         run: uv build --wheel
