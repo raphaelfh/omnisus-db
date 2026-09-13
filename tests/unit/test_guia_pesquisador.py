@@ -25,6 +25,9 @@ PERFIS = {
     "sia": "sia",
     "cnes_estabelecimentos": "cnes_estabelecimentos",
     "ibge_populacao": "ibge_populacao",
+    "sinan_chagas": "sinan",
+    "sinan_hanseniase": "sinan",
+    "medicamentos": "medicamentos",
 }
 
 
@@ -53,3 +56,10 @@ def test_profile_links_its_notebook(perfil):
 @pytest.mark.parametrize("perfil", sorted(PERFIS))
 def test_sources_section_cites_a_document(perfil):
     assert re.search(r"(https?|ftp)://\S+", _secao(_texto(perfil), "Fontes"))
+
+
+def test_every_bases_notebook_has_a_profile():
+    notebooks = {
+        p.stem for p in (ROOT / "notebooks/bases").glob("*.py") if not p.name.startswith("_")
+    }
+    assert set(PERFIS.values()) == notebooks
