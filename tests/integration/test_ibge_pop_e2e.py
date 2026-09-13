@@ -15,7 +15,7 @@ BASE = "https://servicodados.ibge.gov.br/api/v3/agregados/4714"
 
 
 def mock_source():
-    body = json.loads((FIXTURES / "4714-population.json").read_text())
+    body = json.loads((FIXTURES / "4714-population.json").read_text(encoding="utf-8"))
     for name in ("metadados", "periodos"):
         respx.get(f"{BASE}/{name}").respond(
             200, content=(FIXTURES / f"4714-{name}.json").read_bytes()

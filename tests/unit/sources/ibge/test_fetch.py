@@ -14,9 +14,9 @@ BASE = "https://servicodados.ibge.gov.br/api/v3/agregados"
 
 
 def setup_source(table=4714, year=2022):
-    metadata = json.loads((FIXTURES / f"{table}-metadados.json").read_text())
-    periods = json.loads((FIXTURES / f"{table}-periodos.json").read_text())
-    body = json.loads((FIXTURES / f"{table}-population.json").read_text())
+    metadata = json.loads((FIXTURES / f"{table}-metadados.json").read_text(encoding="utf-8"))
+    periods = json.loads((FIXTURES / f"{table}-periodos.json").read_text(encoding="utf-8"))
+    body = json.loads((FIXTURES / f"{table}-population.json").read_text(encoding="utf-8"))
     localities = [s["localidade"] for s in body[0]["resultados"][0]["series"]]
     routes = {}
     for name, data in [
@@ -118,7 +118,7 @@ async def test_revision_change_during_collection_is_rejected():
 @pytest.mark.parametrize("kind", ["variable", "unit", "level", "categories", "total"])
 async def test_metadata_contract_is_enforced(kind):
     routes = setup_source(202, 2010)
-    metadata = json.loads((FIXTURES / "202-metadados.json").read_text())
+    metadata = json.loads((FIXTURES / "202-metadados.json").read_text(encoding="utf-8"))
     if kind == "variable":
         metadata["variaveis"][0]["id"] = 999
     if kind == "unit":

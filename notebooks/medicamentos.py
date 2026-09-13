@@ -68,7 +68,7 @@ def _(Path, mo):
     import omnisus_db
 
     _path = Path(omnisus_db.__file__).parent / "data/dicionarios/sia_apac_medicamentos.yaml"
-    _dictionary = yaml.safe_load(_path.read_text())
+    _dictionary = yaml.safe_load(_path.read_text(encoding="utf-8"))
     mo.accordion(
         {
             "Dicionário SIA-AM usado na ingestão": mo.ui.table(

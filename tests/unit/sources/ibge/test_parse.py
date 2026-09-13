@@ -13,7 +13,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def payload(table=4714):
-    return json.loads((FIXTURES / f"{table}-population.json").read_text())
+    return json.loads((FIXTURES / f"{table}-population.json").read_text(encoding="utf-8"))
 
 
 def parse(body, year=2022, product="census"):

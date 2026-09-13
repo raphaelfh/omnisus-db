@@ -47,52 +47,29 @@ wheel-only install gate on Linux, macOS and Windows, builds, and publishes to
 PyPI via Trusted Publishing (OIDC) with PEP 740 attestations. There is no
 long-lived token to configure or rotate.
 
-## One-time setup, still pending
+## Repository setup
 
-This repository has **no git remote**. Nothing in `.github/workflows/` has ever
-run, `https://raphaelfh.github.io/omnisus-db` does not exist, and the install
-URL in `README.md` 404s.
+The remote is public at https://github.com/raphaelfh/omnisus-db and the
+documentation site deploys from `main` to https://raphaelfh.github.io/omnisus-db.
+The `github-pages` and `pypi` environments exist.
 
-> **Do not push tags on the first push.** A local `v0.1.0` tag exists and points
-> 45 commits back, at code without the inventory, tolerance or performance work.
-> `_version.py` still reads `0.1.0`, so `release.yml`'s tag-vs-version check
-> would *pass* and it would publish that old tree as 0.1.0. Push the branch
-> alone; cut a fresh tag afterwards.
+**The package is not published to PyPI, by decision.** The distribution
+channel is the wheel file built from the tag:
 
 ```bash
-cd ~/PycharmProjects/omnisus-db
-
-gh repo create raphaelfh/omnisus-db --public \
-    --description "Python library for ingesting Brazilian public health databases into DuckLake" \
-    --source . --remote origin
-
-git push -u origin main        # note: no --tags
+git checkout v0.2.0
+uv build --wheel --out-dir dist
+pip install dist/omnisus_db-0.2.0-py3-none-any.whl
 ```
 
-That alone starts `test.yml` and `docs.yml`. Then, before any release:
+`release.yml` still runs on every `v*` tag. Its install gate is useful, and its
+`publish` job fails with `invalid-publisher` because no PyPI Trusted Publisher
+exists. That failure is expected, as in the `v0.2.0` run; do not re-run it.
 
-- **Settings → Pages** → source "GitHub Actions", so `docs.yml` can deploy.
-- **Settings → Environments** → create `pypi`.
-- **PyPI → Publishing** → add a Trusted Publisher: project `omnisus-db`, owner
-  `raphaelfh`, repository `omnisus-db`, workflow `release.yml`, environment
-  `pypi`. No token is created; this is the whole point of OIDC.
-
-### Then cut the next version
-
-The `Unreleased` section of `CHANGELOG.md` contains a **breaking** change —
-`import_dataset` and the named importers now return `ImportReport` rather than
-`list[ImportResult]` — so the next version is `0.2.0`, not `0.1.1`.
-
-Follow "Release procedure" above. Optionally delete the stale local tag first,
-so it cannot be pushed by accident:
-
-```bash
-git tag -d v0.1.0
-```
-
-`README.md` pins its install example to `@v0.1.0`; update it to the new tag
-once one exists, or the documented install gives users code without any of
-this work.
+To publish later, the PyPI account owner adds a pending Trusted Publisher
+(project `omnisus-db`, owner `raphaelfh`, repository `omnisus-db`, workflow
+`release.yml`, environment `pypi`) and re-runs only the failed job with
+`gh run rerun <run-id> --failed`.
 
 ## The wheel gap, and why the floor is 3.12
 

@@ -106,16 +106,18 @@ jobs:
           uv run --no-project --no-sync --python "$NATIVE_GATE" \
             python -I -m pytest -q -c pytest.ini smoke_native_wheel.py
       - name: Build the main Python wheel
+        # Outside dist/: on Linux maturin-action builds in a root container, so
+        # dist/ is root-owned and the runner user cannot create dist/main.
         run: |
-          uv build --wheel --out-dir dist/main
-          python -c "from pathlib import Path; wheels = list(Path('dist/main').glob('*.whl')); assert len(wheels) == 1 and wheels[0].name.endswith('-py3-none-any.whl'), wheels"
+          uv build --wheel --out-dir main-dist
+          python -c "from pathlib import Path; wheels = list(Path('main-dist').glob('*.whl')); assert len(wheels) == 1 and wheels[0].name.endswith('-py3-none-any.whl'), wheels"
       - name: Install the full stack from wheels on Python 3.12
         if: matrix.python == '3.12'
         env:
           STACK_GATE: ${{ runner.temp }}/native-stack-gate
         run: |
           uv venv --python '${{ steps.python.outputs.python-path }}' "$STACK_GATE"
-          main_wheels=(dist/main/*.whl)
+          main_wheels=(main-dist/*.whl)
           uv pip install --python "$STACK_GATE" --no-cache --only-binary=:all: \
             "${main_wheels[0]}[dev]" dist/native/*.whl
       - name: Install the development stack on Python 3.13
@@ -126,7 +128,7 @@ jobs:
           STACK_GATE: ${{ runner.temp }}/native-stack-gate
         run: |
           uv venv --python '${{ steps.python.outputs.python-path }}' "$STACK_GATE"
-          main_wheels=(dist/main/*.whl)
+          main_wheels=(main-dist/*.whl)
           uv pip install --python "$STACK_GATE" "${main_wheels[0]}[dev]" dist/native/*.whl
           printf '%s\n' 'Python 3.13 full-stack tests allow source builds for the preexisting datasus-dbc wheel gap. The isolated native wheel gate is binary-only and blocking.' >> "$GITHUB_STEP_SUMMARY"
       - name: Require native parity and transactional tests against installed wheels
@@ -187,7 +189,9 @@ jobs:
       - name: Build a wheel from the archive in build isolation
         # uv unpacks the archive in an isolated build directory. --locked makes
         # the build fail if Cargo.lock is absent or needs changes.
-        run: uv build dist/sdist/*.tar.gz --wheel --out-dir dist/from-sdist -C build-args=--locked
+        # -p 3.12: the gate below installs into 3.12; uv's default interpreter
+        # would otherwise build a cp313 wheel that cannot be installed there.
+        run: uv build -p 3.12 dist/sdist/*.tar.gz --wheel --out-dir dist/from-sdist -C build-args=--locked
       - name: Install and exercise the wheel from the sdist
         env:
           NATIVE_GATE: ${{ runner.temp }}/native-sdist-gate

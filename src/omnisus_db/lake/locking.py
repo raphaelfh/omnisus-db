@@ -5,7 +5,7 @@ process to lock a new inode while a waiter still owns the old one.
 """
 
 import errno
-import os
+import sys
 from pathlib import Path
 from typing import BinaryIO
 
@@ -25,7 +25,9 @@ class WriterLock:
         lock_path = catalog.with_name(catalog.name + ".writer.lock")
         handle = open(lock_path, "a+b")  # noqa: SIM115 -- owned until close(), across calls
         try:
-            if os.name == "nt":
+            # sys.platform, not os.name: mypy narrows on it, so each branch
+            # type-checks only on the platform where its module exists.
+            if sys.platform == "win32":
                 import msvcrt
 
                 handle.seek(0, 2)
@@ -33,7 +35,7 @@ class WriterLock:
                     handle.write(b"\0")
                     handle.flush()
                 handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)  # type: ignore[attr-defined]
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
             else:
                 import fcntl
 

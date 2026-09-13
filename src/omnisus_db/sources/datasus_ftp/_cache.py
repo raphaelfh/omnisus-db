@@ -121,7 +121,9 @@ def read_cached(remote_path: str, *, ttl_hours: float = 24.0) -> Listing | None:
         if target.exists():
             logger.warning("inventory.cache_unreadable", path=str(target), error=str(exc))
         return None
-    if datetime.now(UTC).replace(tzinfo=None) - fetched_at > timedelta(hours=ttl_hours):
+    # >=, not >: Windows' clock ticks about every 16 ms, so a listing written and
+    # read in one tick has age exactly zero, and ttl_hours=0 must still miss.
+    if datetime.now(UTC).replace(tzinfo=None) - fetched_at >= timedelta(hours=ttl_hours):
         return None
     try:
         frame = pl.read_parquet(target)

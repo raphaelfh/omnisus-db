@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Imports work on Windows.** Staging memory-mapped each spooled `.arrow`
+  batch and deleted it while the table still held the mapping, which Windows
+  refuses (`WinError 5`). Batches are now read into memory one at a time.
+- The listing cache expires when a listing's age equals its TTL. Windows'
+  clock ticks about every 16 ms, so `ttl_hours=0` never expired there.
+- `expire_snapshots` and `cleanup_files` work on Windows. `tzdata` is now a
+  Windows-only dependency, because pyarrow needs a time-zone database to
+  convert the `TIMESTAMPTZ` results and Windows has none.
+- The acervo notebook helper closes its temporary DBF before reading it, which
+  Windows requires.
+
 ## v0.2.0 — 2026-09-12
 
 A minor bump, not a patch: every dataset and import function was renamed
@@ -34,9 +49,10 @@ and the short-name aliases are gone, so 0.1.0 callers break.
 - `scripts/gen_dicionario.py`: physical-inventory YAML from one DBC file.
 - Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow
   batches, with exact integer/string semantics and a shared staging writer.
-  `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend; Python remains the
-  default. Unsupported metadata can fall back before parsing, while corrupt data
-  and late failures remain errors. Native wheels have independent build/install
+  `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend. The default is
+  `auto`: Rust when the extension is installed, otherwise Python. Unsupported
+  metadata can fall back before parsing, while corrupt data and late failures
+  remain errors. Native wheels have independent build/install
   checks, fixture parity tests and resource benchmarks.
 - **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**
   `requires-python` was `>=3.13` for no recorded reason — there is no 3.13-only

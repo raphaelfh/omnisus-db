@@ -14,7 +14,7 @@ from _performance_dbf import comparison_rows, measurement_rows, measurement_svg 
 
 @pytest.fixture
 def report():
-    return json.loads((ROOT / "reports/rust-dbf-performance.json").read_text())
+    return json.loads((ROOT / "reports/rust-dbf-performance.json").read_text(encoding="utf-8"))
 
 
 def test_real_report_keeps_all_measured_runs_and_phase_boundaries(report):

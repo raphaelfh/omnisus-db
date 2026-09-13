@@ -138,8 +138,8 @@ async def _(
             not _latest.exists(),
             mo.callout("Ainda não há acervo local. Clique em Baixar amostras reais.", kind="info"),
         )
-        _manifest_path = Path(json.loads(_latest.read_text())["manifesto"])
-        manifesto = json.loads(_manifest_path.read_text())
+        _manifest_path = Path(json.loads(_latest.read_text(encoding="utf-8"))["manifesto"])
+        manifesto = json.loads(_manifest_path.read_text(encoding="utf-8"))
         run_dir = _manifest_path.parent
     mo.output.append(
         mo.md(

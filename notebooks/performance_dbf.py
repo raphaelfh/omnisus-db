@@ -51,7 +51,7 @@ def _(comparison_rows, json, measurement_rows, mo, root):
         not report_path.exists(),
         mo.callout("Relatório de performance não encontrado.", kind="warn"),
     )
-    report = json.loads(report_path.read_text())
+    report = json.loads(report_path.read_text(encoding="utf-8"))
     measurements = measurement_rows(report)
     comparisons = comparison_rows(measurements)
     return comparisons, measurements, report, report_path
