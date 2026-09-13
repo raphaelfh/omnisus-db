@@ -27,7 +27,7 @@ jobs:
         # --strict turns broken links and orphan pages into failures.
       - run: uv run mkdocs build --strict
       - if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site/
 
