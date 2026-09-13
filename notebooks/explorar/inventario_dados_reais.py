@@ -212,7 +212,7 @@ async def _(
     mo.stop(not (executar or baixar.value), mo.md("O download começa ao clicar no botão acima."))
     # mo.notebook_location() funciona mesmo quando o processo parte de outro diretório.
     pasta = (
-        Path(mo.notebook_location()).parent
+        Path(mo.notebook_location()).parents[1]
         / "data/lake/inventario-real"
         / f"{datetime.now(UTC):%Y%m%dT%H%M%S}-{uuid4().hex[:8]}"
     ).resolve()

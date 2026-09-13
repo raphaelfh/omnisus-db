@@ -19,7 +19,7 @@ def _():
     from omnisus_db.transforms.dictionaries import load_dicionario
 
     dataset = "sinan_chagas"
-    root = Path(__file__).resolve().parent.parent / "data/lake/sinan-chagas"
+    root = Path(__file__).resolve().parents[2] / "data/lake/sinan-chagas"
     return Path, asyncio, dataset, json, load_dicionario, mo, odb, root, uuid4
 
 

@@ -30,8 +30,8 @@ ignorados pelo Git; relatórios de metadados ficam em `reports/`.
 ## Metadados por coluna pelo terminal
 
 ```bash
-uv run --locked --extra notebooks marimo edit notebooks/metadados_cli.py
-uv run --locked --extra notebooks marimo export html notebooks/metadados_cli.py \
+uv run --locked --extra notebooks marimo edit notebooks/desenvolvimento/metadados_cli.py
+uv run --locked --extra notebooks marimo export html notebooks/desenvolvimento/metadados_cli.py \
   -o /tmp/metadados-cli.html
 ```
 
@@ -58,7 +58,7 @@ Veja o [contrato e as limitações de consumo](../docs/dicionario/consumo.md).
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/panorama_datasus.py
+uv run --locked --extra notebooks marimo edit notebooks/explorar/panorama_datasus.py
 ```
 
 Ao abrir, o notebook reutiliza a última coleta local e permite explorar categoria,
@@ -83,14 +83,14 @@ até quatro candidatos podem ser tentados para obter registros reais.
 
 ```bash
 # Abrir como aplicativo
-uv run --locked --extra notebooks marimo run notebooks/panorama_datasus.py
+uv run --locked --extra notebooks marimo run notebooks/explorar/panorama_datasus.py
 
 # Exportar o acervo local já preparado (sem novos downloads)
-uv run --locked --extra notebooks marimo export html notebooks/panorama_datasus.py \
+uv run --locked --extra notebooks marimo export html notebooks/explorar/panorama_datasus.py \
   -o /tmp/panorama-datasus.html
 
 # Executar uma nova coleta real das 18 categorias e gerar o HTML
-uv run --locked --extra notebooks marimo export html notebooks/panorama_datasus.py \
+uv run --locked --extra notebooks marimo export html notebooks/explorar/panorama_datasus.py \
   -o /tmp/panorama-datasus.html -- --preparar true
 ```
 
@@ -119,9 +119,9 @@ Veja o [relatório completo e mapa de campos](../reports/2026-09-10-mapa-datasus
 Esses números descrevem esta coleta, não uma garantia de cobertura futura.
 
 ```bash
-uv run --locked --extra notebooks marimo check --strict notebooks/panorama_datasus.py
+uv run --locked --extra notebooks marimo check --strict notebooks/explorar/panorama_datasus.py
 uv run --locked --extra dev pytest tests/unit/notebooks/test_acervo.py -q
-uv run --locked --extra dev ruff check notebooks/_acervo notebooks/panorama_datasus.py
+uv run --locked --extra dev ruff check notebooks/explorar/_acervo notebooks/explorar/panorama_datasus.py
 ```
 
 ## Análise da API com dados reais já preparados
@@ -133,7 +133,7 @@ O lake já preparado neste workspace é reutilizado ao abrir, sem novo download
 automático ou dados sintéticos nos cenários analíticos.
 
 ```bash
-uv run --locked --extra notebooks marimo edit notebooks/api_dados_reais.py
+uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
 O botão **Baixar nova cópia** consulta o inventário e cria um lake separado,
@@ -148,8 +148,8 @@ e download de agregados CSV/Parquet. O exemplo transacional usa uma agregação 
 em um lake temporário; somente o erro usado para demonstrar rollback é induzido.
 
 ```bash
-uv run --locked --extra notebooks marimo check --strict notebooks/api_dados_reais.py
-uv run --locked --extra notebooks marimo export html notebooks/api_dados_reais.py -o /tmp/omnisus-real.html
+uv run --locked --extra notebooks marimo check --strict notebooks/bases/sim_obitos.py
+uv run --locked --extra notebooks marimo export html notebooks/bases/sim_obitos.py -o /tmp/omnisus-real.html
 ```
 
 A exportação requer a cópia local já preparada para incluir as análises. Os
@@ -167,7 +167,7 @@ reabre o lake, confere a contagem, mostra 50 registros e o esquema, e exporta
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/inventario_dados_reais.py
+uv run --locked --extra notebooks marimo edit notebooks/explorar/inventario_dados_reais.py
 ```
 
 Clique em **Consultar inventário**, escolha UF/ano/arquivos e clique em **Baixar**.
@@ -184,7 +184,7 @@ interromper a célula pode não cancelar a thread de download.
 Para executar o exemplo real inteiro e gerar um HTML com resultados:
 
 ```bash
-uv run --locked --extra notebooks marimo export html notebooks/inventario_dados_reais.py \
+uv run --locked --extra notebooks marimo export html notebooks/explorar/inventario_dados_reais.py \
   -o /tmp/inventario-dados-reais.html -- --executar true
 ```
 
@@ -198,8 +198,8 @@ ela automatiza as operações que normalmente dependem de clique.
 Verificações locais:
 
 ```bash
-uv run --locked --extra notebooks marimo check notebooks/inventario_dados_reais.py
-uv run --locked --extra dev ruff check notebooks/inventario_dados_reais.py
+uv run --locked --extra notebooks marimo check notebooks/explorar/inventario_dados_reais.py
+uv run --locked --extra dev ruff check notebooks/explorar/inventario_dados_reais.py
 ```
 
 Validação real em 10/09/2026: 812 arquivos SIM encontrados (1996–2024, 27 UFs
@@ -213,13 +213,13 @@ Execute pela raiz do checkout atual, com Python 3.12 ou 3.13:
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/api_cenarios.py
+uv run --locked --extra notebooks marimo edit notebooks/desenvolvimento/api_cenarios.py
 ```
 
 Para usar como aplicativo, com o código recolhido:
 
 ```bash
-uv run --locked --extra notebooks marimo run notebooks/api_cenarios.py
+uv run --locked --extra notebooks marimo run notebooks/desenvolvimento/api_cenarios.py
 ```
 
 O extra `notebooks` contém marimo 0.23.16 no lock. As dependências da biblioteca
@@ -250,8 +250,8 @@ de um dataset mensal; datasets anuais produzem um escopo por ano e UF escolhidos
 Para verificar a estrutura e executar os cenários automáticos:
 
 ```bash
-uv run --locked --extra notebooks marimo check notebooks/api_cenarios.py
-uv run --locked --extra notebooks marimo export html notebooks/api_cenarios.py -o /tmp/omnisus-api.html
+uv run --locked --extra notebooks marimo check notebooks/desenvolvimento/api_cenarios.py
+uv run --locked --extra notebooks marimo export html notebooks/desenvolvimento/api_cenarios.py -o /tmp/omnisus-api.html
 ```
 
 A exportação executa as células locais e suas assertions; os botões de rede ficam
@@ -273,9 +273,9 @@ as tabelas permitem baixar os valores. A análise separa DBF → Arrow,
 DBC → Parquet, DBF ampliado → Parquet e publicação em lake novo.
 
 ```bash
-uv run --no-sync marimo edit notebooks/performance_dbf.py
-uv run --no-sync marimo run notebooks/performance_dbf.py
-uv run --no-sync marimo export html notebooks/performance_dbf.py -o /tmp/performance-dbf.html
+uv run --no-sync marimo edit notebooks/desenvolvimento/performance_dbf.py
+uv run --no-sync marimo run notebooks/desenvolvimento/performance_dbf.py
+uv run --no-sync marimo export html notebooks/desenvolvimento/performance_dbf.py -o /tmp/performance-dbf.html
 ```
 
 A leitura do relatório não precisa da extensão Rust instalada, não acessa a rede
@@ -289,5 +289,5 @@ rejeição de evidência incompleta/divergente e gráficos com disco igual a zer
 
 ```bash
 uv run --no-sync pytest tests/unit/notebooks/test_performance_dbf.py -q
-uv run --no-sync marimo check --strict notebooks/performance_dbf.py
+uv run --no-sync marimo check --strict notebooks/desenvolvimento/performance_dbf.py
 ```

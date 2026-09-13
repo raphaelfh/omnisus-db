@@ -19,7 +19,7 @@ def _():
     import omnisus_db as odb
     from omnisus_db.sources.medicamentos import fetch_stock_page
 
-    medication_root = Path(__file__).resolve().parent.parent / "data/lake/medicamentos"
+    medication_root = Path(__file__).resolve().parents[2] / "data/lake/medicamentos"
     return Path, asdict, asyncio, fetch_stock_page, json, medication_root, mo, odb, uuid4
 
 

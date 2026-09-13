@@ -9,14 +9,12 @@ app = marimo.App(width="medium", app_title="DBF · performance Python x Rust")
 @app.cell
 def _():
     import json
-    import sys
     from pathlib import Path
 
     import marimo as mo
     import polars as pl
 
-    root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(root / "notebooks"))
+    root = Path(__file__).resolve().parents[2]
     from _performance_dbf import (
         METRICS,
         PHASES,

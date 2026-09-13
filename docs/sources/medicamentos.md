@@ -105,7 +105,7 @@ aquisições ou indicadores agregados apresentados como dispensação.
 
 ## Trilha Marimo e verificação
 
-Execute `marimo edit notebooks/medicamentos.py` a partir do repositório. Etapas:
+Execute `marimo edit notebooks/bases/medicamentos.py` a partir do repositório. Etapas:
 descobrir diferenças entre fontes; inspecionar dicionário e fixar recorte;
 importar mediante botão; verificar e exportar resumo com manifesto.
 A consulta de estoque tem formulário separado, sem escrita no lake.

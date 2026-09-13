@@ -97,12 +97,12 @@ epidemiológico dos registros.
 Fontes: [página oficial do agravo](https://www.portalsinan.saude.gov.br/doenca-de-chagas-aguda)
 e [dicionário SINAN NET v5](https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf).
 
-O notebook `notebooks/sinan_chagas.py` apresenta descoberta, contrato, plano
+O notebook `notebooks/bases/sinan.py` apresenta descoberta, contrato, plano
 salvo, importação explícita, recuperação e análise agregada com exportação da
 proveniência. Execute na raiz do checkout:
 
 ```bash
-uv run --locked --extra notebooks marimo edit notebooks/sinan_chagas.py
+uv run --locked --extra notebooks marimo edit notebooks/bases/sinan.py
 ```
 
 Abrir/exportar o notebook não inicia rede nem publicação. Interromper uma

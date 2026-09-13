@@ -16,7 +16,7 @@ def _():
 
     import marimo as mo
 
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parents[2]
 
     def run_python(arguments):
         result = subprocess.run(

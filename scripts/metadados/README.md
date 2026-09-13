@@ -7,7 +7,7 @@ instalada `omnisus-db` ainda não possui um comando nativo de metadados.
 | --- | --- |
 | `scripts/metadados/` | Consultar, validar e gerar os catálogos |
 | `docs/dicionario/` | Documentação, contrato experimental e exemplos declarativos |
-| `notebooks/metadados_cli.py` | Demonstração interativa com comandos executados |
+| `notebooks/desenvolvimento/metadados_cli.py` | Demonstração interativa com comandos executados |
 | `src/omnisus_db/data/dicionarios/` | Dicionários usados pela biblioteca |
 | `reports/` | Evidências e retratos históricos das auditorias |
 
@@ -28,7 +28,7 @@ uv run --locked python scripts/metadados/consultar.py --arrow
 uv run --locked python scripts/metadados/atualizar_catalogo.py --check-local
 
 # Abrir a demonstração
-uv run --locked --extra notebooks marimo edit notebooks/metadados_cli.py
+uv run --locked --extra notebooks marimo edit notebooks/desenvolvimento/metadados_cli.py
 ```
 
 `consultar.py` usa `jsonschema`; o modo `--arrow` também usa `pyarrow`.

@@ -55,10 +55,10 @@ publishes some datasets in two directories under the same filenames, and
 `available_releases()`/`outdated()` tell you which release each scope is in
 and which ones moved. Use `available()` and `policy="skip_same"` for
 repeatable imports; filter record geography after acquisition. The
-[Marimo walkthrough](notebooks/sinan_chagas.py) covers discovery, a saved plan,
+[Marimo walkthrough](notebooks/bases/sinan.py) covers discovery, a saved plan,
 publication, recovery and aggregate analysis.
 
-The [medication walkthrough](notebooks/medicamentos.py) uses SIA-AM/APAC and a
+The [medication walkthrough](notebooks/bases/medicamentos.py) uses SIA-AM/APAC and a
 separate bounded BNAFAR/Hórus stock query. Stock observations are partial and
 are not dispensing events or managed lake publications. See the
 [source contract](docs/sources/medicamentos.md) for access and coverage limits.
@@ -76,14 +76,14 @@ Start with the [notebook guide](notebooks/README.md):
 
 | Order | Notebook | Purpose |
 | --- | --- | --- |
-| 1 | [DATASUS panorama](notebooks/panorama_datasus.py) | Real samples from all 18 portal categories; explore tables, fields and provenance |
-| 2 | [Inventory and selection](notebooks/inventario_dados_reais.py) | Discover files and import a selected scope into DuckLake |
-| 3 | [SIM analysis](notebooks/api_dados_reais.py) | Query complete SIM/Roraima files, check quality and create aggregates |
-| 4 | [API scenarios](notebooks/api_cenarios.py) | Learn transactions, rollback and library behavior |
+| 1 | [DATASUS panorama](notebooks/explorar/panorama_datasus.py) | Real samples from all 18 portal categories; explore tables, fields and provenance |
+| 2 | [Inventory and selection](notebooks/explorar/inventario_dados_reais.py) | Discover files and import a selected scope into DuckLake |
+| 3 | [SIM analysis](notebooks/bases/sim_obitos.py) | Query complete SIM/Roraima files, check quality and create aggregates |
+| 4 | [API scenarios](notebooks/desenvolvimento/api_cenarios.py) | Learn transactions, rollback and library behavior |
 
 ```bash
 uv sync --locked --extra notebooks
-uv run --locked --extra notebooks marimo edit notebooks/panorama_datasus.py
+uv run --locked --extra notebooks marimo edit notebooks/explorar/panorama_datasus.py
 ```
 
 The panorama reuses the latest local archive and downloads a new one on request.

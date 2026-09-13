@@ -10,7 +10,6 @@ app = marimo.App(width="full", app_title="DATASUS · panorama das 18 categorias"
 def _():
     import asyncio
     import json
-    import sys
     from datetime import UTC, datetime
     from pathlib import Path
     from uuid import uuid4
@@ -18,9 +17,7 @@ def _():
     import marimo as mo
     import polars as pl
 
-    # Notebook helpers stay together; working directory does not affect imports/data.
-    project_root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(project_root / "notebooks"))
+    project_root = Path(__file__).resolve().parents[2]
     from _acervo.catalogo import SOURCES
     from _acervo.coleta import collect
     from _acervo.relatorio import maps, write_report

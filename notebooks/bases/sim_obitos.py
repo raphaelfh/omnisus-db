@@ -59,7 +59,7 @@ def _(mo):
 
 @app.cell
 def _(Path, mo):
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parents[2]
     data_root = project_root / "data/lake/marimo-real"
     download_button = mo.ui.run_button(label="Baixar nova cópia real de RR · 2022-2023")
     download_button
