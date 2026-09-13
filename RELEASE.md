@@ -53,19 +53,23 @@ The remote is public at https://github.com/raphaelfh/omnisus-db and the
 documentation site deploys from `main` to https://raphaelfh.github.io/omnisus-db.
 The `github-pages` and `pypi` environments exist.
 
-One step remains before any PyPI release, and only the PyPI account owner can
-do it: **PyPI → Your account → Publishing → add a pending Trusted Publisher**
-with project `omnisus-db`, owner `raphaelfh`, repository `omnisus-db`,
-workflow `release.yml`, environment `pypi`. No token is created.
-
-Without it the `publish` job fails with `invalid-publisher`, which is what
-happened to the first `v0.2.0` run. The tag does not need to move. Once the
-publisher exists, re-run only the failed job:
+**The package is not published to PyPI, by decision.** The distribution
+channel is the wheel file built from the tag:
 
 ```bash
-gh run list --workflow release.yml -L 1
-gh run rerun <run-id> --failed
+git checkout v0.2.0
+uv build --wheel --out-dir dist
+pip install dist/omnisus_db-0.2.0-py3-none-any.whl
 ```
+
+`release.yml` still runs on every `v*` tag. Its install gate is useful, and its
+`publish` job fails with `invalid-publisher` because no PyPI Trusted Publisher
+exists. That failure is expected, as in the `v0.2.0` run; do not re-run it.
+
+To publish later, the PyPI account owner adds a pending Trusted Publisher
+(project `omnisus-db`, owner `raphaelfh`, repository `omnisus-db`, workflow
+`release.yml`, environment `pypi`) and re-runs only the failed job with
+`gh run rerun <run-id> --failed`.
 
 ## The wheel gap, and why the floor is 3.12
 
