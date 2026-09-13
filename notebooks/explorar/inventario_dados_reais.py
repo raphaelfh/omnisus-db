@@ -36,6 +36,28 @@ def _(mo):
     pela consulta ao servidor. O exemplo inicial é **SIM · Roraima · 2023**.
     A seleção permite até três arquivos, com limite total de 25 MiB comprimidos.
     Não há dados sintéticos nem substituição por exemplos quando a rede falha.
+
+    ## Como executar
+
+    ```bash
+    uv sync --locked --extra notebooks
+    uv run --locked --extra notebooks marimo edit notebooks/explorar/inventario_dados_reais.py
+    ```
+
+    Cada tentativa grava em `data/lake/inventario-real/<data-uuid>/`: `inventario.csv`,
+    `selecao.csv`, `execucao.json`, catálogo DuckLake e exportações CSV/Parquet
+    completas. Os dados não são versionados. Aguarde a importação terminar antes de
+    repetir; interromper a célula pode não cancelar a thread de download.
+
+    ```bash
+    # Executar o exemplo real inteiro e gerar um HTML com resultados
+    uv run --locked --extra notebooks marimo export html notebooks/explorar/inventario_dados_reais.py -o /tmp/inventario-dados-reais.html -- --executar true
+    ```
+
+    Esse comando **acessa o DATASUS e baixa dados**. O HTML é estático; filtros e
+    botões de download interativos exigem `marimo edit` ou `marimo run`. Sem
+    `--executar true`, a exportação valida a abertura e aguarda os botões, sem
+    consultar o DATASUS — não use essa opção ao servir uma sessão interativa.
     """)
     return
 
