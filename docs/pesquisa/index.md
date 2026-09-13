@@ -53,11 +53,17 @@ a biblioteca aceita.
 qualquer download. A importação usa esse `run_id` e
 `odb.import_dataset(dataset, scopes=..., target=..., policy="skip_same", run_id=...)`,
 para que repetir a etapa não duplique linhas. A população usa
-`odb.import_ibge_populacao`.
+`odb.import_ibge_populacao`. Nos notebooks com download por FTP, esta etapa limita o
+arquivo comprimido a 25 MiB (`LIMITE_BYTES` em `notebooks/bases/_comum.py`); um arquivo
+maior (por exemplo outra UF) termina como `failed`, e pode ser importado subindo esse
+limite ou com a chamada direta `odb.import_dataset` no perfil da base ("Como usar"). A
+população do IBGE não baixa pelo FTP, então esse limite não se aplica a ela.
 
 **4 · Conferir.** Lê o manifesto com `LakeReader.publications(run_id=...)`, compara as
-linhas no lake com as linhas publicadas, pergunta a `odb.outdated(dataset, lake=...)`
-se o DATASUS moveu algum ano de diretório e anota o `snapshot_id` mais recente.
+linhas no lake com as linhas publicadas e anota o `snapshot_id` mais recente.
+`odb.outdated(dataset, lake=...)` é usado quando a base tem diretório preliminar (SIM,
+SINASC, SINAN); as demais bases do DATASUS são publicadas num único diretório, e o
+notebook não chama `outdated` para elas.
 
 **5 · Analisar.** Roda as consultas SQL num leitor preso a esse snapshot,
 `LakeReader(alvo, snapshot_id=...)`, para que o resultado não mude se outra importação

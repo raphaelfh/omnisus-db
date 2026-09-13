@@ -16,6 +16,8 @@ Execução real (não CI) dos oito notebooks de `notebooks/bases/`, na ordem do 
 
 Nenhum recorte padrão dos notebooks foi alterado: todos os arquivos-padrão do briefing existiam e ficaram abaixo do limite de 25 MiB (o maior foi o DBC de SINASC RR/2022, com 641.046 bytes).
 
+**Nota pós-execução (2026-09-13, onda de correção final).** Esta execução real rodou no commit `f217790`, antes de o branch ser rebaseado sobre `origin/main` em `95bb35f`. `notebooks/` e `src/` são idênticos entre `f217790` e o HEAD rebaseado `7c1658a` (`git diff f217790 7c1658a --stat -- notebooks src` não devolve nada; `f217790` continua alcançável no histórico do repositório, confirmado com `git cat-file -e f217790`). Sob marimo 0.24.0, `uv run marimo export html notebooks/desenvolvimento/performance_dbf.py` e `uv run marimo export html notebooks/bases/ibge_populacao.py` (sem `--executar true`, como nesta seção) e a suíte `tests/unit/notebooks/` foram reexecutados e terminaram com código de saída 0. Esta onda de correção também mudou o formato de `proveniencia.json` (cada consulta agora guarda `sql` e `parametros`) e moveu o código da UF do notebook do IBGE para dentro do plano, depois desta execução real; nenhuma consulta SQL nem chamada de importação foi alterada, então os números e desfechos abaixo continuam válidos.
+
 ## 2. Execuções
 
 Comando (repetido por notebook, variando `<nb>` e `<out>`):

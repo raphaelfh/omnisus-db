@@ -148,7 +148,11 @@ def _(mo, odb, target_padrao):
             mo.md(
                 "## 3 · Planejar e importar\n\n"
                 "Confira ano e mês na etapa 2. O plano guarda a tabela escolhida; mudar a "
-                "tabela depois exige fixar um novo plano."
+                "tabela depois exige fixar um novo plano. O notebook limita cada download "
+                "comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um arquivo maior "
+                "(por exemplo outra UF) termina como `failed`, e pode ser importado "
+                "subindo esse limite ou com a chamada direta `odb.import_dataset` no "
+                'perfil desta base ("Como usar").'
             ),
             mo.hstack([uf, ano, mes]),
             target,
@@ -228,6 +232,12 @@ def _(conferir, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, plano["dataset"], escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
     mo.vstack(
         [
@@ -279,15 +289,18 @@ def _(escopos, mo, odb, plano, snapshot_id):
         },
     }
     # _tabela vem do plano, que só aceita as sete chaves de tabelas.
-    consultas = _analises.get(
+    _sql_por_nome = _analises.get(
         _tabela,
         {"registros_no_recorte": f'SELECT count(*) AS registros FROM lake."{_tabela}" {_recorte}'},
     )
     _parametros = [escopos[0].uf, escopos[0].ano, escopos[0].mes]
+    consultas = {
+        nome: {"sql": sql, "parametros": _parametros} for nome, sql in _sql_por_nome.items()
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     _aviso = (
         ""
@@ -303,7 +316,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela_resultado, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela_resultado in resultados.items()

@@ -3,6 +3,13 @@
 Every notebook runs in-process with `app.run()`, as `marimo export` would.
 Button-gated cells stop at `mo.stop`, so anything reaching the network or the
 research lake on open is a failure. The unit conftest also refuses FTP listings.
+
+The guard below patches `socket.socket.connect`, which is what both `ftplib` and
+`httpx` use to open a connection. It does not intercept `connect_ex`, DuckDB's
+native HTTP client, or Windows asyncio's `ConnectEx`; a notebook that reached the
+network through one of those would not be caught here. Loopback addresses are
+allowed through because asyncio's event loop builds a self-pipe with a loopback
+connect on some platforms.
 """
 
 import importlib.util

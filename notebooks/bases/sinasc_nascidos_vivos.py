@@ -131,7 +131,11 @@ def _(mo, odb, target_padrao):
             mo.md(
                 "## 3 · Planejar e importar\n\n"
                 "Confira o ano na etapa 2. Fixar o plano grava `plano.json` com um "
-                "`run_id` antes de qualquer download."
+                "`run_id` antes de qualquer download. O notebook limita cada download "
+                "comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um arquivo maior "
+                "(por exemplo outra UF) termina como `failed`, e pode ser importado "
+                "subindo esse limite ou com a chamada direta `odb.import_dataset` no "
+                'perfil desta base ("Como usar").'
             ),
             mo.hstack([uf, ano]),
             target,
@@ -208,8 +212,15 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-        # refresh=False reaproveita a listagem da etapa 2: o FTP é um recurso público.
+        # refresh=False usa a listagem em cache do FTP, preenchida pela etapa 2 ou
+        # pela própria importação: não faz um novo crawl do servidor público.
         _desatualizados = odb.outdated(dataset, lake=_leitor)
     mo.vstack(
         [
@@ -231,36 +242,49 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
 
 @app.cell
 def _(escopos, mo, odb, plano, snapshot_id):
-    consultas = {
-        "nascidos_por_municipio_de_residencia": """
-            SELECT trim(CAST(codmunres AS VARCHAR)) AS municipio_residencia,
-                   count(*) AS nascidos_vivos
-            FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
-            GROUP BY ALL ORDER BY nascidos_vivos DESC
-        """,
-        "peso_ao_nascer": """
-            SELECT count(*) AS nascidos_vivos,
-                   count(TRY_CAST(peso AS INTEGER)) AS com_peso_numerico,
-                   count(*) FILTER (WHERE TRY_CAST(peso AS INTEGER) < 2500)
-                       AS peso_abaixo_de_2500_g
-            FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
-        """,
-        "consultas_pre_natal": """
-            SELECT trim(CAST(consultas AS VARCHAR)) AS consultas_codigo, count(*) AS nascidos_vivos
-            FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
-            GROUP BY ALL ORDER BY consultas_codigo
-        """,
-        "tipo_de_parto": """
-            SELECT trim(CAST(parto AS VARCHAR)) AS parto_codigo, count(*) AS nascidos_vivos
-            FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
-            GROUP BY ALL ORDER BY parto_codigo
-        """,
-    }
     _parametros = [escopos[0].uf, escopos[0].ano]
+    consultas = {
+        "nascidos_por_municipio_de_residencia": {
+            "sql": """
+                SELECT trim(CAST(codmunres AS VARCHAR)) AS municipio_residencia,
+                       count(*) AS nascidos_vivos
+                FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
+                GROUP BY ALL ORDER BY nascidos_vivos DESC
+            """,
+            "parametros": _parametros,
+        },
+        "peso_ao_nascer": {
+            "sql": """
+                SELECT count(*) AS nascidos_vivos,
+                       count(TRY_CAST(peso AS INTEGER)) AS com_peso_numerico,
+                       count(*) FILTER (WHERE TRY_CAST(peso AS INTEGER) < 2500)
+                           AS peso_abaixo_de_2500_g
+                FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
+            """,
+            "parametros": _parametros,
+        },
+        "consultas_pre_natal": {
+            "sql": """
+                SELECT trim(CAST(consultas AS VARCHAR)) AS consultas_codigo,
+                       count(*) AS nascidos_vivos
+                FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
+                GROUP BY ALL ORDER BY consultas_codigo
+            """,
+            "parametros": _parametros,
+        },
+        "tipo_de_parto": {
+            "sql": """
+                SELECT trim(CAST(parto AS VARCHAR)) AS parto_codigo, count(*) AS nascidos_vivos
+                FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
+                GROUP BY ALL ORDER BY parto_codigo
+            """,
+            "parametros": _parametros,
+        },
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -275,7 +299,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()

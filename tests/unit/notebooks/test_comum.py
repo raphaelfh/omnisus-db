@@ -154,13 +154,14 @@ def test_reconciliation_counts_only_active_publications_of_the_dataset():
 def test_provenance_names_what_a_citation_needs(tmp_path):
     plano = {"run_id": "r1", "dataset": "sim_obitos"}
     publicacoes = [{"publication_id": "p1", "scope": RR_2022, "source_sha256": "ab"}]
+    consultas = {"obitos_por_mes": {"sql": "SELECT 1 WHERE uf = ?", "parametros": ["RR"]}}
 
     registro = comum.registrar_proveniencia(
         tmp_path,
         plano=plano,
         publicacoes=publicacoes,
         snapshot_id=3,
-        consultas={"obitos_por_mes": "SELECT 1"},
+        consultas=consultas,
     )
 
     salvo = json.loads((tmp_path / "proveniencia.json").read_text(encoding="utf-8"))
@@ -168,6 +169,20 @@ def test_provenance_names_what_a_citation_needs(tmp_path):
     assert salvo["plano"] == plano
     assert salvo["publicacoes"][0]["scope"] == str(RR_2022)
     assert salvo["snapshot_id"] == 3
-    assert salvo["consultas"] == {"obitos_por_mes": "SELECT 1"}
+    assert salvo["consultas"] == {
+        "obitos_por_mes": {"sql": "SELECT 1 WHERE uf = ?", "parametros": ["RR"]}
+    }
+    assert salvo["consultas"]["obitos_por_mes"]["parametros"] == ["RR"]
     assert salvo["omnisus_db"] == odb.__version__
     assert salvo["gerado_em_utc"]
+
+
+def test_provenance_rejects_a_query_without_its_parameters(tmp_path):
+    with pytest.raises((TypeError, ValueError, KeyError)):
+        comum.registrar_proveniencia(
+            tmp_path,
+            plano={"run_id": "r1", "dataset": "sim_obitos"},
+            publicacoes=[],
+            snapshot_id=3,
+            consultas={"obitos_por_mes": "SELECT 1"},
+        )

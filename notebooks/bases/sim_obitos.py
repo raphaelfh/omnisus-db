@@ -133,7 +133,11 @@ def _(mo, odb, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "Confira o ano na etapa 2. Fixar o plano grava `plano.json` com um "
                 "`run_id` antes de qualquer download: é o `run_id` que permite "
-                "reconciliar uma importação interrompida."
+                "reconciliar uma importação interrompida. O notebook limita cada "
+                "download comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um "
+                "arquivo maior (por exemplo outra UF) termina como `failed`, e pode "
+                "ser importado subindo esse limite ou com a chamada direta "
+                '`odb.import_dataset` no perfil desta base ("Como usar").'
             ),
             mo.hstack([uf, ano]),
             target,
@@ -210,8 +214,15 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-        # refresh=False reaproveita a listagem da etapa 2: o FTP é um recurso público.
+        # refresh=False usa a listagem em cache do FTP, preenchida pela etapa 2 ou
+        # pela própria importação: não faz um novo crawl do servidor público.
         _desatualizados = odb.outdated(dataset, lake=_leitor)
     mo.vstack(
         [
@@ -233,39 +244,48 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
 
 @app.cell
 def _(escopos, mo, odb, plano, snapshot_id):
-    consultas = {
-        "obitos_por_mes": """
-            WITH obitos AS (
-                SELECT COALESCE(
-                    TRY_CAST(dtobito AS DATE),
-                    TRY_STRPTIME(trim(CAST(dtobito AS VARCHAR)), '%d%m%Y')::DATE
-                ) AS data_obito
-                FROM lake.sim_obitos WHERE uf = ? AND ano = ?
-            )
-            SELECT coalesce(strftime(data_obito, '%Y-%m'), 'sem data válida') AS mes,
-                   count(*) AS obitos
-            FROM obitos GROUP BY ALL ORDER BY mes
-        """,
-        "obitos_por_sexo_e_causa": """
-            SELECT trim(CAST(sexo AS VARCHAR)) AS sexo_codigo,
-                   left(upper(trim(CAST(causabas AS VARCHAR))), 3) AS causa_basica_cid10_3,
-                   count(*) AS obitos
-            FROM lake.sim_obitos WHERE uf = ? AND ano = ?
-            GROUP BY ALL ORDER BY obitos DESC
-        """,
-        "residencia_e_ocorrencia": """
-            SELECT left(trim(CAST(codmunres AS VARCHAR)), 2) AS uf_residencia_ibge,
-                   left(trim(CAST(codmunocor AS VARCHAR)), 2) AS uf_ocorrencia_ibge,
-                   count(*) AS obitos
-            FROM lake.sim_obitos WHERE uf = ? AND ano = ?
-            GROUP BY ALL ORDER BY obitos DESC
-        """,
-    }
     _parametros = [escopos[0].uf, escopos[0].ano]
+    consultas = {
+        "obitos_por_mes": {
+            "sql": """
+                WITH obitos AS (
+                    SELECT COALESCE(
+                        TRY_CAST(dtobito AS DATE),
+                        TRY_STRPTIME(trim(CAST(dtobito AS VARCHAR)), '%d%m%Y')::DATE
+                    ) AS data_obito
+                    FROM lake.sim_obitos WHERE uf = ? AND ano = ?
+                )
+                SELECT coalesce(strftime(data_obito, '%Y-%m'), 'sem data válida') AS mes,
+                       count(*) AS obitos
+                FROM obitos GROUP BY ALL ORDER BY mes
+            """,
+            "parametros": _parametros,
+        },
+        "obitos_por_sexo_e_causa": {
+            "sql": """
+                SELECT trim(CAST(sexo AS VARCHAR)) AS sexo_codigo,
+                       left(upper(trim(CAST(causabas AS VARCHAR))), 3) AS causa_basica_cid10_3,
+                       count(*) AS obitos
+                FROM lake.sim_obitos WHERE uf = ? AND ano = ?
+                GROUP BY ALL ORDER BY obitos DESC
+            """,
+            "parametros": _parametros,
+        },
+        "residencia_e_ocorrencia": {
+            "sql": """
+                SELECT left(trim(CAST(codmunres AS VARCHAR)), 2) AS uf_residencia_ibge,
+                       left(trim(CAST(codmunocor AS VARCHAR)), 2) AS uf_ocorrencia_ibge,
+                       count(*) AS obitos
+                FROM lake.sim_obitos WHERE uf = ? AND ano = ?
+                GROUP BY ALL ORDER BY obitos DESC
+            """,
+            "parametros": _parametros,
+        },
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -281,7 +301,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()

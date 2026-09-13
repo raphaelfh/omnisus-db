@@ -129,7 +129,11 @@ def _(mo, odb, target_padrao):
             mo.md(
                 "## 3 · Planejar e importar\n\n"
                 "Confira ano e mês na etapa 2. Fixar o plano grava `plano.json` com um "
-                "`run_id` antes de qualquer download."
+                "`run_id` antes de qualquer download. O notebook limita cada download "
+                "comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um arquivo maior "
+                "(por exemplo outra UF) termina como `failed`, e pode ser importado "
+                "subindo esse limite ou com a chamada direta `odb.import_dataset` no "
+                'perfil desta base ("Como usar").'
             ),
             mo.hstack([uf, ano, mes]),
             target,
@@ -208,6 +212,12 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
     mo.vstack(
         [
@@ -227,31 +237,40 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
 
 @app.cell
 def _(escopos, mo, odb, plano, snapshot_id):
-    consultas = {
-        "aih_por_diagnostico_principal": """
-            SELECT left(upper(trim(CAST(diag_princ AS VARCHAR))), 3) AS diagnostico_cid10_3,
-                   count(*) AS aih,
-                   sum(TRY_CAST(dias_perm AS INTEGER)) AS dias_de_permanencia,
-                   round(avg(TRY_CAST(dias_perm AS INTEGER)), 1) AS media_dias,
-                   round(sum(TRY_CAST(val_tot AS DOUBLE)), 2) AS valor_total
-            FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
-            GROUP BY ALL ORDER BY aih DESC
-        """,
-        "campo_morte": """
-            SELECT trim(CAST(morte AS VARCHAR)) AS morte_codigo, count(*) AS aih
-            FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
-            GROUP BY ALL ORDER BY morte_codigo
-        """,
-        "aih_distintas": """
-            SELECT count(*) AS linhas, count(DISTINCT n_aih) AS numeros_de_aih_distintos
-            FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
-        """,
-    }
     _parametros = [escopos[0].uf, escopos[0].ano, escopos[0].mes]
+    consultas = {
+        "aih_por_diagnostico_principal": {
+            "sql": """
+                SELECT left(upper(trim(CAST(diag_princ AS VARCHAR))), 3) AS diagnostico_cid10_3,
+                       count(*) AS aih,
+                       sum(TRY_CAST(dias_perm AS INTEGER)) AS dias_de_permanencia,
+                       round(avg(TRY_CAST(dias_perm AS INTEGER)), 1) AS media_dias,
+                       round(sum(TRY_CAST(val_tot AS DOUBLE)), 2) AS valor_total
+                FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
+                GROUP BY ALL ORDER BY aih DESC
+            """,
+            "parametros": _parametros,
+        },
+        "campo_morte": {
+            "sql": """
+                SELECT trim(CAST(morte AS VARCHAR)) AS morte_codigo, count(*) AS aih
+                FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
+                GROUP BY ALL ORDER BY morte_codigo
+            """,
+            "parametros": _parametros,
+        },
+        "aih_distintas": {
+            "sql": """
+                SELECT count(*) AS linhas, count(DISTINCT n_aih) AS numeros_de_aih_distintos
+                FROM lake.sih_aih_reduzida WHERE uf = ? AND ano = ? AND mes = ?
+            """,
+            "parametros": _parametros,
+        },
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -266,7 +285,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()

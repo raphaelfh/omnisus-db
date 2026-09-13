@@ -126,7 +126,11 @@ def _(mo, odb, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "Confira ano e mês na etapa 2. Fixar o plano grava `plano.json` com um "
                 "`run_id` antes de qualquer download. Para também atualizar a visão "
-                "`aux_cnes`, a biblioteca oferece `import_cnes_estabelecimentos`."
+                "`aux_cnes`, a biblioteca oferece `import_cnes_estabelecimentos`. O "
+                "notebook limita cada download comprimido a 25 MiB (`LIMITE_BYTES` em "
+                "`_comum.py`); um arquivo maior (por exemplo outra UF) termina como "
+                "`failed`, e pode ser importado subindo esse limite ou com a chamada "
+                'direta `odb.import_dataset` no perfil desta base ("Como usar").'
             ),
             mo.hstack([uf, ano, mes]),
             target,
@@ -205,6 +209,12 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
     mo.vstack(
         [
@@ -224,27 +234,33 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
 
 @app.cell
 def _(escopos, mo, odb, plano, snapshot_id):
-    consultas = {
-        "estabelecimentos_por_tipo": """
-            SELECT trim(CAST(competen AS VARCHAR)) AS competencia,
-                   trim(CAST(tp_unid AS VARCHAR)) AS tipo_de_unidade,
-                   count(DISTINCT cnes) AS estabelecimentos,
-                   count(*) AS linhas
-            FROM lake.cnes_estabelecimentos WHERE uf = ? AND ano = ? AND mes = ?
-            GROUP BY ALL ORDER BY estabelecimentos DESC
-        """,
-        "estabelecimentos_por_municipio": """
-            SELECT trim(CAST(codufmun AS VARCHAR)) AS municipio,
-                   count(DISTINCT cnes) AS estabelecimentos
-            FROM lake.cnes_estabelecimentos WHERE uf = ? AND ano = ? AND mes = ?
-            GROUP BY ALL ORDER BY estabelecimentos DESC
-        """,
-    }
     _parametros = [escopos[0].uf, escopos[0].ano, escopos[0].mes]
+    consultas = {
+        "estabelecimentos_por_tipo": {
+            "sql": """
+                SELECT trim(CAST(competen AS VARCHAR)) AS competencia,
+                       trim(CAST(tp_unid AS VARCHAR)) AS tipo_de_unidade,
+                       count(DISTINCT cnes) AS estabelecimentos,
+                       count(*) AS linhas
+                FROM lake.cnes_estabelecimentos WHERE uf = ? AND ano = ? AND mes = ?
+                GROUP BY ALL ORDER BY estabelecimentos DESC
+            """,
+            "parametros": _parametros,
+        },
+        "estabelecimentos_por_municipio": {
+            "sql": """
+                SELECT trim(CAST(codufmun AS VARCHAR)) AS municipio,
+                       count(DISTINCT cnes) AS estabelecimentos
+                FROM lake.cnes_estabelecimentos WHERE uf = ? AND ano = ? AND mes = ?
+                GROUP BY ALL ORDER BY estabelecimentos DESC
+            """,
+            "parametros": _parametros,
+        },
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -259,7 +275,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()

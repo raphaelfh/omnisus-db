@@ -35,7 +35,11 @@ def target_padrao() -> str:
 
 
 def executar_sem_botoes(cli_args: Mapping[str, object]) -> bool:
-    """`-- --executar true` percorre as etapas dos botões sem interface."""
+    """`-- --executar true` percorre as etapas dos botões sem interface.
+
+    Vale para `marimo export html ...` ou `python notebook.py`; em `marimo edit`
+    os argumentos de CLI não chegam à célula e as etapas seguem os botões.
+    """
     return str(cli_args.get("executar", "false")).lower() == "true"
 
 
@@ -130,14 +134,29 @@ def registrar_proveniencia(
     plano: Mapping[str, Any],
     publicacoes: Sequence[Mapping[str, Any]],
     snapshot_id: int,
-    consultas: Mapping[str, str],
+    consultas: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
-    """Grava `proveniencia.json`: o suficiente para citar e refazer o resultado."""
+    """Grava `proveniencia.json`: o suficiente para citar e refazer o resultado.
+
+    `consultas` mapeia cada nome a `{"sql": str, "parametros": list}`: o texto exato
+    executado e os parâmetros posicionais dessa execução, para que a consulta possa
+    ser refeita sem adivinhar com que UF, ano ou mês ela rodou.
+    """
+    for nome, consulta in consultas.items():
+        if (
+            not isinstance(consulta, Mapping)
+            or "sql" not in consulta
+            or "parametros" not in consulta
+        ):
+            raise ValueError(f"consulta {nome!r} precisa de 'sql' e 'parametros' para ser refeita")
     registro = {
         "plano": dict(plano),
         "publicacoes": [dict(p) for p in publicacoes],
         "snapshot_id": snapshot_id,
-        "consultas": dict(consultas),
+        "consultas": {
+            nome: {"sql": consulta["sql"], "parametros": list(consulta["parametros"])}
+            for nome, consulta in consultas.items()
+        },
         "omnisus_db": odb.__version__,
         "gerado_em_utc": datetime.now(UTC).isoformat(),
     }

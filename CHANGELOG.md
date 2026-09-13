@@ -4,13 +4,13 @@
 
 ### Added
 
-- **Guia do pesquisador** (`docs/pesquisa/`): comece aqui, indicadores e
-  reprodutibilidade, em português. Os perfis das bases em `docs/sources/` seguem
-  um mesmo roteiro com fontes citadas; o SIA ganhou perfil.
-- **Um notebook por base** em `notebooks/bases/` (SIM, SINASC, SIH, SIA, CNES,
-  IBGE, SINAN, medicamentos), com as mesmas seis etapas e um lake de pesquisa
-  compartilhado. Abrir um notebook não baixa nem grava nada; um teste garante isso.
-  Os demais notebooks estão em `notebooks/explorar/` e `notebooks/desenvolvimento/`.
+- **A researcher guide** (`docs/pesquisa/`): a starting point, indicators and
+  reproducibility, in Portuguese. The source profiles in `docs/sources/` follow a
+  shared outline with cited sources; SIA now has a profile too.
+- **One notebook per database** in `notebooks/bases/` (SIM, SINASC, SIH, SIA, CNES,
+  IBGE, SINAN, medicines), with the same six steps and a shared research lake.
+  Opening a notebook downloads and writes nothing; a test guards that. The other
+  notebooks live in `notebooks/explorar/` and `notebooks/desenvolvimento/`.
 
 ### Changed
 

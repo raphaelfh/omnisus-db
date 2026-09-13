@@ -137,7 +137,11 @@ def _(mo, target_padrao):
             mo.md(
                 "## 3 · Planejar e importar\n\n"
                 "O arquivo é nacional: não há filtro de UF na importação. Filtre a "
-                "geografia dos registros depois, na análise."
+                "geografia dos registros depois, na análise. O notebook limita cada "
+                "download comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um "
+                "arquivo maior termina como `failed`, e pode ser importado subindo "
+                "esse limite ou com a chamada direta `odb.import_dataset` no perfil "
+                'desta base ("Como usar").'
             ),
             ano,
             target,
@@ -214,8 +218,15 @@ def _(conferir, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, plano["dataset"], escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-        # refresh=False reaproveita a listagem da etapa 2: o FTP é um recurso público.
+        # refresh=False usa a listagem em cache do FTP, preenchida pela etapa 2 ou
+        # pela própria importação: não faz um novo crawl do servidor público.
         _desatualizados = odb.outdated(plano["dataset"], lake=_leitor)
     mo.vstack(
         [
@@ -239,40 +250,56 @@ def _(conferir, escopos, mo, odb, plano, relatorio):
 def _(escopos, mo, odb, plano, snapshot_id):
     _tabela = plano["dataset"]  # uma das duas chaves de agravos
     _recorte = f'FROM lake."{_tabela}" WHERE _source_ano = ?'
+    _parametros = [escopos[0].ano]
     consultas = {
-        "diretorio_de_origem": f"""
-            SELECT _source_release AS diretorio, count(*) AS notificacoes {_recorte}
-            GROUP BY ALL
-        """,
-        "notificacoes_por_uf_de_notificacao": f"""
-            SELECT trim(CAST(sg_uf_not AS VARCHAR)) AS uf_notificacao_ibge,
-                   count(*) AS notificacoes {_recorte}
-            GROUP BY ALL ORDER BY notificacoes DESC
-        """,
-        "notificacoes_por_uf_de_residencia": f"""
-            SELECT left(trim(CAST(id_mn_resi AS VARCHAR)), 2) AS uf_residencia_ibge,
-                   count(*) AS notificacoes {_recorte}
-            GROUP BY ALL ORDER BY notificacoes DESC
-        """,
+        "diretorio_de_origem": {
+            "sql": f"""
+                SELECT _source_release AS diretorio, count(*) AS notificacoes {_recorte}
+                GROUP BY ALL
+            """,
+            "parametros": _parametros,
+        },
+        "notificacoes_por_uf_de_notificacao": {
+            "sql": f"""
+                SELECT trim(CAST(sg_uf_not AS VARCHAR)) AS uf_notificacao_ibge,
+                       count(*) AS notificacoes {_recorte}
+                GROUP BY ALL ORDER BY notificacoes DESC
+            """,
+            "parametros": _parametros,
+        },
+        "notificacoes_por_uf_de_residencia": {
+            "sql": f"""
+                SELECT left(trim(CAST(id_mn_resi AS VARCHAR)), 2) AS uf_residencia_ibge,
+                       count(*) AS notificacoes {_recorte}
+                GROUP BY ALL ORDER BY notificacoes DESC
+            """,
+            "parametros": _parametros,
+        },
     }
     if _tabela == "sinan_chagas":
-        consultas["classificacao_e_evolucao"] = f"""
-            SELECT trim(CAST(classi_fin AS VARCHAR)) AS classi_fin,
-                   trim(CAST(evolucao AS VARCHAR)) AS evolucao,
-                   count(*) AS notificacoes {_recorte}
-            GROUP BY ALL ORDER BY classi_fin, evolucao
-        """
+        consultas["classificacao_e_evolucao"] = {
+            "sql": f"""
+                SELECT trim(CAST(classi_fin AS VARCHAR)) AS classi_fin,
+                       trim(CAST(evolucao AS VARCHAR)) AS evolucao,
+                       count(*) AS notificacoes {_recorte}
+                GROUP BY ALL ORDER BY classi_fin, evolucao
+            """,
+            "parametros": _parametros,
+        }
     else:
-        consultas["modo_de_entrada_e_alta"] = f"""
-            SELECT trim(CAST(modoentr AS VARCHAR)) AS modoentr,
-                   trim(CAST(tpalta_n AS VARCHAR)) AS tpalta_n,
-                   count(*) AS notificacoes {_recorte}
-            GROUP BY ALL ORDER BY modoentr, tpalta_n
-        """
+        consultas["modo_de_entrada_e_alta"] = {
+            "sql": f"""
+                SELECT trim(CAST(modoentr AS VARCHAR)) AS modoentr,
+                       trim(CAST(tpalta_n AS VARCHAR)) AS tpalta_n,
+                       count(*) AS notificacoes {_recorte}
+                GROUP BY ALL ORDER BY modoentr, tpalta_n
+            """,
+            "parametros": _parametros,
+        }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, [escopos[0].ano]).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -287,7 +314,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()

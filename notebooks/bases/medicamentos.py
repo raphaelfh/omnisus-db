@@ -126,7 +126,12 @@ def _(mo, odb, target_padrao):
         [
             mo.md(
                 "## A3 · Planejar e importar\n\n"
-                "Fixar o plano grava `plano.json` com um `run_id` antes de qualquer download."
+                "Fixar o plano grava `plano.json` com um `run_id` antes de qualquer "
+                "download. O notebook limita cada download comprimido a 25 MiB "
+                "(`LIMITE_BYTES` em `_comum.py`); um arquivo maior (por exemplo outra "
+                "UF) termina como `failed`, e pode ser importado subindo esse limite "
+                "ou com a chamada direta `odb.import_dataset` no perfil desta base "
+                '("Como usar").'
             ),
             mo.hstack([uf, ano, mes]),
             target,
@@ -205,6 +210,12 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
         _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        mo.stop(
+            not publicacoes,
+            mo.md(
+                "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
+            ),
+        )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
     mo.vstack(
         [
@@ -223,20 +234,23 @@ def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
 
 @app.cell
 def _(escopos, mo, odb, plano, snapshot_id):
-    consultas = {
-        "apac_por_procedimento_principal": """
-            SELECT trim(CAST(ap_pripal AS VARCHAR)) AS procedimento_principal,
-                   count(*) AS apac,
-                   round(sum(TRY_CAST(ap_vl_ap AS DOUBLE)), 2) AS valor_aprovado
-            FROM lake.sia_apac_medicamentos WHERE uf = ? AND ano = ? AND mes = ?
-            GROUP BY ALL ORDER BY apac DESC
-        """,
-    }
     _parametros = [escopos[0].uf, escopos[0].ano, escopos[0].mes]
+    consultas = {
+        "apac_por_procedimento_principal": {
+            "sql": """
+                SELECT trim(CAST(ap_pripal AS VARCHAR)) AS procedimento_principal,
+                       count(*) AS apac,
+                       round(sum(TRY_CAST(ap_vl_ap AS DOUBLE)), 2) AS valor_aprovado
+                FROM lake.sia_apac_medicamentos WHERE uf = ? AND ano = ? AND mes = ?
+                GROUP BY ALL ORDER BY apac DESC
+            """,
+            "parametros": _parametros,
+        },
+    }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(sql, _parametros).pl()
-            for nome, sql in consultas.items()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            for nome, consulta in consultas.items()
         }
     mo.vstack(
         [
@@ -247,7 +261,11 @@ def _(escopos, mo, odb, plano, snapshot_id):
             ),
             mo.ui.table(resultados["apac_por_procedimento_principal"], selection=None),
             mo.accordion(
-                {"SQL": mo.md(f"```sql\n{consultas['apac_por_procedimento_principal']}\n```")}
+                {
+                    "SQL": mo.md(
+                        f"```sql\n{consultas['apac_por_procedimento_principal']['sql']}\n```"
+                    )
+                }
             ),
         ]
     )

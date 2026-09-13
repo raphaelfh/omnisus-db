@@ -111,6 +111,7 @@ def _(CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS, mo):
 def _(mo, target_padrao):
     produto = mo.ui.dropdown(["census", "estimate"], value="census", label="Produto")
     ano = mo.ui.number(start=2000, stop=2100, step=1, value=2022, label="Ano da edição")
+    codigo_uf = mo.ui.text(value="14", label="Código IBGE da UF para a análise (14 = RR)")
     target = mo.ui.text(value=target_padrao(), label="Lake", full_width=True)
     fixar = mo.ui.run_button(label="Fixar o plano")
     mo.vstack(
@@ -119,21 +120,28 @@ def _(mo, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "Use o mesmo lake do SIM para poder calcular taxas. Uma edição já "
                 "importada não é importada de novo: a visão `ibge_populacao` falha "
-                "quando um município e ano têm duas publicações."
+                "quando um município e ano têm duas publicações. O código da UF "
+                "também entra no plano: trocá-lo depois de fixado não sobrescreve a "
+                "execução, é preciso fixar um novo plano."
             ),
             mo.hstack([produto, ano]),
+            codigo_uf,
             target,
             fixar,
         ]
     )
-    return ano, fixar, produto, target
+    return ano, codigo_uf, fixar, produto, target
 
 
 @app.cell
-def _(ano, executar, fixar, fixar_plano, mo, produto, target):
+def _(ano, codigo_uf, executar, fixar, fixar_plano, mo, produto, target):
     mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
     plano, pasta = fixar_plano(
-        target.value, dataset="ibge_populacao", product=produto.value, ano=int(ano.value)
+        target.value,
+        dataset="ibge_populacao",
+        product=produto.value,
+        ano=int(ano.value),
+        codigo_uf=codigo_uf.value.strip(),
     )
     importar = mo.ui.run_button(label="Baixar e publicar esta edição")
     mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
@@ -222,15 +230,8 @@ def _(importadas, mo, odb, plano):
 
 
 @app.cell
-def _(mo):
-    codigo_uf = mo.ui.text(value="14", label="Código IBGE da UF para a análise (14 = RR)")
-    codigo_uf
-    return (codigo_uf,)
-
-
-@app.cell
-def _(codigo_uf, mo, odb, plano, snapshot_id):
-    _ano, _uf = plano["ano"], codigo_uf.value.strip()
+def _(mo, odb, plano, snapshot_id):
+    _ano, _uf = plano["ano"], plano["codigo_uf"]
     _consultas = {
         "populacao_por_municipio": (
             "SELECT codigo_ibge, populacao FROM lake.ibge_populacao "
@@ -272,7 +273,10 @@ def _(codigo_uf, mo, odb, plano, snapshot_id):
             nome: _leitor.connect().execute(sql, parametros).pl()
             for nome, (sql, parametros) in _consultas.items()
         }
-    consultas = {nome: sql for nome, (sql, _p) in _consultas.items()}
+    consultas = {
+        nome: {"sql": sql, "parametros": parametros}
+        for nome, (sql, parametros) in _consultas.items()
+    }
     _texto = (
         "A taxa junta os municípios pelos **6 primeiros dígitos**: confira nas tabelas de "
         "dígitos que os dois lados têm o formato esperado antes de usar o resultado. "
@@ -291,7 +295,7 @@ def _(codigo_uf, mo, odb, plano, snapshot_id):
                     nome: mo.vstack(
                         [
                             mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]}\n```")}),
+                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
                         ]
                     )
                     for nome, tabela in resultados.items()
