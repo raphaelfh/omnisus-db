@@ -105,15 +105,14 @@ aquisições ou indicadores agregados apresentados como dispensação.
 
 ## Trilha Marimo e verificação
 
-Execute `marimo edit notebooks/bases/medicamentos.py` a partir do repositório. Etapas:
-descobrir diferenças entre fontes; inspecionar dicionário e fixar recorte;
-importar mediante botão; verificar e exportar resumo com manifesto.
-A consulta de estoque tem formulário separado, sem escrita no lake.
+Execute `uv run --locked --extra notebooks marimo edit notebooks/bases/medicamentos.py`
+a partir do repositório. Etapas: descobrir diferenças entre fontes; inspecionar
+dicionário e fixar recorte; importar mediante botão; verificar e exportar resumo com
+manifesto. A consulta de estoque tem formulário separado, sem escrita no lake.
 
-Cada execução APAC cria pasta própria em `data/lake/medicamentos/<run_id>/`, salva
-plano antes da aquisição e mantém relatório/publicações ao lado do resumo agregado.
-O isolamento facilita reprodução e impede que novas seleções contaminem um lake
-anterior. Para atualizar um mesmo lake, use a API e políticas já existentes.
+As APAC vão para o lake de pesquisa compartilhado; cada execução guarda plano,
+resultado e proveniência em `data/lake/pesquisa/execucoes/<run_id>/`, e
+`policy="skip_same"` impede duplicar um arquivo já publicado.
 O notebook usa uma thread para chamadas síncronas; interromper a célula não garante
 cancelamento da importação. Consulte o `run_id` antes de repetir trabalho interrompido.
 
