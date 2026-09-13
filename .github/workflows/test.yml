@@ -43,6 +43,11 @@ jobs:
         run: uv sync --frozen -p ${{ matrix.python }} --extra dev
       - name: Lint
         run: uv run ruff check .
+      - name: Notebook check
+        # A folder, not a glob: Windows runners do not expand globs.
+        # --ignore-scripts skips helper modules; the offline-open test still
+        # imports every notebook, so a notebook marimo cannot parse still fails.
+        run: uv run marimo check --strict --ignore-scripts notebooks
       - name: Format check
         run: uv run ruff format --check .
       - name: Type check
