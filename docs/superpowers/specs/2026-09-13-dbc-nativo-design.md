@@ -155,7 +155,34 @@ keeps passing.
 - **First PyPI publication:** neither name is published yet; nothing is
   uploaded unless the release gate is green.
 
-## 9. Out of scope
+## 9. Revisions after the spike (2026-09-13, before planning)
+
+These rulings override the sections above where they disagree.
+
+- **Measured:** a throwaway pure-Python port matched all 13 golden outputs
+  (there are 13 `.dbc` fixtures, not 14) and zlib's vector, decoding the
+  largest fixture (2.9 MB out) in 0.34 s. An `abi3-py312` build of the current
+  crate succeeded (`cp312-abi3` wheel), so the §8 abi3 risk is closed.
+- **The native package stays optional (overrides §5 "Dependency" and
+  "`release.yml`").** `RELEASE.md` records that nothing is published to PyPI by
+  decision; the distribution channel is the wheel file built from the tag. A
+  required `omnisus-db-dbf` dependency would make that wheel uninstallable.
+  So `omnisus-db` gains no dependency, pure Python is the default decoder,
+  `release.yml` publishes nothing new, and the musllinux/aarch64 targets are
+  dropped (YAGNI while the package is optional). The wheel-only install gates
+  on 3.12, 3.13 and 3.14 become required, because removing `datasus-dbc`
+  makes them pass.
+- **Stale native API is an error, not a fallback (overrides §4.1).** This is
+  what the DBF selector already does; both selectors now share one loader,
+  `datasus_ftp/native.py`, requiring `API_VERSION == 2`.
+- **Speed hint threshold (overrides §4.2):** 16 MiB of compressed input, which
+  is roughly 10 s in pure Python; 5 MiB would fire on every ordinary file.
+- **No output-size limit is added;** DBC sources are the DATASUS FTP, as
+  before.
+- **zlib license:** both ports are altered versions of `blast.c`, so each
+  source file carries the `blast.h` notice and says it was altered.
+
+## 10. Out of scope
 
 - Changing the DBF reader itself.
 - Compressing DBC files.
