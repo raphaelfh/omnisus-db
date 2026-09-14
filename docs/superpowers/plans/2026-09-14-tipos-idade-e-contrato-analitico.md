@@ -1,6 +1,6 @@
 # Tipos, idade e contrato analítico — plano de implementação
 
-> **For agentic workers:** Use `superpowers:executing-plans` para executar uma entrega por vez. As caixas abaixo registram execução, não aprovação. Este documento planeja mudanças; não autoriza por si só publicação, alteração do lake ou criação de tarefas externas.
+> **For agentic workers:** Use `superpowers:executing-plans` para executar uma entrega por vez. As caixas abaixo registram execução, não aprovação. Este documento registra o plano e sua execução; não autoriza por si só publicação, alteração do lake ou criação de tarefas externas.
 
 **Goal:** disponibilizar metadados e valores analíticos confiáveis para SIM e SIH, corrigir o consumo no Omnisus e retirar caminhos obsoletos na mesma sequência de entregas.
 
@@ -9,6 +9,19 @@
 **Tech Stack:** Python >=3.12, DuckDB/DuckLake, PyArrow, YAML e ferramentas já presentes; backend Python e frontend TypeScript do Omnisus.
 
 **Spec:** relato `../omnisus/docs/architecture/omnisus-db-report-2026-09-14-tipos-e-idade.md`, relativo à raiz deste checkout; contratos em `docs/dicionario/{contrato,consumo,estrutura}.md`; requisitos e decisões explicitados neste plano. O pedido do usuário exige estrutura limpa e ausência de código morto.
+
+## Registro da execução
+
+Implementação da biblioteca em `c51d08d`, branch local `codex/contrato-analitico`.
+O wheel 0.3.0 é construído desse commit limpo e identificado por SHA-256.
+A integração do app está em `d98a0c9`, branch homônima no outro repositório. As sete
+entregas funcionais são registradas aqui; não foram abertas sete PRs remotas.
+Recibos, verificações e pendências estão em
+`reports/evidence/2026-09-14/contrato-analitico/progress.md`.
+
+A auditoria mantém pendências documentais explícitas: campos sem evidência,
+escopos ainda não auditados e os compostos SIH cuja idade exata não foi confirmada.
+O aceite do recorte auditado não encerra essas pendências nem autoriza extrapolação.
 
 ## Restrições globais
 
@@ -57,7 +70,7 @@ Não reutilizar `field.physical_type` do protótipo para significar ora o manual
 
 ### Superfície pública pequena
 
-Propostas para a implementação; ainda não disponíveis:
+Interfaces implementadas na edição 0.3.0:
 
 ```python
 def describe_dataset(dataset: str) -> dict[str, object]:
@@ -107,16 +120,16 @@ Não criar um arquivo por campo. Só extrair outro módulo quando existir uma re
 
 **Consome:** relato, documentos oficiais, DBFs/layouts e manifesto do snapshot. **Produz:** regras com evidência e aplicabilidade explícitas; auditoria reproduzível.
 
-- [ ] Implementar um comando de auditoria `python scripts/metadados/auditar_contrato.py --target <target> --snapshot-id 5 --out <diretorio>`, usando exclusivamente `LakeReader`. Registrar snapshot, revisão da biblioteca, hashes das publicações, schemas, SQL executado e agregados; não exportar registros individuais.
-- [ ] Conferir os PDFs SIM anterior/2025, registrando página, trecho, hash e divergência. Verificar separadamente unidades 0–5, `000`, `400`, `9xx` e valores terminados em `99`.
-- [ ] Buscar fonte oficial SIH para `cod_idade` 0/2/3/4/5/9, regra `100 + valor` e `idade=999`. Comparar unidades e idade com nascimento/internação no recorte sem tratar consistência empírica como autoridade documental universal.
-- [ ] Para `idade=999`, registrar uma decisão por unidade: ignorada quando sustentado; valor fora do domínio ou regra não suportada quando não sustentado. Não manter silenciosamente a sentinela global só porque o decoder atual a usa.
-- [ ] Auditar códigos de sexo SIM/SIH e sua vigência. SIM e SIH não compartilham um mapa por terem o mesmo nome de campo. Registrar códigos não binários, ignorados e desconhecidos sem os colapsar indevidamente.
-- [ ] Classificar cada campo ausente como histórico, não disseminado, metadado da biblioteca ou pendência sem evidência. Listar expressamente os sete campos SIM citados no relato e as cinco colunas de proveniência legadas.
-- [ ] Incluir `_source_release`, `diagsec1..9` e `tpdisec1..9` no inventário resolvido, com origem e aplicabilidade. Campos sem significado confirmado recebem estado desconhecido, não uma descrição presumida.
-- [ ] Documentar como obter hash, URI e publicação pelo manifesto e escopo. Não replicar essa informação em toda linha nem prometer linhagem por registro que o manifesto não fornece.
-- [ ] Corrigir a afirmação “o parser aplica o dicionário” nos dois perfis e a docstring que sugere tipos de ingestão controlados pelo YAML. Distinguir decodificação de apresentação e conversão de dados.
-- [ ] Salvar o SQL e os números completos da tabela de aceitação abaixo; substituir “igual” pelos valores efetivos.
+- [x] Implementar um comando de auditoria `python scripts/metadados/auditar_contrato.py --target <target> --snapshot-id 5 --out <diretorio>`, usando exclusivamente `LakeReader`. Registrar snapshot, revisão da biblioteca, hashes das publicações, schemas, SQL executado e agregados; não exportar registros individuais.
+- [x] Conferir os PDFs SIM anterior/2025, registrando página, trecho, hash e divergência. Verificar separadamente unidades 0–5, `000`, `400`, `9xx` e valores terminados em `99`.
+- [x] Buscar fonte oficial SIH para `cod_idade` 0/2/3/4/5/9, regra `100 + valor` e `idade=999`. Comparar unidades e idade com nascimento/internação no recorte sem tratar consistência empírica como autoridade documental universal.
+- [x] Para `idade=999`, registrar uma decisão por unidade: ignorada quando sustentado; valor fora do domínio ou regra não suportada quando não sustentado. Não manter silenciosamente a sentinela global só porque o decoder atual a usa.
+- [x] Auditar códigos de sexo SIM/SIH e sua vigência. SIM e SIH não compartilham um mapa por terem o mesmo nome de campo. Registrar códigos não binários, ignorados e desconhecidos sem os colapsar indevidamente.
+- [x] Classificar cada campo ausente como histórico, não disseminado, metadado da biblioteca ou pendência sem evidência. Listar expressamente os sete campos SIM citados no relato e as cinco colunas de proveniência legadas.
+- [x] Incluir `_source_release`, `diagsec1..9` e `tpdisec1..9` no inventário resolvido, com origem e aplicabilidade. Campos sem significado confirmado recebem estado desconhecido, não uma descrição presumida.
+- [x] Documentar como obter hash, URI e publicação pelo manifesto e escopo. Não replicar essa informação em toda linha nem prometer linhagem por registro que o manifesto não fornece.
+- [x] Corrigir a afirmação “o parser aplica o dicionário” nos dois perfis e a docstring que sugere tipos de ingestão controlados pelo YAML. Distinguir decodificação de apresentação e conversão de dados.
+- [x] Salvar o SQL e os números completos da tabela de aceitação abaixo; substituir “igual” pelos valores efetivos.
 
 **Aceite:** todo ponto documental tem evidência identificada ou pendência explícita. Regras sem evidência/aplicabilidade suficiente continuam indisponíveis; sua resolução permanece trabalho aberto, não é marcada como concluída por haver um fallback.
 
@@ -128,12 +141,12 @@ Não criar um arquivo por campo. Só extrair outro módulo quando existir uma re
 
 **Consome:** inventário e evidências da entrega 1. **Produz:** `describe_dataset()` público, versão do contrato e hash determinístico.
 
-- [ ] Migrar o registro de fontes para o pacote e fazer `docs/dicionario/fontes/registro.json` ser gerado dele. Resolver referências sem acesso à rede; incluir os recursos no wheel.
-- [ ] Implementar o contrato existente com tipos físicos documentais, tipos lógicos, domínio, ausência, derivação, fontes e aplicabilidade. Preservar os demais campos legados como não revisados. Não exigir curadoria integral de todas as bases para entregar SIM/SIH.
-- [ ] Corrigir os tipos lógicos sabidamente errados por evidência. Não transformar automaticamente todo `integer` categórico nem alinhar todo YAML ao schema de uma amostra.
-- [ ] Exportar `describe_dataset` em `omnisus_db.__init__`. Devolver cópias independentes ou valores realmente imutáveis; o `dataclass(frozen=True)` atual não protege listas e dicionários internos.
-- [ ] Exportar `display_row` a partir da implementação existente em `transforms/dictionaries.py`. Ela encapsula `load_dicionario(dataset).decode_row(dict(row))`; não acrescenta uma segunda implementação de apresentação. Testar ausência de mutação da entrada, contexto SIH completo e pass-through de campo desconhecido. Consumidor que só precisa de rótulo enum passa uma linha com aquele campo; idade SIH exige também sua unidade.
-- [ ] Exercitar isolamento, empacotamento e preservação de códigos pela interface pública:
+- [x] Migrar o registro de fontes para o pacote e fazer `docs/dicionario/fontes/registro.json` ser gerado dele. Resolver referências sem acesso à rede; incluir os recursos no wheel.
+- [x] Implementar o contrato existente com tipos físicos documentais, tipos lógicos, domínio, ausência, derivação, fontes e aplicabilidade. Preservar os demais campos legados como não revisados. Não exigir curadoria integral de todas as bases para entregar SIM/SIH.
+- [x] Corrigir os tipos lógicos sabidamente errados por evidência. Não transformar automaticamente todo `integer` categórico nem alinhar todo YAML ao schema de uma amostra.
+- [x] Exportar `describe_dataset` em `omnisus_db.__init__`. Devolver cópias independentes ou valores realmente imutáveis; o `dataclass(frozen=True)` atual não protege listas e dicionários internos.
+- [x] Exportar `display_row` a partir da implementação existente em `transforms/dictionaries.py`. Ela encapsula `load_dicionario(dataset).decode_row(dict(row))`; não acrescenta uma segunda implementação de apresentação. Testar ausência de mutação da entrada, contexto SIH completo e pass-through de campo desconhecido. Consumidor que só precisa de rótulo enum passa uma linha com aquele campo; idade SIH exige também sua unidade.
+- [x] Exercitar isolamento, empacotamento e preservação de códigos pela interface pública:
 
 ```python
 def test_metadata_does_not_share_mutable_state():
@@ -144,10 +157,10 @@ def test_metadata_does_not_share_mutable_state():
     assert odb.describe_dataset("sim_obitos") == original
 ```
 
-- [ ] Verificar também que `"01"` e `"1"` continuam distintos, que hashes são estáveis, referências inexistentes falham e que o contrato não declara tipo físico observado sem schema/snapshot.
-- [ ] Buscar consumidores de `Dicionario.arrow_schema` no pacote, app, notebooks, scripts e documentação. Remover a propriedade, `_TYPE_MAP` e o import de PyArrow se nenhum outro uso restar nesse módulo. Substituir testes que só exercitam a propriedade por testes do contrato real.
-- [ ] Migrar scripts de consulta ao resolvedor público. Manter o exemplo JSON como exemplo gerado; remover validadores/compiladores duplicados que a migração tornar sem uso.
-- [ ] Rodar `uv run pytest tests/unit/test_metadata.py tests/unit/transforms/test_dictionaries.py` e validar o wheel fora do checkout.
+- [x] Verificar também que `"01"` e `"1"` continuam distintos, que hashes são estáveis, referências inexistentes falham e que o contrato não declara tipo físico observado sem schema/snapshot.
+- [x] Buscar consumidores de `Dicionario.arrow_schema` no pacote, app, notebooks, scripts e documentação. Remover a propriedade, `_TYPE_MAP` e o import de PyArrow se nenhum outro uso restar nesse módulo. Substituir testes que só exercitam a propriedade por testes do contrato real.
+- [x] Migrar scripts de consulta ao resolvedor público. Preservar o JSON draft como exemplo histórico identificado; remover validadores/compiladores duplicados que a migração tornar sem uso.
+- [x] Rodar `uv run pytest tests/unit/test_metadata.py tests/unit/transforms/test_dictionaries.py` e validar o wheel fora do checkout.
 
 **Aceite:** consumidor consulta os metadados sem caminhos internos ou arquivos em `docs`; nenhuma execução de cast é inferida do `type` legado. Schema físico de ingestão permanece sob `dbf_batches.py`/staging.
 
@@ -157,9 +170,9 @@ def test_metadata_does_not_share_mutable_state():
 
 **Consome:** regras auditadas, metadados públicos e schema observado. **Produz:** `analytical_projection()` e idade calculável em SQL; apresentação derivada da mesma semântica.
 
-- [ ] Definir resultado etário estruturado com valor/unidade de origem interpretados, `years_completed` anulável e estado `valid`, `ignored`, `missing`, `invalid` ou `unsupported`. Preservar o bruto no chamador; não converter meses em dias exatos nem usar datas para substituir silenciosamente a idade publicada.
-- [ ] Modelar regras finitas por produto em uma definição compartilhada. O executor escalar atende à apresentação existente; o SQL atende a milhões de registros. Ambos usam as mesmas unidades, sentinelas e offsets; testes de equivalência detectam divergências entre os dois executores.
-- [ ] Incorporar ao executor os casos abaixo e os limites efetivamente estabelecidos na entrega 1. Valor não coberto pela evidência recebe `unsupported`, sem inventar um limite clínico:
+- [x] Definir resultado etário estruturado com valor/unidade de origem interpretados, `years_completed` anulável e estado `valid`, `ignored`, `missing`, `invalid` ou `unsupported`. Preservar o bruto no chamador; não converter meses em dias exatos nem usar datas para substituir silenciosamente a idade publicada.
+- [x] Modelar regras finitas por produto em uma definição compartilhada. O executor escalar atende à apresentação existente; o SQL atende a milhões de registros. Ambos usam as mesmas unidades, sentinelas e offsets; testes de equivalência detectam divergências entre os dois executores.
+- [x] Incorporar ao executor os casos abaixo e os limites efetivamente estabelecidos na entrega 1. Valor não coberto pela evidência recebe `unsupported`, sem inventar um limite clínico:
 
 | Base | Entrada | Anos completos / estado |
 | --- | --- | --- |
@@ -175,11 +188,11 @@ def test_metadata_does_not_share_mutable_state():
 | SIH | unidade ausente/desconhecida | `NULL`, com motivo explícito |
 | SIH | `idade=999` em cada unidade | decisão auditada na entrega 1, sem sentinela presumida |
 
-- [ ] Produzir `idade_anos_completos` e `idade_status` como colunas derivadas; incluir a referência à unidade original na derivação. Nome derivado que colide com coluna existente deve gerar erro explícito.
-- [ ] Reutilizar `lake/sql.py` e validar nomes contra `observed_schema`. Campo obrigatório ausente, versão inexistente e escopo sem aplicabilidade não podem resultar em `TRY_CAST(idade AS INTEGER)` como fallback.
-- [ ] Migrar `_decode_idade_sim` e `_decode_idade_sih` para apresentação do resultado estruturado e retirar as regras antigas. Preservar pass-through de exibição para bruto não interpretável quando esse for o comportamento contratado; não reutilizá-lo como resultado analítico.
-- [ ] Testar equivalência escalar/SQL com casos tabelados, limites e entradas malformadas; executar SQL real em DuckDB. Incluir regressão para números fracionários, whitespace, zeros à esquerda e unidades desconhecidas.
-- [ ] Rodar `uv run pytest tests/unit/transforms/test_age.py tests/unit/transforms/test_analytics.py tests/unit/transforms/test_dictionaries.py`.
+- [x] Produzir `idade_anos_completos` e `idade_status` como colunas derivadas; incluir a referência à unidade original na derivação. Nome derivado que colide com coluna existente deve gerar erro explícito.
+- [x] Reutilizar `lake/sql.py` e validar nomes contra `observed_schema`. Campo obrigatório ausente, versão inexistente e escopo sem aplicabilidade não podem resultar em `TRY_CAST(idade AS INTEGER)` como fallback.
+- [x] Migrar `_decode_idade_sim` e `_decode_idade_sih` para apresentação do resultado estruturado e retirar as regras antigas. Preservar pass-through de exibição para bruto não interpretável quando esse for o comportamento contratado; não reutilizá-lo como resultado analítico.
+- [x] Testar equivalência escalar/SQL com casos tabelados, limites e entradas malformadas; executar SQL real em DuckDB. Incluir regressão para números fracionários, whitespace, zeros à esquerda e unidades desconhecidas.
+- [x] Rodar `uv run pytest tests/unit/transforms/test_age.py tests/unit/transforms/test_analytics.py tests/unit/transforms/test_dictionaries.py`.
 
 **Aceite:** agregação SQL sem UDF por registro, com política de nulos/ignorados explícita; códigos brutos preservados; resultado reproduzível por versão/hash e snapshot. Remover os dois decoders antigos como fontes independentes de regras.
 
@@ -189,13 +202,13 @@ def test_metadata_does_not_share_mutable_state():
 
 **Consome:** resolvedor e mecanismo de projeção existentes. **Produz:** `sexo_categoria`, `sexo_status`, `<campo>_data` e `<campo>_data_status` para datas suportadas.
 
-- [ ] Acrescentar mapa categórico de sexo por produto/edição, derivado da autoria auditada. Não adicionar outro mapa global SIM/SIH em Python ou no app. Preservar categorias distintas documentadas e estados de ignorado/desconhecido.
-- [ ] Cobrir `SIM sexo=2` e `SIH sexo=3` como feminino nas regras aplicáveis, e casos masculinos, ignorados, não mapeados e ausentes. Ausência de categoria binária não autoriza descartar o registro da qualidade/denominador.
-- [ ] Para todos os 11 campos de data SIM e quatro SIH listados no relato, compor conversão por formato declarado e verificado. Exigir oito dígitos e data calendárica válida; usar `TRY_STRPTIME(..., '%d%m%Y' ou '%Y%m%d')::DATE`, com guarda de formato. Fonte já tipada como `DATE` segue caminho compatível sem reinterpretação como string.
-- [ ] Vazio/nulo produz `missing`; calendário impossível produz `invalid`; sentinela documentada produz `ignored`. Preservar valor bruto e registrar as contagens de conversão não válida.
-- [ ] Testar ano bissexto válido, `31022024`, zeros, whitespace, texto inesperado, ordenação cronológica e tratamento explícito de `NULL`. Validar o formato de cada campo, incluindo `gestor_dt`, antes de liberar a regra.
-- [ ] Auditar `transforms/codes.py`. Remover helpers usados somente por seus próprios testes e retirar esses testes, se a busca completa confirmar ausência de consumidores. Não adicionar uma implementação Polars só para justificar sua sobrevivência. Retirar/reclassificar `x-transform` que aparenta execução inexistente, preservando a anotação descritiva pertinente.
-- [ ] Rodar `uv run pytest tests/unit/transforms/test_analytics.py tests/unit/transforms/test_dictionaries.py tests/unit/sources/datasus_ftp/test_staging.py`.
+- [x] Acrescentar mapa categórico de sexo por produto/edição, derivado da autoria auditada. Não adicionar outro mapa global SIM/SIH em Python ou no app. Preservar categorias distintas documentadas e estados de ignorado/desconhecido.
+- [x] Cobrir `SIM sexo=2` e `SIH sexo=3` como feminino nas regras aplicáveis, e casos masculinos, ignorados, não mapeados e ausentes. Ausência de categoria binária não autoriza descartar o registro da qualidade/denominador.
+- [x] Para todos os 11 campos de data SIM e quatro SIH listados no relato, compor conversão por formato declarado e verificado. Exigir oito dígitos e data calendárica válida; usar `TRY_STRPTIME(..., '%d%m%Y' ou '%Y%m%d')::DATE`, com guarda de formato. Fonte já tipada como `DATE` segue caminho compatível sem reinterpretação como string.
+- [x] Vazio/nulo produz `missing`; calendário impossível produz `invalid`; sentinela documentada produz `ignored`. Preservar valor bruto e registrar as contagens de conversão não válida.
+- [x] Testar ano bissexto válido, `31022024`, zeros, whitespace, texto inesperado, ordenação cronológica e tratamento explícito de `NULL`. Validar o formato de cada campo, incluindo `gestor_dt`, antes de liberar a regra.
+- [x] Auditar `transforms/codes.py`. Remover helpers usados somente por seus próprios testes e retirar esses testes, se a busca completa confirmar ausência de consumidores. Não adicionar uma implementação Polars só para justificar sua sobrevivência. Retirar/reclassificar `x-transform` que aparenta execução inexistente, preservando a anotação descritiva pertinente.
+- [x] Rodar `uv run pytest tests/unit/transforms/test_analytics.py tests/unit/transforms/test_dictionaries.py tests/unit/sources/datasus_ftp/test_staging.py`.
 
 **Aceite:** datas ordenam corretamente quando o consumidor seleciona a representação tipada; sexo SIH não usa o mapa do SIM; ingestão e bruto não mudaram. Nada é convertido por ter apenas um tipo lógico legado.
 
@@ -205,17 +218,17 @@ def test_metadata_does_not_share_mutable_state():
 
 **Consome:** wheel da biblioteca com metadados e projeções, schema real e escopos selecionados. **Produz:** relatórios corretos e integração por interface pública.
 
-- [ ] Usar o wheel candidato durante validação; na entrega final fixar versão/artefato/hash distribuído. Não depender de importação editable de outro checkout.
-- [ ] Migrar o adaptador de metadados para `describe_dataset`. Remover o acesso interno ao carregador onde substituído e atualizar os testes de contrato do adaptador.
-- [ ] Migrar consumidores legítimos de `decode_row`/`decode` para `display_row`. Em `_decode_label`, passar o valor bruto e o campo à biblioteca uma vez; remover as tentativas locais com inteiro/string e `_maybe_int` após a busca confirmar seu último uso. Não retirar `Dicionario` interno da biblioteca enquanto a ingestão/apresentação o usam; retirar os imports e reexports internos do app após a migração de todos os seus consumidores.
-- [ ] Obter projeções no adaptador a partir de schema/escopos reais. Compor subconsulta/CTE com as colunas calculadas e deixar filtros vinculados por parâmetros. Guardar snapshot, versão da regra e hash nos metadados reprodutíveis da consulta/relatório.
-- [ ] Fazer `_age_group_distribution`, `_age_pyramid` e idade no drill-down usarem `idade_anos_completos`; extrair a definição duplicada das faixas para um único helper local consumido pelos três caminhos. Faixas são política do relatório, não do DATASUS.
-- [ ] Substituir o mapa binário da pirâmide por `sexo_categoria`. Explicitar contagens excluídas das séries masculina/feminina por outras categorias ou ausência e reconciliá-las com o total filtrado.
-- [ ] Remover a classificação por `x-display`, os casts diretos de idade codificada e `AGE_CODED_PENDING_UPSTREAM` quando todos os consumidores da versão suportada tiverem migrado. Preservar indisponibilidade funcional com motivos reais: campo ausente, regra não suportada ou escopo não confirmado.
-- [ ] Impedir regressão em SINASC/`IDADEMAE` e outras bases: idade em anos também exige declaração explícita adequada; ausência de `x-display` não serve como confirmação. Não aplicar regras de SIM/SIH a outros produtos.
-- [ ] Reativar faixa etária e drill-down quando a regra de idade estiver disponível; reativar pirâmide somente quando idade e sexo estiverem disponíveis. Não deixar um recurso independente bloqueado pela ausência de outro.
-- [ ] Ajustar schemas e frontend para motivos atuais; gerar tipos pelo mecanismo do projeto e remover textos/branches exclusivos da espera upstream já encerrada.
-- [ ] Rodar, no backend, `uv run pytest tests/contract/test_metadata_adapter.py tests/integration/test_reports_queries.py tests/unit/test_reports_service.py tests/contract/test_reports_api.py`; no frontend, `npm exec vitest run src/features/reports/ReportStates.test.tsx` e os testes dos componentes modificados.
+- [x] Usar o wheel candidato durante validação; na entrega final fixar versão/artefato/hash distribuído. Não depender de importação editable de outro checkout.
+- [x] Migrar o adaptador de metadados para `describe_dataset`. Remover o acesso interno ao carregador onde substituído e atualizar os testes de contrato do adaptador.
+- [x] Migrar consumidores legítimos de `decode_row`/`decode` para `display_row`. Em `_decode_label`, passar o valor bruto e o campo à biblioteca uma vez; remover as tentativas locais com inteiro/string e `_maybe_int` após a busca confirmar seu último uso. Não retirar `Dicionario` interno da biblioteca enquanto a ingestão/apresentação o usam; retirar os imports e reexports internos do app após a migração de todos os seus consumidores.
+- [x] Obter projeções no adaptador a partir de schema/escopos reais. Compor subconsulta/CTE com as colunas calculadas e deixar filtros vinculados por parâmetros. Guardar snapshot, versão da regra e hash nos metadados reprodutíveis da consulta/relatório.
+- [x] Fazer `_age_group_distribution`, `_age_pyramid` e idade no drill-down usarem `idade_anos_completos`; extrair a definição duplicada das faixas para um único helper local consumido pelos três caminhos. Faixas são política do relatório, não do DATASUS.
+- [x] Substituir o mapa binário da pirâmide por `sexo_categoria`. Explicitar contagens excluídas das séries masculina/feminina por outras categorias ou ausência e reconciliá-las com o total filtrado.
+- [x] Remover a classificação por `x-display`, os casts diretos de idade codificada e `AGE_CODED_PENDING_UPSTREAM` quando todos os consumidores da versão suportada tiverem migrado. Preservar indisponibilidade funcional com motivos reais: campo ausente, regra não suportada ou escopo não confirmado.
+- [x] Impedir regressão em SINASC/`IDADEMAE` e outras bases: idade em anos também exige declaração explícita adequada; ausência de `x-display` não serve como confirmação. Não aplicar regras de SIM/SIH a outros produtos.
+- [x] Reativar faixa etária e drill-down quando a regra de idade estiver disponível; reativar pirâmide somente quando idade e sexo estiverem disponíveis. Não deixar um recurso independente bloqueado pela ausência de outro.
+- [x] Ajustar schemas e frontend para motivos atuais; gerar tipos pelo mecanismo do projeto e remover textos/branches exclusivos da espera upstream já encerrada.
+- [x] Rodar, no backend, `uv run pytest tests/contract/test_metadata_adapter.py tests/integration/test_reports_queries.py tests/unit/test_reports_service.py tests/contract/test_reports_api.py`; no frontend, `npm exec vitest run src/features/reports/ReportStates.test.tsx` e os testes dos componentes modificados.
 
 **Aceite:** todos os números da tabela de aceitação conferem e os 913.968 registros SIH `sexo=3` participam da contabilidade feminina no recorte. Campos ignorados/desconhecidos são contabilizados. Não existe fallback que produz gráfico aparentemente válido por tratar código como anos.
 
@@ -225,12 +238,12 @@ def test_metadata_does_not_share_mutable_state():
 
 **Consome:** metadados e projeção de datas da biblioteca. **Produz:** seleção coerente de campos brutos e derivados no explorador.
 
-- [ ] Expor as datas derivadas como campos selecionáveis com rótulo claro e proveniência; manter a ordenação bruta do campo bruto, conforme o contrato atual do explorador.
-- [ ] Quando a coluna tipada for selecionada, aplicar ordenação, filtros, paginação e exportação sobre a mesma expressão no backend. Não ordenar somente a página no frontend nem reimplementar parse de data em TypeScript.
-- [ ] Definir `NULLS LAST` na ordenação das datas derivadas, desempate estável conforme a paginação existente e indicadores para valores inválidos/ignorados.
-- [ ] Incluir campo/representação, snapshot e identidade da regra no estado reproduzível; links e presets antigos continuam apontando à representação bruta. Não alterar silenciosamente seu significado.
-- [ ] Testar `02/01/2023` antes de `01/04/2023`, paginação com empates, inválidos e filtros; confirmar equivalência entre resultado exibido e CSV/Parquet exportado. Exportação bruta continua disponível.
-- [ ] Remover a limitação de ordenação textual somente dos fluxos que passaram a usar data tipada; manter descrição correta da representação bruta.
+- [x] Expor as datas derivadas como campos selecionáveis com rótulo claro e proveniência; manter a ordenação bruta do campo bruto, conforme o contrato atual do explorador.
+- [x] Quando a coluna tipada for selecionada, aplicar ordenação, filtros, paginação e exportação sobre a mesma expressão no backend. Não ordenar somente a página no frontend nem reimplementar parse de data em TypeScript.
+- [x] Definir `NULLS LAST` na ordenação das datas derivadas, desempate estável conforme a paginação existente e indicadores para valores inválidos/ignorados.
+- [x] Incluir campo/representação, snapshot e identidade da regra no estado reproduzível; links e presets antigos continuam apontando à representação bruta. Não alterar silenciosamente seu significado.
+- [x] Testar `02/01/2023` antes de `01/04/2023`, paginação com empates, inválidos e filtros; confirmar equivalência entre resultado exibido e CSV/Parquet exportado. Exportação bruta continua disponível.
+- [x] Remover a limitação de ordenação textual somente dos fluxos que passaram a usar data tipada; manter descrição correta da representação bruta.
 
 **Aceite:** usuário consegue ordenar cronologicamente e reproduzir a consulta, com semântica consistente em tela e exportação, sem alteração do snapshot.
 
@@ -240,11 +253,12 @@ def test_metadata_does_not_share_mutable_state():
 
 **Consome:** PRs funcionais com testes aprovados. **Produz:** artefato instalável identificado, documentação coerente e consumidor atualizado.
 
-- [ ] Corrigir a contradição de `RELEASE.md`: o canal atual é wheel/tag. Alterar `release.yml` para produzir/publicar o artefato no canal adotado e só executar PyPI quando explicitamente habilitado. Não criar Trusted Publisher ou mudar o canal por conta própria.
-- [ ] Preparar uma versão que inclua a correção SIM já em `Unreleased`, a interface analítica e a migração de caminhos removidos. Documentar que a correção de exibição, isoladamente, não produz idade numérica.
-- [ ] Se a entrega analítica atrasar e for distribuída antes uma correção de exibição, tratá-la como entrega parcial com número próprio; manter este plano aberto até a integração completa.
-- [ ] Construir wheel e sdist e testar instalação fora do checkout. Executar os gates existentes nas versões/plataformas suportadas; confirmar recursos de fontes/dicionários e hash do contrato.
-- [ ] Rodar os checks existentes de lint, tipos e testes para os módulos afetados; executar a suíte geral uma vez na integração final. Não ampliar benchmarks ou matriz Rust sem mudança no decoder/ingestão que justifique isso.
+- [x] Corrigir a contradição de `RELEASE.md`: o canal atual é wheel/tag. Alterar `release.yml` para produzir/publicar o artefato no canal adotado e só executar PyPI quando explicitamente habilitado. Não criar Trusted Publisher ou mudar o canal por conta própria.
+- [x] Preparar uma versão que inclua a correção SIM já em `Unreleased`, a interface analítica e a migração de caminhos removidos. Documentar que a correção de exibição, isoladamente, não produz idade numérica.
+- [x] Não foi necessária uma distribuição parcial: o candidato 0.3.0 inclui a interface analítica e a correção de exibição.
+- [x] Construir wheel e sdist, conferir reconstrução byte a byte e testar instalação fora do checkout em Python 3.12/3.13/3.14 no macOS arm64; confirmar recursos de fontes/dicionários e hash do contrato.
+- [ ] Executar a matriz remota Linux/macOS/Windows após autorização para push; workflows preparados, resultado remoto ainda não disponível.
+- [x] Rodar os checks existentes de lint, tipos e testes para os módulos afetados; executar a suíte geral uma vez na integração final. Não ampliar benchmarks ou matriz Rust sem mudança no decoder/ingestão que justifique isso.
 
 ```bash
 uv run ruff check .
@@ -253,10 +267,11 @@ uv run mypy src
 uv run pytest -m "not e2e and not perf" --cov=omnisus_db --cov-fail-under=85
 ```
 
-- [ ] Comparar resultado analítico contra a tabela abaixo via `LakeReader(snapshot_id=5)` e registrar SQL/versões. Conferir que contagens e schemas brutos permanecem iguais.
-- [ ] Revisar diff, imports, referências e exports após as remoções. Não considerar ausência de alerta de lint prova suficiente de ausência de deadcode.
-- [ ] Preparar tag, notas e artefato revisáveis; publicar somente mediante autorização aplicável ao canal. Depois atualizar o app para o artefato definitivo e repetir seu smoke de instalação/relatórios.
-- [ ] Atualizar relato e handoff do app com os resultados e pendências reais; remover a frase “basta trocar a fonte” e só encerrar após idade, sexo, datas, metadados, distribuição e limpeza terem aceite.
+- [x] Comparar resultado analítico contra a tabela abaixo via `LakeReader(snapshot_id=5)` e registrar SQL/versões. Conferir que contagens e schemas brutos permanecem iguais.
+- [x] Revisar diff, imports, referências e exports após as remoções. Não considerar ausência de alerta de lint prova suficiente de ausência de deadcode.
+- [x] Preparar versão, notas e artefato revisáveis; fixar app/notebooks no wheel definitivo local e repetir a instalação/relatórios.
+- [ ] Criar/push da tag e publicar o candidato no canal adotado somente após autorização. PyPI permanece desabilitado por padrão.
+- [x] Atualizar relato e handoff do app com os resultados e pendências reais; remover a frase “basta trocar a fonte” e só encerrar após idade, sexo, datas, metadados, distribuição e limpeza terem aceite.
 
 ## Tabela de aceitação no snapshot 5
 
@@ -298,14 +313,14 @@ Testes de comportamento migram para a interface substituta. Testes que apenas d�
 
 Executar `1 → 2 → 3 → 4 → 5 → 6 → 7`. Preparar o wheel candidato após a entrega 4 para integrar o app; a entrega 7 consolida distribuição definitiva e aceitação ponta a ponta. Cada entrega é um PR revisável; testes, documentação e remoções pertencem ao mesmo PR do comportamento correspondente.
 
-- [ ] Todos os itens do relato foram mapeados às entregas 1–7.
-- [ ] Regra não resolvida permanece explicitamente aberta e não é mascarada por um valor numérico.
-- [ ] App e notebooks consumidores não precisam importar internals para os caminhos migrados.
-- [ ] Dados brutos e snapshots preservados; interpretação e sua versão são visíveis.
-- [ ] Faixas e pirâmide reconciliam com totais incluindo desconhecidos/outras categorias.
-- [ ] Datas tipadas têm ordenação, filtro e exportação coerentes.
-- [ ] Wheel distribuído funciona offline fora do checkout; versão final usada pelo app está identificada.
-- [ ] Nenhum novo helper, wrapper, mapa de códigos, branch de compatibilidade ou recurso empacotado ficou sem consumidor ou finalidade documental explícita.
-- [ ] Não há implementação antiga ainda executável concorrendo com a nova no mesmo fluxo.
+- [x] Todos os itens do relato foram mapeados às entregas 1–7.
+- [x] Regra não resolvida permanece explicitamente aberta e não é mascarada por um valor numérico.
+- [x] App e notebooks consumidores não precisam importar internals para os caminhos migrados.
+- [x] Dados brutos e snapshots preservados; interpretação e sua versão são visíveis.
+- [x] Faixas e pirâmide reconciliam com totais incluindo desconhecidos/outras categorias.
+- [x] Datas tipadas têm ordenação, filtro e exportação coerentes.
+- [x] Wheel distribuído funciona offline fora do checkout; versão final usada pelo app está identificada.
+- [x] Nenhum novo helper, wrapper, mapa de códigos, branch de compatibilidade ou recurso empacotado ficou sem consumidor ou finalidade documental explícita.
+- [x] Não há implementação antiga ainda executável concorrendo com a nova no mesmo fluxo.
 
 Estimativa de tamanho: sete entregas funcionais, em dois repositórios. O maior fator de incerteza é a evidência/aplicabilidade das regras SIH e a migração dos consumidores de apresentação; não prometer data de conclusão antes da entrega 1 e do inventário de consumidores da entrega 2.
