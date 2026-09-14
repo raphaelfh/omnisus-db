@@ -53,7 +53,7 @@ schema:
     - name: munic_mov
       type: string
       label: Município do hospital (IBGE)
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: munic_mov, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: natureza
@@ -113,22 +113,121 @@ schema:
       type: date
       label: Data de nascimento
       x-format: yyyyMMdd
+      x-metadata:
+        physical_name: NASC
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 1
+            locator: Layout RD, linha NASC, char(8), descrição da data
+        claims:
+        - target: /field/format
+          value_sha256: 22b7645fd60de2bfe0dc4203b75a4a01b1c8ff1a856491178e3c3bf01d6230d6
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 1
+            locator: Layout RD, linha NASC, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 1
+            locator: Layout RD, linha NASC, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
     - name: sexo
       type: string
       label: Sexo
       x-decode:
-        "0": "Ignorado"
-        "1": "Masculino"
-        "2": "Feminino"
-        "3": "Feminino"
-        "9": "Ignorado"
-        "M": "Masculino"
-        "F": "Feminino"
-        "I": "Ignorado"
+        '0': Ignorado
+        '1': Masculino
+        '2': Feminino
+        '3': Feminino
+        '9': Ignorado
+        '4': Ignorado
+        '5': Ignorado
+        '6': Ignorado
+        '7': Ignorado
+        '8': Ignorado
+      x-metadata:
+        physical_name: SEXO
+        physical_type:
+          type: string
+          length: 1
+        missing_codes:
+          '1': not_missing
+          '2': not_missing
+          '0': ignored
+          '9': ignored
+          '3': not_missing
+          '4': ignored
+          '5': ignored
+          '6': ignored
+          '7': ignored
+          '8': ignored
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sih-tab-714ed980d483
+            pages: []
+            locator: RD2008.DEF and CNV/SEXO.CNV:1 masculine,2/3 feminine
+        claims:
+        - target: /field/physical_type
+          value_sha256: 848e3f778dde84f2e0e943a8a871c439e45d31d3688547d85fcdb5b3987d2266
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official SIM PDF / SIH TabWin source comparison; see audit evidence.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 1
+            locator: SEXO char(1)
+          note: Applies only to audited source identities.
+        - target: /field/codes
+          value_sha256: ded1c9386f47f67a52b7b26d8249bb33f9f361fe582899d3a08d70378c5c1c5f
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official SIM PDF / SIH TabWin source comparison; see audit evidence.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sih-tab-714ed980d483
+            pages: []
+            locator: RD2008.DEF and CNV/SEXO.CNV:1 masculine,2/3 feminine
+          note: 'SEXO.CNV: masculine1 and feminine2,3 take precedence over ignored fallback0-9.'
     - name: munic_res
       type: string
       label: Município de residência (IBGE)
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: munic_res, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: cep
@@ -147,6 +246,29 @@ schema:
       type: integer
       label: Idade
       x-display: idade_sih
+      x-metadata:
+        physical_name: IDADE
+        unit: encoded
+        derivation:
+          kind: coded_age
+          inputs:
+          - idade
+          - cod_idade
+          rule_version: 1.0.0
+          output: idade_anos_completos
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sih-tab-714ed980d483
+            pages: []
+            locator: RD2008.DEF, CNV/IDADEDET.CNV; composite unit+two-digit quantity
     - name: nacional
       type: string
       label: Nacionalidade
@@ -183,10 +305,106 @@ schema:
       type: date
       label: Data de internação
       x-format: yyyyMMdd
+      x-metadata:
+        physical_name: DT_INTER
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DI_INTER, char(8), descrição da data
+        claims:
+        - target: /field/format
+          value_sha256: 22b7645fd60de2bfe0dc4203b75a4a01b1c8ff1a856491178e3c3bf01d6230d6
+          status: conflicting
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DI_INTER, char(8), descrição da data
+          note: Official layout spells DI_INTER and aaammdd despite char(8). The yyyyMMdd
+            interpretation is confirmed only for the exact audited source hashes, not
+            a literal transcription of this row.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DI_INTER, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
+        issues:
+        - id: documentary-format-typo
+          status: open
+          description: Official layout spells DI_INTER and aaammdd despite char(8). The
+            yyyyMMdd interpretation is confirmed only for the exact audited source hashes,
+            not a literal transcription of this row.
     - name: dt_saida
       type: date
       label: Data de saída
       x-format: yyyyMMdd
+      x-metadata:
+        physical_name: DT_SAIDA
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DT_SAIDA, char(8), descrição da data
+        claims:
+        - target: /field/format
+          value_sha256: 22b7645fd60de2bfe0dc4203b75a4a01b1c8ff1a856491178e3c3bf01d6230d6
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DT_SAIDA, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 2
+            locator: Layout RD, linha DT_SAIDA, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
     - name: dias_perm
       type: integer
       label: Dias de permanência
@@ -495,6 +713,50 @@ schema:
       type: date
       label: Data de autorização
       x-format: yyyyMMdd
+      x-metadata:
+        physical_name: GESTOR_DT
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 3
+            locator: Layout RD, linha GESTOR_DT, char(8), descrição da data
+        claims:
+        - target: /field/format
+          value_sha256: 22b7645fd60de2bfe0dc4203b75a4a01b1c8ff1a856491178e3c3bf01d6230d6
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 3
+            locator: Layout RD, linha GESTOR_DT, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sihsus-1e89d5f2cc41
+            pages:
+            - 3
+            locator: Layout RD, linha GESTOR_DT, char(8), descrição da data
+          note: Applicability restricted to exact audited source identities.
     - name: aud_just
       type: string
       label: Justificativa do auditor
@@ -515,31 +777,192 @@ schema:
       type: integer
       label: Ano
       constraints: { required: true }
+      x-metadata:
+        derivation:
+          kind: source_partition
+          input: source_uri
+          rule: DATASUS filename scope
     - name: mes
       type: integer
       label: Mês
       constraints: { minimum: 1, maximum: 12 }
+      x-metadata:
+        derivation:
+          kind: source_partition
+          input: source_uri
+          rule: DATASUS filename scope
     - name: uf
       type: string
       label: UF
       constraints: { required: true, pattern: "^[A-Z]{2}$" }
-    - name: _fonte_arquivo
+      x-metadata:
+        derivation:
+          kind: source_partition
+          input: source_uri
+          rule: DATASUS filename scope
+    - name: _source_release
       type: string
-      label: Arquivo fonte
-    - name: _data_extracao
+      label: Modalidade da fonte
+      x-decode: {final: Final, prelim: Preliminar}
+      derivation: {kind: publication, input: source_uri, rule: release_from_uri}
+      x-metadata:
+        derivation:
+          kind: publication
+          input: source_uri
+          rule: release_from_uri
+    - name: diagsec1
       type: string
-      label: Data de extração
-    - name: _hash_arquivo
+      label: Diagnóstico secundário 1
+    - name: tpdisec1
       type: string
-      label: Hash do arquivo
-    - name: _sistema
+      label: Tipo de diagnóstico secundário 1
+    - name: diagsec2
       type: string
-      label: Sistema
-    - name: _grupo
+      label: Diagnóstico secundário 2
+    - name: tpdisec2
       type: string
-      label: Grupo
+      label: Tipo de diagnóstico secundário 2
+    - name: diagsec3
+      type: string
+      label: Diagnóstico secundário 3
+    - name: tpdisec3
+      type: string
+      label: Tipo de diagnóstico secundário 3
+    - name: diagsec4
+      type: string
+      label: Diagnóstico secundário 4
+    - name: tpdisec4
+      type: string
+      label: Tipo de diagnóstico secundário 4
+    - name: diagsec5
+      type: string
+      label: Diagnóstico secundário 5
+    - name: tpdisec5
+      type: string
+      label: Tipo de diagnóstico secundário 5
+    - name: diagsec6
+      type: string
+      label: Diagnóstico secundário 6
+    - name: tpdisec6
+      type: string
+      label: Tipo de diagnóstico secundário 6
+    - name: diagsec7
+      type: string
+      label: Diagnóstico secundário 7
+    - name: tpdisec7
+      type: string
+      label: Tipo de diagnóstico secundário 7
+    - name: diagsec8
+      type: string
+      label: Diagnóstico secundário 8
+    - name: tpdisec8
+      type: string
+      label: Tipo de diagnóstico secundário 8
+    - name: diagsec9
+      type: string
+      label: Diagnóstico secundário 9
+    - name: tpdisec9
+      type: string
+      label: Tipo de diagnóstico secundário 9
+
 x-source-format: dbc
 x-source-family: datasus_ftp
 x-source-prefix: RD
 x-partitions: [ano, uf, mes]
-x-version: "2.0.0"
+x-version: "2.1.0"
+
+x-analytics:
+  version: 1.0.0
+  applicability_policy: exact_audited_source_identity
+  validated_sources:
+  - ano: 2024
+    mes: 1
+    uf: SP
+    release: final
+    source_sha256: 9d0d841b8d0c6fa4600a06a2da9f861e0ac0e8681a4f772378a8f25f929e4847
+  - ano: 2024
+    mes: 2
+    uf: SP
+    release: final
+    source_sha256: 5ba1da3b7d7025ee7cc4b69b0f69808ffb25040916ffffac732e637c5d845d8a
+  - ano: 2024
+    mes: 3
+    uf: SP
+    release: final
+    source_sha256: 0ed4fbc0c04d5aa2f8a1fea2037c50e3470c43afea07d358a5d510bc52e61523
+  - ano: 2024
+    mes: 4
+    uf: SP
+    release: final
+    source_sha256: 6ce518e7c7701143859ce0ee3a105613677d2568fb2b8925a976546d5d7dd920
+  - ano: 2024
+    mes: 5
+    uf: SP
+    release: final
+    source_sha256: f2d924b6dd7bd7f36dface3a90136837546b4f6354cdd38c0ed3d4d33f50fe15
+  - ano: 2025
+    mes: 1
+    uf: SP
+    release: final
+    source_sha256: 33f811186a6a4dfa377cea2b75e739a7b1316c516d8895473af4c3685a095553
+  - ano: 2025
+    mes: 2
+    uf: SP
+    release: final
+    source_sha256: 7d196729e3b5ba3c1fe3d184f3b5f3b73813abe9a0bd28bbd5c669b1437413b7
+  age:
+    field: idade
+    kind: sih
+    units:
+      '2':
+        unit: day
+        minimum_value: 0
+        maximum_value: 30
+      '3':
+        unit: month
+        minimum_value: 1
+        maximum_value: 11
+      '4':
+        unit: year
+        minimum_value: 1
+        maximum_value: 99
+      '5':
+        unit: year
+        offset: 100
+        minimum_value: 0
+        maximum_value: 30
+    maximum_value: 99
+    unit_field: cod_idade
+    invalid_composites:
+    - '000'
+    - '999'
+    evidence:
+    - source_id: sih-tab-714ed980d483
+      pages: []
+      locator: RD2008.DEF, CNV/IDADEDET.CNV; composite unit+two-digit quantity
+    notes:
+    - IDADE999 is not a universal ignored sentinel. Composites000/999 are invalid.
+    - Composite312 maps11months in IDADEDET but is outside this exact-quantity decoder;
+      unsupported.
+  sex:
+    field: sexo
+    categories:
+      '1': male
+      '2': female
+      '0': null
+      '9': null
+      '3': female
+      '4': null
+      '5': null
+      '6': null
+      '7': null
+      '8': null
+    evidence:
+    - source_id: sih-tab-714ed980d483
+      pages: []
+      locator: RD2008.DEF and CNV/SEXO.CNV:1 masculine,2/3 feminine
+  dates:
+  - nasc
+  - dt_inter
+  - dt_saida
+  - gestor_dt

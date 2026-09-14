@@ -38,8 +38,9 @@ SUS (SIH/SUS), nos arquivos RD que o DATASUS publica um por UF e mês de process
 - `ano_cmpt` e `mes_cmpt` são o ano e o mês de processamento da AIH
   (Informe SIH 2016-03, p. 1), e a data de internação é outro campo (p. 2).
 - A data de internação está em `dt_inter` e a data de saída em `dt_saida`, ambas no
-  formato aaaammdd (Informe SIH 2016-03, p. 2; o documento grafa o primeiro campo como
-  `DI_INTER`).
+  formato aaaammdd no recorte; o Informe SIH 2016-03, p. 2, declara char(8), mas
+  grafa o primeiro campo `DI_INTER` e seu formato `aaammdd`, inconsistências
+  documentais preservadas na auditoria.
 - `nasc` é a data de nascimento do paciente, no formato aaaammdd
   (Informe SIH 2016-03, p. 1).
 - `gestor_dt` é a data da autorização dada pelo gestor, no formato aaaammdd
@@ -55,11 +56,9 @@ SUS (SIH/SUS), nos arquivos RD que o DATASUS publica um por UF e mês de process
   dicionário o rotule "UF do gestor"
   (`src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`).
 - `cnes` é o código CNES do hospital, com 7 caracteres (Informe SIH 2016-03, p. 3).
-- O dicionário marca `munic_res` e `munic_mov` com `lpad_6` e os liga a
-  `aux_municipios` (`src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`), mas a
-  importação não ajusta o comprimento dos códigos: `lpad_6` está definido em
-  `src/omnisus_db/transforms/codes.py`, e o caminho de importação (`staging.py`) não o
-  chama.
+- O dicionário liga `munic_res` e `munic_mov` a `aux_municipios`.
+  A importação preserva o comprimento dos códigos publicados; não aplica
+  preenchimento de zeros guiado pelo YAML.
 
 ## Cobertura e modalidade
 
@@ -100,13 +99,15 @@ p. 4–5), não estão no catálogo.
   `diagsec9` (p. 4).
 - `natureza` tem conteúdo só até maio de 2012; a natureza jurídica pela CONCLA está em
   `nat_jur` (Informe SIH 2016-03, p. 2).
-- `idade` depende da unidade em `cod_idade` (Informe SIH 2016-03, p. 2); o documento
-  não lista os códigos da unidade, e o dicionário decodifica 0 = ignorada, 2 = dias,
-  3 = meses, 4 = anos e 5 = mais de 100 anos
-  (`src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`).
-- `sexo` tem 1 caractere e o documento não lista os códigos
-  (Informe SIH 2016-03, p. 1); os rótulos do dicionário não têm apoio neste documento
-  (`src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`).
+- `idade` depende de `cod_idade` (Informe SIH 2016-03, p. 2). O pacote oficial
+  `TAB_SIH.zip`, `CNV/IDADEDET.CNV`, confirma dias, meses, anos e unidade 5 com
+  deslocamento de 100 anos no domínio detalhado. Os códigos compostos `000` e
+  `999` são classificados como inválidos; isso não define uma sentinela global
+  para o campo bruto `idade`.
+- `sexo` tem 1 caractere (Informe SIH 2016-03, p. 1). A tabela oficial
+  `CNV/SEXO.CNV` define 1 masculino e 2/3 feminino. A aplicação dessas regras
+  exige os escopos e hashes confirmados no contrato; códigos não documentados
+  permanecem desconhecidos.
 - Os códigos ficam no lake como publicados: o dicionário decodifica rótulos, datas e
   idade na exibição, não na importação (`src/omnisus_db/transforms/dictionaries.py`,
   docstring do módulo; `src/omnisus_db/sources/datasus_ftp/staging.py`, que não
@@ -125,12 +126,12 @@ p. 4–5), não estão no catálogo.
   `n_aih` nos seus dados.
 - Se o mês do arquivo (`mes`) é sempre igual a `mes_cmpt`: o documento não explica o
   nome do arquivo. Compare as duas colunas antes de supor.
-- Os códigos de `morte`, `ident`, `cod_idade` e `sexo`: o documento não os lista, e os
-  rótulos vêm do dicionário da biblioteca. A consulta `campo_morte` do notebook mostra
+- Os códigos de `morte` e `ident`: o informe não os lista. Para idade e sexo,
+  a auditoria de 2026-09-14 acrescentou o pacote oficial TAB_SIH: unidade 5 usa
+  100 + quantidade no domínio confirmado; sexo 1 é masculino e 2/3 feminino. A consulta `campo_morte` do notebook mostra
   os valores publicados.
 - O comprimento do código de município nos dados: o documento declara 6 caracteres
-  (p. 1–2), e o dicionário indica `lpad_6`. Confira nos seus dados antes de juntar com
-  outra base.
+  (p. 1–2). Confira nos seus dados antes de juntar com outra base.
 - Se o layout vale para arquivos processados depois de 2016-03: o documento é o informe
   desse processamento (p. 1).
 
@@ -180,7 +181,17 @@ devolve um `ImportReport`; o estado de uma transação interrompida aparece em
 ### Dicionário
 
 As definições de campo, os metadados de chave estrangeira e as regras de decodificação
-ficam em `src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`. O parser aplica o
-dicionário e preserva os campos não listados; por isso as colunas físicas da tabela
-podem ser mais numerosas que as do dicionário. A validação do dicionário, sozinha, não
+ficam em `src/omnisus_db/data/dicionarios/sih_aih_reduzida.yaml`. A ingestão preserva os valores e tipos do DBF, normaliza nomes de colunas e
+acrescenta as partições e a modalidade de origem. O YAML descreve campos e
+apresentação; ele não comanda coerções na ingestão. Colunas não listadas no YAML
+também são preservadas. A validação do dicionário, sozinha, não
 certifica todos os registros recebidos.
+
+### Auditoria do contrato analítico (2026-09-14)
+
+Regras, divergências, inventário e limites de aplicabilidade estão na
+[auditoria reproduzível](../../reports/evidence/2026-09-14/contrato-analitico/regras.md).
+Ela registra o snapshot 5, os hashes das publicações, schemas e consultas agregadas.
+A aplicabilidade se restringe aos escopos confirmados; uma edição documental não
+valida automaticamente toda a série histórica. A proveniência de arquivo é
+consultada por `LakeReader.publications()` no mesmo snapshot.

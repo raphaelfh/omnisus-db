@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Analytical contract (0.3.0 candidate)
+
+- Public offline `describe_dataset`, `display_row` and `analytical_projection`.
+  SIM/SIH projections expose completed years, per-product sex categories and
+  typed dates with validity states; exact audited source identities gate rules.
+  Stored data is unchanged. Query consumers must pin snapshot and metadata hash.
+- Official SIH TabWin definitions establish the hundred-years offset and female
+  codes 2/3. Composite invalid ages are separate from raw `IDADE=999`; unsupported
+  values remain explicit. Source hashes and documentary conflicts are packaged.
+- Removed unused `Dicionario.arrow_schema`, its type map and unused Polars code
+  helpers. Age presentation and SQL share one rule definition; normalization
+  annotations are descriptive `x-normalization-hint`, never implicit execution.
+- Release builds retain wheel/sdist artifacts. PyPI is opt-in, consistent with
+  the existing wheel distribution decision; no release has been published here.
+
+
 ### Added
 
 - **Notebooks declare PEP 723 dependencies.** Each marimo notebook installs
@@ -56,9 +72,11 @@
   (`Estrutura_SIM_Anterior.pdf` on the DATASUS FTP). The decoder had followed
   `Estrutura_do_SIM_2025.pdf`, whose list is shifted by one, so `310` read as
   "10 dias" instead of "10 meses" and unit 0 read as "Ignorada". Checked
-  against `dtobito - dtnasc` on SIM AC 2022. A value of 99 under units 0–5 is
-  now a real age: `499` reads as "99 anos", not "Ignorada". This changes
-  display only. Stored `idade` values are unchanged.
+  against `dtobito - dtnasc` on SIM AC 2022. Quantity 99 is no longer a
+  universal unknown sentinel: `499` reads as "99 anos". Each unit now obeys
+  its declared limits; unsupported quantities preserve their raw display.
+  The earlier display correction alone did not provide numeric ages; the
+  analytical API above supplies them separately. Stored `idade` is unchanged.
 
 ## v0.2.0 — 2026-09-12
 

@@ -30,7 +30,7 @@ schema:
     - name: codmunnasc
       type: string
       label: Município de nascimento
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunnasc, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: locnasc
@@ -124,7 +124,7 @@ schema:
     - name: codmunres
       type: string
       label: Município de residência
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunres, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: naturalmae
@@ -133,7 +133,7 @@ schema:
     - name: codmunnatu
       type: string
       label: Município de naturalidade da mãe
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunnatu, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: codufnatu

@@ -31,48 +31,30 @@ decoding remains available.
 
 ## Main Python package
 
-Tag and push. Everything else is `release.yml`.
+The distribution channel is a wheel built from a version tag. **The package is
+not published to PyPI, by decision.** Preparing a local artifact does not publish
+it or authorize a tag/push.
 
 ```bash
-# 1. Set the version. It has exactly one home.
-$EDITOR src/omnisus_db/_version.py
-
-# 2. Move the Unreleased section of CHANGELOG.md under the new version.
-$EDITOR CHANGELOG.md
-
-git commit -am "release: v0.2.0"
-git tag v0.2.0
-git push origin main --tags
+uv build --wheel --sdist --out-dir dist
 ```
 
-`release.yml` then checks the tag against the packaged version, runs the
-wheel-only install gate on Linux, macOS and Windows, builds, and publishes to
-PyPI via Trusted Publishing (OIDC) with PEP 740 attestations. There is no
-long-lived token to configure or rotate.
+The version has one home, `src/omnisus_db/_version.py`. Update the changelog and
+lockfile with it. Validate the candidate wheel outside the checkout, including
+public metadata, packaged evidence and analytical projections, before release.
 
-## Repository setup
+After the release is authorized, tag that reviewed commit with `v<version>` and
+push the specific branch/tag. `release.yml` checks the tag, builds wheel/sdist
+once and retains them with checksums as the `distribution` workflow artifact.
+The same wheel passes the binary-only installation matrix on Python 3.12–3.14,
+Linux, macOS and Windows. Consumers install the identified wheel and record its
+SHA-256; they should not depend on editable neighboring checkouts.
 
-The remote is public at https://github.com/raphaelfh/omnisus-db and the
-documentation site deploys from `main` to https://raphaelfh.github.io/omnisus-db.
-The `github-pages` and `pypi` environments exist.
-
-**The package is not published to PyPI, by decision.** The distribution
-channel is the wheel file built from the tag:
-
-```bash
-git checkout v0.2.0
-uv build --wheel --out-dir dist
-pip install dist/omnisus_db-0.2.0-py3-none-any.whl
-```
-
-`release.yml` still runs on every `v*` tag. Its install gate is useful, and its
-`publish` job fails with `invalid-publisher` because no PyPI Trusted Publisher
-exists. That failure is expected, as in the `v0.2.0` run; do not re-run it.
-
-To publish later, the PyPI account owner adds a pending Trusted Publisher
-(project `omnisus-db`, owner `raphaelfh`, repository `omnisus-db`, workflow
-`release.yml`, environment `pypi`) and re-runs only the failed job with
-`gh run rerun <run-id> --failed`.
+The PyPI job is skipped unless repository variable `PUBLISH_TO_PYPI` equals
+`true`. Changing that channel requires the account owner's decision and a
+configured Trusted Publisher (project `omnisus-db`, owner `raphaelfh`, repository
+`omnisus-db`, workflow `release.yml`, environment `pypi`). A missing publisher is
+not an expected failing release step anymore. No token is stored in this repo.
 
 ## Supported Python
 

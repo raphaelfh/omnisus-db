@@ -11,6 +11,12 @@ schema:
       type: string
       label: Número da DO
       constraints: { required: true }
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: contador
       type: integer
       label: Contador
@@ -35,6 +41,50 @@ schema:
       label: Data do óbito
       x-format: ddMMyyyy
       constraints: { required: true }
+      x-metadata:
+        physical_name: DTOBITO
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTOBITO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTOBITO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTOBITO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: horaobito
       type: string
       label: Hora do óbito
@@ -46,19 +96,86 @@ schema:
     - name: codmunnatu
       type: string
       label: Município de naturalidade
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunnatu, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: dtnasc
       type: date
       label: Data de nascimento
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTNASC
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTNASC, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTNASC, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 1
+            locator: 'Linha DTNASC, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: idade
       type: string
       label: Idade
       x-display: idade_sim
+      x-metadata:
+        physical_name: IDADE
+        unit: encoded
+        derivation:
+          kind: coded_age
+          inputs:
+          - idade
+          rule_version: 1.0.0
+          output: idade_anos_completos
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-anterior-13cabba0b9a1
+            pages:
+            - 1
+            locator: 'Linha 07 IDADE: unidade/quantidade e exemplos000,400,505'
     - name: sexo
-      type: integer
+      type: string
       label: Sexo
       x-decode:
         "0": "Ignorado"
@@ -68,6 +185,58 @@ schema:
         "M": "Masculino"
         "F": "Feminino"
         "I": "Ignorado"
+      x-metadata:
+        physical_name: SEXO
+        physical_type:
+          type: string
+          length: 1
+        missing_codes:
+          '1': not_missing
+          '2': not_missing
+          '0': ignored
+          '9': ignored
+          M: not_missing
+          F: not_missing
+          I: ignored
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 2
+            locator: Linha10 SEXO
+        claims:
+        - target: /field/physical_type
+          value_sha256: 848e3f778dde84f2e0e943a8a871c439e45d31d3688547d85fcdb5b3987d2266
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official SIM PDF / SIH TabWin source comparison; see audit evidence.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 2
+            locator: Linha10 SEXO
+          note: Applies only to audited source identities.
+        - target: /field/codes
+          value_sha256: a927ea1d414ebeea12565ce4fd97ddc5ae16b12c281f297984557e4ac8118b06
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official SIM PDF / SIH TabWin source comparison; see audit evidence.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 2
+            locator: Linha10 SEXO
+          note: Applies only to audited source identities.
     - name: racacor
       type: integer
       label: Raça/cor
@@ -139,7 +308,7 @@ schema:
     - name: codmunres
       type: string
       label: Município de residência
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunres, reference: { resource: aux_municipios, fields: codigo_ibge } }
 
@@ -173,7 +342,7 @@ schema:
     - name: codmunocor
       type: string
       label: Município de ocorrência
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codmunocor, reference: { resource: aux_municipios, fields: codigo_ibge } }
 
@@ -362,7 +531,7 @@ schema:
     - name: comunsvoim
       type: string
       label: Município SVO/IML
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: comunsvoim, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: dtatestado
@@ -373,6 +542,50 @@ schema:
     # ========================================================================
     # Bloco VIII — Causas Externas
     # ========================================================================
+      x-metadata:
+        physical_name: DTATESTADO
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 5
+            locator: 'Linha DTATESTADO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 5
+            locator: 'Linha DTATESTADO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 5
+            locator: 'Linha DTATESTADO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: circobito
       type: string
       label: Circunstância do óbito
@@ -421,6 +634,50 @@ schema:
       type: date
       label: Data da investigação
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTINVESTIG
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTINVESTIG, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTINVESTIG, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTINVESTIG, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: causabas_o
       type: string
       label: Causa básica original
@@ -443,10 +700,98 @@ schema:
       type: date
       label: Data cadastro investigação
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTCADINV
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCADINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCADINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCADINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: dtconinv
       type: date
       label: Data conclusão investigação
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTCONINV
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCONINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCONINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 7
+            locator: 'Linha DTCONINV, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: fontes
       type: string
       label: Fontes (combinado)
@@ -471,6 +816,50 @@ schema:
       type: date
       label: Data cadastro informação
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTCADINF
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCADINF, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCADINF, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCADINF, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: morteparto
       type: string
       label: Morte/parto (pós-investigação)
@@ -483,6 +872,50 @@ schema:
       type: date
       label: Data conclusão do caso
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTCONCASO
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCONCASO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCONCASO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 8
+            locator: 'Linha DTCONCASO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: altcausa
       type: string
       label: Alteração de causa
@@ -503,6 +936,50 @@ schema:
       type: date
       label: Data do cadastro
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTCADASTRO
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTCADASTRO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTCADASTRO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTCADASTRO, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: stcodifica
       type: string
       label: Status codificação
@@ -521,6 +998,50 @@ schema:
       type: date
       label: Data recebimento
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTRECEBIM
+        physical_type:
+          type: string
+          length: 8
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECEBIM, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECEBIM, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: d250552cb2cfdaafce9d365c236eb53a1f7a34dfeee9dd571daa0ab10900e5c1
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECEBIM, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: atestado
       type: string
       label: Atestado (texto)
@@ -528,12 +1049,68 @@ schema:
       type: date
       label: Data recebimento original
       x-format: ddMMyyyy
+      x-metadata:
+        physical_name: DTRECORIGA
+        physical_type:
+          type: string
+          length: null
+        applicability:
+          status: confirmed
+          data_period: null
+          valid_from: null
+          valid_until: null
+          conditions:
+          - Only the exact source identities in dataset.analytics.validated_sources.
+          reason: Documented rule compared with snapshot5; no applicability to other source
+            hashes is inferred.
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECORIGA, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+        claims:
+        - target: /field/format
+          value_sha256: a13ca65b57465876bc69a130063253d83bccd0866f370e742ede623e4f79dd74
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECORIGA, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
+        - target: /field/physical_type
+          value_sha256: b2938d7c5bcf65ed1e26c1ccb6394c088c14e7ecda0979b2d7b148aaa9de52e2
+          status: verified_in_source
+          checked_at: '2026-09-14'
+          method: Official PDF field/page inspection and comparison with audited snapshot.
+          reviewer: OpenAI Codex
+          evidence:
+          - source_id: sim-b4195ac8e0f8
+            pages:
+            - 6
+            locator: 'Linha DTRECORIGA, colunas Tipo/Tamanho e Valores: Data no padrão ddmmaaaa'
+          note: Applicability restricted to exact audited source identities.
     - name: opor_do
       type: integer
       label: Oportunidade da DO
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: ufinform
       type: string
       label: UF informante
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: cb_pre
       type: string
       label: Causa básica pré-seleção
@@ -585,14 +1162,32 @@ schema:
         "15": "Óbito possível de ser materno"
         "16": "Restrição de idade (TP_MSG_5)"
         "17": "Restrição de idade (TP_MSG_6)"
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: cb_alt
       type: string
       label: Causa básica alterada
       foreignKeys:
         - { fields: cb_alt, reference: { resource: aux_cid10, fields: codigo } }
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: covid_clas
       type: string
       label: Classificação COVID
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: mat_clas
       type: string
       label: Classificação materna
@@ -600,33 +1195,124 @@ schema:
     # ========================================================================
     # Partições + proveniência (adicionados pelo ETL)
     # ========================================================================
+      x-metadata:
+        issues:
+        - id: absent-in-audited-snapshot
+          status: open
+          description: Not disseminated in audited snapshot5. Legacy definition retained;
+            historical applicability unconfirmed.
     - name: ano
       type: integer
       label: Ano
       constraints: { required: true, minimum: 1996 }
+      x-metadata:
+        derivation:
+          kind: source_partition
+          input: source_uri
+          rule: DATASUS filename scope
     - name: uf
       type: string
       label: UF
       constraints: { required: true, pattern: "^[A-Z]{2}$" }
-    - name: _fonte_arquivo
+      x-metadata:
+        derivation:
+          kind: source_partition
+          input: source_uri
+          rule: DATASUS filename scope
+    - name: _source_release
       type: string
-      label: Arquivo fonte
-    - name: _data_extracao
-      type: string
-      label: Data de extração
-    - name: _hash_arquivo
-      type: string
-      label: Hash do arquivo
-    - name: _sistema
-      type: string
-      label: Sistema
-    - name: _grupo
-      type: string
-      label: Grupo
-
+      label: Modalidade da fonte
+      x-decode: {final: Final, prelim: Preliminar}
+      derivation: {kind: publication, input: source_uri, rule: release_from_uri}
+      x-metadata:
+        derivation:
+          kind: publication
+          input: source_uri
+          rule: release_from_uri
   primaryKey: [numerodo]
 x-source-format: dbc
 x-source-family: datasus_ftp
 x-source-prefix: DO
 x-partitions: [ano, uf]
-x-version: "2.0.0"
+x-version: "2.1.0"
+
+x-analytics:
+  version: 1.0.0
+  applicability_policy: exact_audited_source_identity
+  validated_sources:
+  - ano: 2022
+    uf: RR
+    release: final
+    source_sha256: 6643344fe1ab587d648e5e0ea8cf7e3ef9e5b5b7021a12dcbbc54f5724d2ec65
+  - ano: 2023
+    uf: RR
+    release: final
+    source_sha256: 15b5203507161b7c35f9c69a52c955bdac133629549099b85a88e03a9a45baf0
+  - ano: 2024
+    uf: RR
+    release: final
+    source_sha256: 86d66d736b83e5653d86d55eb47ab6db6b3e8238de3d362f9237768ed5c8a79a
+  - ano: 2024
+    uf: SP
+    release: final
+    source_sha256: fac57a15fe3d7efa3b0f2d797043a9335ef3d9dd6e824623031d71471533daf8
+  age:
+    field: idade
+    kind: sim
+    units:
+      '0':
+        unit: minute
+      '1':
+        unit: hour
+      '2':
+        unit: day
+      '3':
+        unit: month
+        maximum_value: 11
+      '4':
+        unit: year
+      '5':
+        unit: year
+        offset: 100
+    maximum_value: 99
+    ignored_values:
+    - '000'
+    ignored_units:
+    - '9'
+    under_one_year:
+    - '400'
+    evidence:
+    - source_id: sim-anterior-13cabba0b9a1
+      pages:
+      - 1
+      locator: 'Linha 07 IDADE: unidade/quantidade e exemplos000,400,505'
+    notes:
+    - Zero hours/days are observed in the validated sources; do not impose DOM min01.
+    - Quantity99 is retained for years; months above11 are unsupported.
+  sex:
+    field: sexo
+    categories:
+      '1': male
+      '2': female
+      '0': null
+      '9': null
+      M: male
+      F: female
+      I: null
+    evidence:
+    - source_id: sim-b4195ac8e0f8
+      pages:
+      - 2
+      locator: Linha10 SEXO
+  dates:
+  - dtobito
+  - dtnasc
+  - dtatestado
+  - dtinvestig
+  - dtcadinv
+  - dtconinv
+  - dtcadinf
+  - dtconcaso
+  - dtcadastro
+  - dtrecebim
+  - dtrecoriga

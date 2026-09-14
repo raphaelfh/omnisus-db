@@ -10,8 +10,8 @@ PCE,PCE,1,35,0,0,1,35,não auditada,2026-09-10,pce-9f83353e4e10
 PO,PO,1,23,0,0,1,23,não auditada,2026-09-10,po-5503556badd2
 RESP,RESP,1,78,0,0,1,78,não auditada,2026-09-10,resp-c6e3fda1713d
 SIASUS,PA,1,60,0,0,1,59,não auditada,2026-09-10,siasus-70fe69dbd4cf
-SIHSUS,RD,1,113,95,21,1,110,não auditada,2026-09-10,sihsus-1e89d5f2cc41
-SIM,DO,1,87,87,38,1,81,não auditada,2026-09-10,sim-b4195ac8e0f8
+SIHSUS,RD,1,113,95,21,2,110,não auditada,2026-09-10,sihsus-1e89d5f2cc41|sih-tab-714ed980d483
+SIM,DO,1,87,87,38,3,81,não auditada,2026-09-10,sim-b4195ac8e0f8|sim-dom-fb396a277981|sim-anterior-13cabba0b9a1
 SINAN,CHAG,1,108,0,0,2,107,não auditada,2026-09-10,sinan-16c598f86fbf|sinan-b3e0561c7a2d
 SINASC,DN,1,61,61,26,1,22,não auditada,2026-09-10,sinasc-24e0d4388ea1
 SISCOLO,CC,1,102,0,0,0,0,não auditada,2026-09-10,

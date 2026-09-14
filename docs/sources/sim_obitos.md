@@ -53,9 +53,8 @@ DATASUS, um por UF e ano.
 - `lococor` diz o local de ocorrência: 1 = hospital, 2 = outros estabelecimentos de
   saúde, 3 = domicílio, 4 = via pública, 5 = outros, 6 = aldeia indígena,
   9 = ignorado (Estrutura do SIM 2025, p. 3).
-- A importação não ajusta o comprimento dos códigos de município: `lpad_6` está
-  definido em `src/omnisus_db/transforms/codes.py`, mas o caminho de importação
-  (`staging.py`) não o chama.
+- A importação não ajusta o comprimento dos códigos de município: o staging
+  preserva os códigos publicados. Confira o comprimento antes de fazer junções.
 
 ## Cobertura e modalidade
 
@@ -85,9 +84,9 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
 - Em óbito fetal, `idade` não deve ser preenchida (Estrutura do SIM 2025, p. 2).
 - `sexo` usa M ou 1 = masculino, F ou 2 = feminino, e I, 0 ou 9 = ignorado
   (Estrutura do SIM 2025, p. 2).
-- O dicionário declara `sexo` como inteiro, embora o documento liste letras; a
-  divergência está aberta em `docs/dicionario/exemplos/sim_obitos.sexo.json`
-  (questão `legacy-logical-type`).
+- O contrato declara `sexo` como código textual, preservando letras e dígitos.
+  O exemplo experimental antigo registra a divergência histórica de tipo lógico;
+  a definição atual está no contrato público `describe_dataset()`.
 - `causabas_o` guarda a causa básica informada antes da resseleção
   (Estrutura do SIM 2025, p. 6). Em outro campo, `altcausa` indica se houve correção
   ou alteração da causa do óbito após investigação (Estrutura do SIM 2025, p. 8).
@@ -119,13 +118,11 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
   registros era fetal (`reports/evidence/2026-09-10/marimo-real/verification.json`,
   `filter_2022_non_fetal` e `empty_fetal_selection`). Não conte óbitos fetais com esta
   base sem conferir `tipobito` nos seus dados.
-- A unidade dos dias em `idade`: o documento dá a faixa "de 24 horas e 29 dias", com
-  quantidade de 01 a 29, mas nenhum código de unidade para ela (p. 2). O decodificador
-  de exibição da biblioteca lê a unidade 3 como dias
-  (`src/omnisus_db/transforms/dictionaries.py`, `_IDADE_SIM_UNITS`), o que diverge do
-  documento; a correção está registrada fora deste guia
-  (`reports/2026-09-13-guia-pesquisador-validacao.md`, §4.3). Confira a distribuição do
-  primeiro dígito antes de converter.
+- A edição de 07/2025 diverge das unidades dos documentos anterior e DOM. O DOM
+  confirma 0 = minutos, 1 = horas, 2 = dias e 3 = meses. O documento anterior
+  distingue `000` ignorado e `400` menor de um ano sem subunidade. Há 91 valores
+  `100`/`200` no snapshot fora dos mínimos documentais; a projeção aceita zero
+  anos completos nesses escopos e registra essa decisão, conforme a auditoria abaixo.
 - Se a edição de 07/2025 vale para arquivos de anos anteriores: o exemplo auditado do
   campo `sexo` deixa aberta a confirmação de uma referência aplicável a 2023
   (`docs/dicionario/exemplos/sim_obitos.sexo.json`, questão `edition-applicability`).
@@ -134,8 +131,8 @@ publicados = odb.available_releases("sim_obitos", ufs=["RR"], refresh=True)
   `codmunocor` com a UF do arquivo; a consulta `residencia_e_ocorrencia` do notebook faz
   isso.
 - O comprimento do código de município nos dados: o documento declara 7 e 8
-  caracteres (p. 3), e o dicionário liga esses campos a `aux_municipios` com a
-  indicação `lpad_6`. Confira nos seus dados antes de juntar com a população do IBGE.
+  caracteres (p. 3), e o dicionário liga esses campos a `aux_municipios`.
+  Confira nos seus dados antes de juntar com a população do IBGE.
 
 ## Como usar
 
@@ -184,9 +181,10 @@ devolve um `ImportReport`; o estado de uma transação interrompida aparece em
 ### Dicionário
 
 As definições de campo, os metadados de chave estrangeira e as regras de decodificação
-ficam em `src/omnisus_db/data/dicionarios/sim_obitos.yaml`. O parser aplica o
-dicionário e preserva os campos não listados; por isso as colunas físicas da tabela
-podem ser mais numerosas que as do dicionário. A validação do dicionário, sozinha, não
+ficam em `src/omnisus_db/data/dicionarios/sim_obitos.yaml`. A ingestão preserva os valores e tipos do DBF, normaliza nomes de colunas e
+acrescenta as partições e a modalidade de origem. O YAML descreve campos e
+apresentação; ele não comanda coerções na ingestão. Colunas não listadas no YAML
+também são preservadas. A validação do dicionário, sozinha, não
 certifica todos os registros recebidos.
 
 ### Dados preliminares
@@ -206,3 +204,12 @@ with odb.LakeReader(odb.DEFAULT_TARGET) as leitor:
 odb.import_dataset("sim_obitos", scopes=movidos, target=odb.DEFAULT_TARGET,
                    policy="replace", run_id="sim-final-2026")
 ```
+
+### Auditoria do contrato analítico (2026-09-14)
+
+Regras, divergências, inventário e limites de aplicabilidade estão na
+[auditoria reproduzível](../../reports/evidence/2026-09-14/contrato-analitico/regras.md).
+Ela registra o snapshot 5, os hashes das publicações, schemas e consultas agregadas.
+A aplicabilidade se restringe aos escopos confirmados; uma edição documental não
+valida automaticamente toda a série histórica. A proveniência de arquivo é
+consultada por `LakeReader.publications()` no mesmo snapshot.

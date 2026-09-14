@@ -37,9 +37,8 @@ Saúde e arquivos publicados pelo DATASUS, um por UF e ano.
 - `ufinform` é o código da UF que informou o registro, um campo diferente da coluna
   `uf` que vem do nome do arquivo (Estrutura do SINASC para CD, p. 2;
   `src/omnisus_db/sources/datasus_ftp/staging.py`).
-- A importação não ajusta o comprimento dos códigos de município: `lpad_6` está
-  definido em `src/omnisus_db/transforms/codes.py`, mas o caminho de importação
-  (`staging.py`) não o chama.
+- A importação não ajusta o comprimento dos códigos de município: `x-normalization-hint: lpad_6` é
+  uma anotação descritiva e não é executada pela importação.
 
 ## Cobertura e modalidade
 

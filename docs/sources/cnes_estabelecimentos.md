@@ -50,9 +50,8 @@ Arquivo de estabelecimentos (ST) do Cadastro Nacional de Estabelecimentos de Sa�
   saúde NOAS (Informe CNES 2017-06, p. 3).
 - O dicionário marca `codufmun` com `lpad_6` e o liga a `aux_municipios`
   (`src/omnisus_db/data/dicionarios/cnes_estabelecimentos.yaml`), mas a importação não
-  ajusta o comprimento dos códigos: `lpad_6` está definido em
-  `src/omnisus_db/transforms/codes.py`, e o caminho de importação (`staging.py`) não o
-  chama.
+  ajusta o comprimento dos códigos: `x-normalization-hint: lpad_6` é uma anotação descritiva;
+  a importação não executa esse preenchimento.
 - O código de município da população do IBGE tem 7 dígitos
   (`src/omnisus_db/data/dicionarios/ibge_populacao.yaml`, `codigo_ibge`), e o notebook
   da população junta municípios pelos 6 primeiros dígitos

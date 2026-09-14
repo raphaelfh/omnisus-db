@@ -20,8 +20,8 @@ em PDFs não são confirmações de significado, códigos ou vigência.
 | PO | PO | 1 | 23 | 0 | 0 | 1 |
 | RESP | RESP | 1 | 78 | 0 | 0 | 1 |
 | SIASUS | PA | 1 | 60 | 0 | 0 | 1 |
-| SIHSUS | RD | 1 | 113 | 95 | 21 | 1 |
-| SIM | DO | 1 | 87 | 87 | 38 | 1 |
+| SIHSUS | RD | 1 | 113 | 95 | 21 | 2 |
+| SIM | DO | 1 | 87 | 87 | 38 | 3 |
 | SINAN | CHAG | 1 | 108 | 0 | 0 | 2 |
 | SINASC | DN | 1 | 61 | 61 | 26 | 1 |
 | SISCOLO | CC | 1 | 102 | 0 | 0 | 0 |
@@ -63,6 +63,9 @@ e IDs das fontes com menção textual, mantendo a validação semântica como pe
 | SINASC | [Estrutura_SINASC_para_CD.pdf](ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/NOV/DOCS/Estrutura_SINASC_para_CD.pdf) | `sinasc-24e0d4388ea1` |
 | SINAN | [DIC_DADOS_Chagas_v5.pdf](https://portalsinan.saude.gov.br/images/documentos/Agravos/Chagas/DIC_DADOS_Chagas_v5.pdf) | `sinan-16c598f86fbf` |
 | SINAN | [DIC_DADOS_Notificacao_Individual_v5.pdf](https://portalsinan.saude.gov.br/images/documentos/Agravos/NINDIV/DIC_DADOS_Notificacao_Individual_v5.pdf) | `sinan-b3e0561c7a2d` |
+| SIHSUS | [TAB_SIH.zip](ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Auxiliar/TAB_SIH.zip) | `sih-tab-714ed980d483` |
+| SIM | [Dicionário DOM (+ investigação materna)](https://svs.aids.gov.br/daent/cgiae/coesv/sistemas-informacao/sim/documentacao/dicionario-de-dados-SIM-tabela-DOM.pdf) | `sim-dom-fb396a277981` |
+| SIM | [Estrutura SIM anterior — Mortalidade 2006](ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DOCS/Estrutura_SIM_Anterior.pdf) | `sim-anterior-13cabba0b9a1` |
 
 ## Rastreamento no repositório
 

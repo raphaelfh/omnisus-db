@@ -9,7 +9,7 @@ origem em outro YAML para compreender a evidência do campo.
 
 | Chave no JSON resolvido | Conteúdo e regra |
 | --- | --- |
-| `schema_version` | Versão do contrato, inicialmente `0.1.0-draft` |
+| `schema_version` | Versão do contrato, `1.0.0`; exemplo histórico `0.1.0-draft` |
 | `dataset` | ID, categoria, subtipo e produto de origem |
 | `dictionary_version` | Versão editorial da definição |
 | `field.id`, `name`, `physical_name` | Identidade estável, nome exposto e nome físico |
@@ -85,23 +85,22 @@ Datas também têm papéis distintos: `retrieved_on` é obtenção do documento;
 apenas o mês declarado; `checked_at` é conferência semântica; `data_period` é o
 período observado. Não preencher um dia fictício quando a fonte só informa mês.
 
-## Extensão de autoria proposta
+## Extensão de autoria
 
 Nos YAMLs atuais, conservar `description`, `type`, `x-decode`, `x-format` e
 demais propriedades usadas pela lib. Acrescentar `x-metadata` com identidade,
-tipo físico, domínio, proveniência e aplicabilidade. O compilador proposto
-transformará essa autoria no contrato resolvido:
+tipo físico, domínio, proveniência e aplicabilidade. O resolvedor transforma essa autoria no contrato resolvido:
 
 | Autoria | Exportação |
 | --- | --- |
 | `schema.fields[].name` | `field.name` |
 | `label`, `description`, `type` | `field.label`, `description`, `logical_type` |
 | `x-decode` + classificação editorial dos códigos | `field.codes` |
-| `x-metadata.physical` | `field.physical_name`, `physical_type` |
+| `x-metadata.physical_name` e `physical_type` | `field.physical_name`, `physical_type` |
 | `x-metadata.claims` + IDs em `sources/` | `claims` + `sources` resolvidos |
 | `x-metadata.applicability` | `applicability` |
 
-O compilador ainda precisa ser implementado. Nunca preencher evidência por padrão
+O resolvedor `describe_dataset` implementa esta separação. Nunca preencher evidência por padrão
 para todos os `x-decode` antigos. A migração inicial deve marcá-los como
 `unreviewed`, preservando as decodificações existentes até uma revisão específica.
 
@@ -115,8 +114,9 @@ mantêm a correspondência documentada. A revisão foi feita por Codex; não é
 uma assinatura de revisão humana independente.
 
 Há uma divergência relevante para a integração: o YAML atual da biblioteca usa
-`type: integer`, embora o documento também liste códigos alfabéticos. O exemplo
-mostra separadamente esse tipo lógico legado e o tipo físico documental. A
+`type: integer`, embora o documento também liste códigos alfabéticos. O exemplo histórico
+mostra separadamente esse tipo lógico legado e o tipo físico documental. A versão
+atual corrige o tipo lógico de `sexo` para string e mantém os códigos. A
 aplicabilidade do manual de 2025 ao arquivo amostrado `DORR2023.dbc` permanece
 `unknown`; o exemplo não autoriza uma conversão de tipo ou recodificação desses
 dados. Veja a URL oficial e o hash no próprio [JSON](exemplos/sim_obitos.sexo.json).

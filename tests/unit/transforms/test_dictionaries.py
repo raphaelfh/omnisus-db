@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pyarrow as pa
 import pytest
 
 from omnisus_db.transforms.dictionaries import Dicionario, load_dicionario
 
 # ---------------------------------------------------------------------------
-# Loading + caching + Arrow schema
+# Loading + caching
 # ---------------------------------------------------------------------------
 
 
@@ -19,15 +18,6 @@ def test_load_aux_uf_returns_dicionario() -> None:
     assert isinstance(dic, Dicionario)
     assert dic.name == "aux_uf"
     assert dic.encoding == "utf-8"
-
-
-def test_dicionario_arrow_schema_includes_required_fields() -> None:
-    dic = load_dicionario("aux_uf")
-    schema = dic.arrow_schema
-    assert isinstance(schema, pa.Schema)
-    names = schema.names
-    assert "codigo_ibge" in names
-    assert "sigla" in names
 
 
 def test_load_dicionario_unknown_raises() -> None:
@@ -49,18 +39,6 @@ def test_load_sim_obitos_has_expected_extensions() -> None:
     # Type-tolerant decode: int input + string keys in YAML
     assert dic.decode("sexo", 1) == "Masculino"
     assert dic.decode("sexo", 99) == 99
-
-
-def test_load_sim_obitos_arrow_schema_round_trip() -> None:
-    dic = load_dicionario("sim_obitos")
-    schema = dic.arrow_schema
-    # Required fields present
-    assert "numerodo" in schema.names
-    assert "ano" in schema.names
-    # Date types mapped
-    assert schema.field("dtobito").type == pa.date32()
-    # Integer mapped
-    assert schema.field("sexo").type == pa.int64()
 
 
 # ---------------------------------------------------------------------------

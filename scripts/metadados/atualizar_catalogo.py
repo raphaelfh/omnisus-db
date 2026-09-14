@@ -4,16 +4,13 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 from pathlib import Path
 
+from omnisus_db.metadata import sources_registry
+
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs/dicionario"
-# Edição lida na página renderizada; vinculada aos bytes, não ao nome do arquivo.
-KNOWN_EDITIONS = {
-    "b4195ac8e0f825a794cb487df93db41601a2f430a708172f494f1251b55eeeb1": "07/2025",
-}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -29,55 +26,30 @@ def main() -> None:
     audit_dir = args.audit_dir.resolve()
     audit = json.loads((audit_dir / "auditoria_fontes.json").read_text(encoding="utf-8"))
     checked_on = audit["consulta_utc"][:10]
-    sources = []
-    for item in audit["documentos"]:
-        if "sha256" not in item:
-            continue
-        original_path = Path(item["arquivo"])
-        # O caminho de máquina da auditoria não integra o contrato distribuído.
-        cache_path = (
-            ROOT
-            / "data/lake/panorama-datasus/documentacao-auditoria"
-            / original_path.parent.name
-            / original_path.name
-        )
-        if original_path.is_file():
-            cache_path = original_path
-        if args.check_local:
-            content = cache_path.read_bytes()
+    registry = sources_registry()
+    sources = registry["sources"]
+    if args.check_local:
+        import hashlib
+
+        by_hash = {source["sha256"]: source for source in sources}
+        for item in audit["documentos"]:
+            if "sha256" not in item:
+                continue
+            source = by_hash[item["sha256"]]
+            original = Path(item["arquivo"])
+            cache = (
+                ROOT
+                / "data/lake/panorama-datasus/documentacao-auditoria"
+                / original.parent.name
+                / original.name
+            )
+            path = original if original.is_file() else cache
+            content = path.read_bytes()
             if (
-                len(content) != item["bytes"]
-                or hashlib.sha256(content).hexdigest() != item["sha256"]
+                len(content) != source["bytes"]
+                or hashlib.sha256(content).hexdigest() != source["sha256"]
             ):
-                raise ValueError(f"Evidência local divergente: {cache_path}")
-        category = item["categoria"]
-        source_id = f"{category.lower().replace(' ', '-')}-{item['sha256'][:12]}"
-        sources.append(
-            {
-                "id": source_id,
-                "category": category,
-                "title": original_path.name,
-                "publisher": None,
-                "authority": "official",
-                "url": item["url"],
-                "sha256": item["sha256"],
-                "bytes": item["bytes"],
-                "edition": KNOWN_EDITIONS.get(item["sha256"]),
-                "published_on": None,
-                "retrieved_on": checked_on,
-                "last_checked_on": checked_on,
-            }
-        )
-    ids = [source["id"] for source in sources]
-    if len(ids) != len(set(ids)):
-        raise ValueError("IDs de fontes duplicados")
-    registry = {
-        "schema_version": "0.1.0-draft",
-        "audit_checked_at": audit["consulta_utc"],
-        "origin": audit_dir.name,
-        "scope": "Documentos obtidos na auditoria; não implica validação semântica de todos os campos.",
-        "sources": sources,
-    }
+                raise ValueError(f"Evidência local divergente: {path}")
 
     coverage = {row["categoria"]: row for row in read_csv(audit_dir / "auditoria_cobertura.csv")}
     rows = []

@@ -19,17 +19,17 @@ biblioteca não constitui confirmação oficial.
 | [Catálogo da auditoria](catalogo.md) | Cobertura das 18 categorias e fontes consultadas |
 | [Manutenção e checagem](manutencao.md) | Atualização, conflitos, revisão e critérios de publicação |
 | [Consumo e integração](consumo.md) | Uso atual, protótipo JSON/Arrow e implantação na lib |
-| [JSON Schema](schemas/column-metadata.schema.json) | Contrato experimental `0.1.0-draft` |
+| [JSON Schema](schemas/column-metadata.schema.json) | Contrato `1.0.0` e exemplo histórico `0.1.0-draft` |
 | [Exemplo SIM / DO / SEXO](exemplos/sim_obitos.sexo.json) | Um campo com evidência oficial localizada |
 | [Registro das fontes](fontes/registro.json) | URLs, SHA-256, tamanho e data da consulta |
 | [Cobertura em CSV](cobertura.csv) | Inventário consumível das lacunas |
 | [Inventário por campo](campos.csv) | 1.326 ocorrências, tipos físicos, definições locais e fontes candidatas |
 
-O contrato e a integração descritos são uma proposta implementável. O protótipo
-JSON e seu validador são executáveis; a biblioteca **ainda não fornece** a API
-pública de metadados proposta nem anexa automaticamente esses metadados a todas
-as colunas. Os YAMLs e decodificadores de produção não foram alterados por esta
-organização documental.
+A biblioteca fornece o contrato público `1.0.0`, a apresentação via `display_row`
+e projeções analíticas SQL de SIM/SIH para identidades de fonte auditadas. Veja
+[Consumo e integração](consumo.md). O exemplo histórico continua como referência
+arquivada; a produção resolve os YAMLs e o registro de fontes empacotados. A
+biblioteca não anexa automaticamente metadados a todas as consultas/colunas.
 
 ## Escopo e limites da evidência
 

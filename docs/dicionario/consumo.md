@@ -1,121 +1,109 @@
 # Consumo dos metadados
 
-## O que funciona atualmente
+A biblioteca fornece `describe_dataset`, `display_row` e `analytical_projection`.
+Elas funcionam offline com os recursos do wheel. Consultar metadados não abre um
+lake nem baixa documentos. O contrato resolvido é `1.0.0`; a versão editorial do
+dicionário e a versão da regra analítica são informações separadas.
 
-O carregador interno já permite consultar as definições existentes:
+## Definições e apresentação
 
 ```python
-from omnisus_db.transforms.dictionaries import load_dicionario
+import omnisus_db as odb
 
-dictionary = load_dicionario("sim_obitos")
-field = dictionary.field_def("sexo")
-print(field.get("description"))  # pode não estar preenchida
-print(field.get("x-decode", {}))
+metadata = odb.describe_dataset("sim_obitos")
+sexo = next(item for item in metadata["fields"] if item["field"]["name"] == "sexo")
+print(sexo["field"]["logical_type"])
+print(sexo["claims"])
+print(metadata["metadata_hash"])
+print(odb.display_row("sim_obitos", {"idade": "469", "sexo": "2"}))
 ```
 
-Esse caminho é interno e retorna o conteúdo legado, sem garantia de revisão
-oficial por campo. Atualmente `Dicionario.arrow_schema` constrói os tipos sem
-anexar a proveniência proposta às colunas.
+Cada chamada devolve dados independentes. `fields` contém documentos por coluna,
+com referências resolvidas e estados de revisão; `schema.fields` preserva as
+definições de autoria para consumidores de apresentação. Tipos legados são
+**descritivos**: nenhum deles autoriza cast ou recodificação automática.
+`display_row` retorna rótulos e preserva valores não interpretáveis; não usar seu
+texto para calcular idades. SIH exige `cod_idade` e `idade` na mesma linha.
 
-Para explorar todas as colunas amostradas, o [inventário CSV](campos.csv) traz
-categoria/tabela/coluna, tipo físico, largura, rótulos e códigos locais, fontes
-com menção textual e data da auditoria. `codigos_locais_json` é JSON dentro da
-célula CSV; célula vazia significa informação não mapeada. Esses dados legados
-continuam identificados como não auditados semanticamente e não satisfazem,
-por si só, o contrato de evidência verificada.
+`physical_type` descreve o documento de origem, com comprimento desconhecido como
+`null`. O tipo SQL efetivo vem de `DESCRIBE` no snapshot da consulta. Os valores
+originais do lake continuam preservados.
 
-## Protótipo executável
+## Projeções para análise
 
-O [exemplo JSON](exemplos/sim_obitos.sexo.json) pode ser lido diretamente por qualquer
-consumidor JSON. O script `scripts/metadados/consultar.py`, no checkout, valida contrato, referências e
-hash das afirmações. Também permite anexar o objeto a uma coluna Arrow e
-conferir o transporte por Parquet, usando uma tabela vazia: não fabrica dados
-de saúde para demonstrar metadados.
+A edição inicial confirma apenas os arquivos SIM/SIH identificados por escopo,
+modalidade e SHA-256 em `metadata["analytics"]["validated_sources"]`. Outro arquivo,
+mesmo da mesma UF/ano, não herda automaticamente a interpretação. A função não
+consulta o lake: o chamador deve fornecer schema e identidades do mesmo snapshot,
+verificando que as publicações representam todas as linhas dos escopos selecionados.
 
-Na raiz do repositório, em ambiente com `jsonschema` e `pyarrow`:
+```python
+import omnisus_db as odb
+
+target = "ducklake:./data/omnisus-v2.ducklake"
+with odb.LakeReader(target, snapshot_id=5) as reader:
+    con = reader.connect()
+    schema = {row[0]: row[1] for row in con.sql("DESCRIBE lake.sim_obitos").fetchall()}
+    publications = [row for row in reader.publications()
+                    if row["dataset"] == "sim_obitos" and row["active"] and row["managed"]]
+    contexts = [odb.SourceContext.from_publication(row) for row in publications]
+    projection = odb.analytical_projection("sim_obitos", observed_schema=schema, scopes=contexts)
+    print(projection.rule_version, projection.metadata_hash)
+    print(projection.unavailable)
+```
+
+Depois de verificar a cobertura do manifesto, o consumidor compõe uma subconsulta
+com `DerivedColumn.expression AS DerivedColumn.name`. Os nomes de origem são
+resolvidos/escapados pela biblioteca. Filtros de usuário continuam vinculados por
+parâmetros na consulta do consumidor. As expressões executam em SQL nativo, sem
+UDF Python por registro e sem criar views persistentes.
+
+As colunas disponíveis são `idade_anos_completos`, `idade_status`, `sexo_categoria`,
+`sexo_status`, `<campo>_data` e `<campo>_data_status`. Estados distinguem `valid`,
+`missing`, `ignored`, `invalid` e `unsupported`; nenhum deles deve virar zero por
+conveniência. `SIM 400` significa zero anos completos com precisão menor de um ano,
+não zero dias. Faixas etárias pertencem ao relatório.
+
+Versão analítica solicitada e ausente gera erro. Colisão de nome derivado também.
+Campo obrigatório ausente, dataset sem regra e contexto não confirmado retornam
+indisponibilidade. `x-display` não indica capacidade analítica. Para reproduzir
+resultados, fixar snapshot, versão do pacote/artefato, `rule_version` e
+`metadata_hash`. Metadata hash deve ser conferido antes de reaplicar um preset.
+
+## Fontes, limitação e auditoria
+
+O registro canônico está em `src/omnisus_db/data/dicionarios/sources/registry.json`.
+`docs/dicionario/fontes/registro.json` é gerado dele. Definições e revisões de campo
+ficam nos YAMLs. Uma alteração de valor revisado exige atualizar sua evidência e
+hash; referências inexistentes geram erro. Campo sem revisão não ganha aprovação
+por estar no pacote.
+
+A auditoria do snapshot 5, com SQL e agregados, está em
+`reports/evidence/2026-09-14/contrato-analitico/`. A referência SIH `DT_INTER` possui
+grafia/formato inconsistente no manual; o contrato registra o conflito e restringe
+a interpretação ao recorte conferido. Idades SIH fora do domínio explicitamente
+suportado ficam `unsupported`, incluindo `IDADE=999` sob unidade válida.
 
 ```bash
-python scripts/metadados/consultar.py
-python scripts/metadados/consultar.py --metadata docs/dicionario/exemplos/sim_obitos.sexo.json --json
-python scripts/metadados/consultar.py --arrow
+python scripts/metadados/consultar.py --dataset sim_obitos --field sexo --json
+python scripts/metadados/consultar.py --dataset sih_aih_reduzida --field dt_inter --arrow
+python scripts/metadados/auditar_contrato.py --target ducklake:./data/omnisus-v2.ducklake --snapshot-id 5 --out ./reports/audit --acceptance-only
 ```
 
-`--json` emite exclusivamente o documento validado no stdout, para consumo por
-pipes ou outros programas. Falhas de validação retornam código diferente de zero
-e diagnóstico no stderr. `--json` e `--arrow` são modos mutuamente exclusivos.
-O notebook `notebooks/metadados_cli.py`, no checkout, executa esses comandos e
-consultas Python aos CSVs do catálogo, exibindo as saídas reais e filtros por
-categoria/tabela/coluna. Não há ainda um comando nativo `omnisus-db metadata`.
+O script de consulta valida o documento e pode demonstrar transporte Arrow/Parquet
+em tabela vazia. `--metadata arquivo.json` valida um exemplo arquivado. O exemplo
+histórico `0.1.0-draft` permanece legível; não é fonte de produção. Não há transporte
+automático de metadados em toda consulta/exportação: para SQL/CSV guardar o JSON e a
+identidade da regra no contrato da consulta.
 
-Leitura direta, sem depender da API futura:
+## Migração e limpeza
 
-```python
-import json
-from pathlib import Path
+Use a interface pública em vez de importar o carregador interno. `Dicionario`
+continua interno para ingestão/apresentação; `Dicionario.arrow_schema` foi removido,
+pois não descrevia o lake e não tinha consumidor de produção. Helpers Polars de
+`transforms.codes` usados apenas por testes também foram removidos.
+`x-normalization-hint` substitui a antiga anotação `x-transform: lpad_6` e não executa
+normalização. A ingestão física e seu schema Arrow continuam implementados.
 
-metadata = json.loads(
-    Path("docs/dicionario/exemplos/sim_obitos.sexo.json").read_text(encoding="utf-8")
-)
-print(metadata["field"]["description"])
-print(metadata["field"]["codes"])
-print(metadata["claims"][0]["checked_at"])
-print(metadata["sources"][0]["url"])
-print(metadata["applicability"]["status"])  # unknown: não confirmar vigência
-```
-
-O protótipo só demonstra leitura e transporte. Não recodifica dados nem escolhe
-automaticamente uma edição aplicável.
-
-## Contrato de distribuição recomendado
-
-Distribuir um JSON resolvido por dataset/edição com índice por coluna, além de
-um arquivo acompanhante `*.metadata.json` junto à exportação de dados. Incluir
-versões do contrato e dicionário, identidade do produto e hash dos metadados.
-Cada coluna deve poder ser obtida isoladamente no formato deste exemplo.
-
-Para Arrow, usar uma chave de metadado com namespace, `omnisus:column`, cujo
-valor é JSON UTF-8. A API oficial aceita metadados em
-[campos Arrow](https://arrow.apache.org/docs/python/generated/pyarrow.field.html)
-e no [schema](https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html).
-Em domínios grandes, anexar uma referência versionada e distribuir a lista
-separadamente para evitar repetir milhares de códigos em cada arquivo.
-
-Não presumir preservação em toda transformação. Testar as rotas usadas pela lib
-(Arrow → Parquet → Arrow, Polars, DuckDB/DuckLake e consultas SQL). Projeções,
-aliases e colunas derivadas precisam de associação explícita à coluna original
-ou de metadados de derivação. Para SQL e CSV, o JSON acompanhante e um catálogo
-consultável são a referência de transporte; um CSV não carrega metadados por
-coluna por si só.
-
-## API pública proposta, ainda não implementada
-
-O formato desejado é uma consulta equivalente a
-`describe_dataset(dataset, period=..., dictionary_version=...)`, retornando os
-campos, seus estados de revisão e fontes. O nome e a assinatura finais devem
-ser definidos na integração. O consumidor deve conseguir:
-
-- consultar metadados offline, sem precisar baixar PDFs;
-- fixar uma versão para reproduzir uma análise;
-- buscar um campo pelo nome exposto ou físico, sem ambiguidade;
-- distinguir informação desconhecida de informação confirmada;
-- exigir aplicabilidade confirmada antes de interpretar códigos;
-- receber códigos desconhecidos preservados e relatórios de divergência.
-
-Não apresentar `describe_dataset` como função disponível até haver implementação,
-exportação pública e testes. A consulta deve devolver cópias ou objetos imutáveis,
-evitando que um consumidor altere os dicionários compartilhados pelo cache atual.
-
-## Roteiro de implantação
-
-| Etapa | Entrega | Critério de conclusão |
-| --- | --- | --- |
-| 1. Contrato e catálogo | Estes documentos, schema, exemplo e inventário | Validação documental e exemplo executável |
-| 2. Autoria versionada | Extensões YAML, fontes e domínios empacotados | Migração preserva comportamento legado; nenhuma validação presumida |
-| 3. Compilador e resolvedor | JSON determinístico, seleção por produto/edição/período | Referências resolvidas, conflito temporal explícito, recursos no wheel |
-| 4. API de consulta | Consulta de dataset/campo e relatório de cobertura | Funciona offline e com versão fixada |
-| 5. Transporte | Arrow/Parquet, JSON acompanhante e catálogo SQL | Proveniência preservada ou ausência explicitamente reportada em cada rota |
-| 6. Ampliação editorial | Checagem campo a campo, começando pelos produtos já suportados | Cobertura publicada por afirmação e por aplicabilidade |
-
-A etapa 1 está materializada nesta pasta. As demais são trabalho de integração
-e curadoria; a existência deste contrato não significa que as 1.326 ocorrências
-de colunas já tenham descrição e códigos oficialmente validados.
+A ampliação da aplicabilidade a outros arquivos e a curadoria dos demais campos
+permanecem trabalho explícito. O contrato não declara validadas todas as bases.

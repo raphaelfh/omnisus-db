@@ -9,15 +9,12 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from omnisus_db import describe_dataset
+from omnisus_db.metadata import canonical_json
+
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs/dicionario"
 SCHEMA = DOCS / "schemas/column-metadata.schema.json"
-
-
-def canonical_json(value: object) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")
 
 
 def resolve_pointer(document: dict, pointer: str) -> object:
@@ -89,14 +86,28 @@ def arrow_roundtrip(metadata: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metadata", type=Path, default=DOCS / "exemplos/sim_obitos.sexo.json")
+    origin = parser.add_mutually_exclusive_group()
+    origin.add_argument("--metadata", type=Path, help="Validate an archived example JSON.")
+    origin.add_argument(
+        "--dataset", default=None, help="Resolve a packaged dataset (default: sim_obitos)."
+    )
+    parser.add_argument("--field", default="sexo", help="Field to resolve (default: sexo).")
     output_mode = parser.add_mutually_exclusive_group()
     output_mode.add_argument("--arrow", action="store_true")
     output_mode.add_argument(
         "--json", action="store_true", help="Emitir apenas o JSON validado no stdout, para pipes."
     )
     args = parser.parse_args()
-    metadata = json.loads(args.metadata.read_text(encoding="utf-8"))
+    if args.metadata:
+        metadata = json.loads(args.metadata.read_text(encoding="utf-8"))
+    else:
+        description = describe_dataset(args.dataset or "sim_obitos")
+        matches = [
+            item for item in description["fields"] if item["field"]["name"] == args.field.lower()
+        ]
+        if not matches:
+            parser.error(f"Unknown field: {args.field}")
+        metadata = matches[0]
     validate_metadata(metadata)
     if args.json:
         print(json.dumps(metadata, ensure_ascii=False, indent=2))

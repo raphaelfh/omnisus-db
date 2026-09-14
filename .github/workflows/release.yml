@@ -4,11 +4,32 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: read
+
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv python install 3.13
+      - name: Check tag against the single packaged version
+        shell: bash
+        run: |
+          packaged=$(python -c 'import runpy; print(runpy.run_path("src/omnisus_db/_version.py")["__version__"])')
+          test "$packaged" = "${GITHUB_REF_NAME#v}"
+      - run: uv build
+      - name: Record artifact checksums
+        run: sha256sum dist/* > dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+          if-no-files-found: error
+
   gate:
-    # Publishing is gated on the wheel-only install (spec §7.1.1 and §7.2):
-    # we must not ship a package users cannot install without a Rust toolchain.
-    # Every supported Python, every OS. No continue-on-error; this is the gate.
+    needs: build
     name: wheel-only install (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -17,49 +38,38 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist/
       - run: uv python install ${{ matrix.python }}
-      - run: uv build --wheel
-      - name: Install it, binary dependencies only
+      - name: Install and inspect the distribution outside a checkout
         shell: bash
         run: |
           uv venv -p ${{ matrix.python }} .gate
           uv pip install --python .gate --only-binary=:all: dist/*.whl
-      - name: Import the installed package
-        shell: bash
-        run: uv run --python .gate --no-project python -c "import omnisus_db; print(omnisus_db.__version__)"
+          uv run --python .gate --no-project python -c "import omnisus_db as o; assert o.describe_dataset('sim_obitos')['schema_version'] == '1.0.0'; assert o.display_row('sim_obitos', {'idade':'469'})['idade'] == '69 anos'; print(o.__version__)"
 
   publish:
+    # Wheel artifacts are the current distribution channel. The repository
+    # owner must explicitly opt into PyPI and configure its Trusted Publisher.
+    if: vars.PUBLISH_TO_PYPI == 'true'
     needs: gate
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/omnisus-db
     permissions:
-      # PyPI Trusted Publishing (OIDC): no long-lived token to leak or rotate.
       id-token: write
-      # PEP 740 build attestations.
       attestations: write
       contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
-      - run: uv python install 3.13
-      - name: Check the tag matches the packaged version
-        # The version has one home (_version.py); this makes the tag agree with
-        # it rather than trusting the tagger.
-        shell: bash
-        run: |
-          packaged=$(uv run --no-project --with hatchling python -c "
-          import re, pathlib
-          src = pathlib.Path('src/omnisus_db/_version.py').read_text()
-          print(re.search(r'\"([^\"]+)\"', src).group(1))
-          ")
-          tagged="${GITHUB_REF_NAME#v}"
-          echo "packaged=$packaged tagged=$tagged"
-          test "$packaged" = "$tagged"
-      - run: uv build
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+      - run: rm dist/SHA256SUMS
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true

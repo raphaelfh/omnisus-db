@@ -14,7 +14,7 @@ partições e decodificações, preservando propriedades adicionais em `raw` e
 `fields`. Estender essa base evita um segundo catálogo manual. O
 [Table Schema da Frictionless](https://specs.frictionlessdata.io/table-schema/)
 permite propriedades adicionais e distingue representação física e lógica.
-As extensões `x-*` abaixo são convenções propostas pelo omnisus-db, não campos
+As extensões `x-*` abaixo são convenções do omnisus-db, não campos
 padronizados pela Frictionless.
 
 ## Organização atual destes documentos
@@ -54,8 +54,9 @@ uma segunda definição de produção de `sim_obitos`.
 
 ## Organização de destino na biblioteca
 
-Este layout é proposto para a etapa de integração; os novos diretórios abaixo
-ainda não são carregados pela biblioteca.
+O resolvedor atual carrega os YAMLs existentes e `sources/registry.json`. O layout
+expandido abaixo permanece uma proposta para múltiplas edições/domínios, quando
+houver consumidores; esses diretórios adicionais não são criados por antecipação.
 
 ```text
 src/omnisus_db/data/dicionarios/

@@ -8,6 +8,7 @@ from collections.abc import Callable, Iterable, Sequence
 from omnisus_db._version import __version__
 from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake, LakeReader
 from omnisus_db.lake.publication import DeletionResult, ImportPolicy
+from omnisus_db.metadata import describe_dataset
 from omnisus_db.products import Product, datasets, products
 from omnisus_db.sources._base import (
     ImportAbortedError,
@@ -35,6 +36,14 @@ from omnisus_db.sources.datasus_ftp.inventory import (
     available_releases,
 )
 from omnisus_db.sources.datasus_ftp.inventory import crawl as _crawl
+from omnisus_db.transforms.analytics import (
+    AnalyticalProjection,
+    DerivedColumn,
+    SourceContext,
+    UnavailableField,
+    analytical_projection,
+)
+from omnisus_db.transforms.dictionaries import display_row
 
 ALL_UFS: tuple[str, ...] = (
     "AC",
@@ -337,9 +346,11 @@ def outdated(
 __all__ = [
     "ALL_UFS",
     "DEFAULT_TARGET",
+    "AnalyticalProjection",
     "CatalogAttachError",
     "Dataset",
     "DeletionResult",
+    "DerivedColumn",
     "FtpEntry",
     "FtpPathNotFound",
     "FtpUnavailable",
@@ -352,11 +363,16 @@ __all__ = [
     "Product",
     "ScopeKey",
     "ScopeOutcome",
+    "SourceContext",
+    "UnavailableField",
     "__version__",
+    "analytical_projection",
     "available",
     "available_releases",
     "browse",
     "datasets",
+    "describe_dataset",
+    "display_row",
     "import_cnes_estabelecimentos",
     "import_cnes_master",
     "import_dataset",

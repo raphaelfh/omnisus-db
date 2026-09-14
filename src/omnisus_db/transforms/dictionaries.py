@@ -1,13 +1,13 @@
 """Frictionless Table Schema YAML loader with display-time decoders.
 
-The dicionarios YAML is the single source of truth for both ETL ingestion
-metadata (column types, partitions, foreign keys, ETL ``x-transform`` hints)
-*and* display-time decoding used by the Explorer UI.
+The dictionary describes logical fields and display-time decoding. Ingestion
+uses the DBF physical schema and dictionary encoding; declared logical types
+and normalization hints do not cast or transform stored columns.
 
 Display decoding happens via :meth:`Dicionario.decode_row` in three layers,
 applied in this order per field:
 
-1. **``x-display``** — named display transform from ``_DISPLAY_TRANSFORMS``
+1. **``x-display``** — supported presentation rule
    (e.g. ``time_hhmm``, ``idade_sim``, ``idade_sih``). These can read the full
    row, so cross-field decoders (SIH ``COD_IDADE`` + ``IDADE``) are supported.
 2. **``type: date`` + ``x-format``** — date strings reformatted to ``dd/mm/yyyy``.
@@ -23,28 +23,16 @@ often pad codes with spaces.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import cache
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-import pyarrow as pa
 import yaml
 
-# Frictionless type → Arrow type
-_TYPE_MAP: dict[str, pa.DataType] = {
-    "string": pa.string(),
-    "integer": pa.int64(),
-    "number": pa.float64(),
-    "boolean": pa.bool_(),
-    "date": pa.date32(),
-    "datetime": pa.timestamp("us"),
-    "year": pa.uint16(),
-    "yearmonth": pa.string(),
-}
-
+from omnisus_db.transforms.age import decode_age
 
 # ---------------------------------------------------------------------------
 # Display-time decoders
@@ -99,96 +87,6 @@ def _decode_time_hhmm(value: Any) -> Any:
         return value
     return f"{m.group(1)}:{m.group(2)}"
 
-
-# DATASUS SIM age unit code → (singular, plural). 000 and 9xx = ignored.
-# Estrutura_SIM_Anterior.pdf (DATASUS FTP SIM/CID10/DOCS, p. 1, row 07) gives
-# "000: Idade ignorada", "020: 20 minutos", "103: 3 horas", "204: 4 dias",
-# "305: 5 meses", "400: menor de 1 ano…", "505: 105 anos". The 2019 and 2025
-# structure docs drop 0 and "dia" and list 1=minuto, 2=hora, 3=mês, which the
-# data contradicts: on SIM AC 2022 (4159 records) with dtobito - dtnasc, units
-# 0 and 1 die on the birth date or the next day, all 102 unit-2 values equal
-# the age in days, all 115 unit-3 values the age in months, and units 4/5 the
-# age in years.
-_IDADE_SIM_UNITS: dict[str, tuple[str, str]] = {
-    "0": ("minuto", "minutos"),
-    "1": ("hora", "horas"),
-    "2": ("dia", "dias"),
-    "3": ("mês", "meses"),
-    "4": ("ano", "anos"),
-    "5": ("ano", "anos"),  # 5 = 100+ years
-}
-
-
-def _decode_idade_sim(value: Any) -> Any:
-    """SIM 3-digit encoded age → human-readable string.
-
-    Encoding: 1st digit = unit, last 2 digits = numeric value.
-    ``469`` → ``69 anos``  ·  ``045`` → ``45 minutos``  ·  ``501`` → ``101 anos``.
-    """
-    if value is None:
-        return value
-    s = str(value).strip()
-    if not s:
-        return value
-    s = s.zfill(3)
-    if len(s) != 3 or not s.isdigit():
-        return value
-    unit_code = s[0]
-    if unit_code == "9" or s == "000":
-        return "Ignorada"
-    if s == "400":
-        return "Menor de 1 ano"
-    n = int(s[1:])
-    unit = _IDADE_SIM_UNITS.get(unit_code)
-    if unit is None:
-        return value
-    if unit_code == "5":
-        n += 100
-    singular, plural = unit
-    return f"{n} {singular if n == 1 else plural}"
-
-
-# DATASUS SIH age unit code (COD_IDADE) → (singular, plural). 0/9 = ignored.
-_IDADE_SIH_UNITS: dict[str, tuple[str, str]] = {
-    "2": ("dia", "dias"),
-    "3": ("mes", "meses"),
-    "4": ("ano", "anos"),
-    "5": ("ano", "anos"),  # 5 = 100+ years
-}
-
-
-def _decode_idade_sih(value: Any, row: dict[str, Any]) -> Any:
-    """SIH cross-field age decode: reads ``COD_IDADE`` + ``IDADE`` from row.
-
-    ``COD_IDADE=4`` and ``IDADE=35`` → ``35 anos``.
-    """
-    cod = row.get("cod_idade") if "cod_idade" in row else row.get("COD_IDADE")
-    idade = row.get("idade") if "idade" in row else row.get("IDADE")
-    if cod is None or idade is None:
-        return value
-    cod_str = str(cod).strip()
-    try:
-        n = int(str(idade).strip())
-    except (ValueError, TypeError):
-        return value
-    if cod_str in ("0", "9") or n == 999:
-        return "Ignorada"
-    unit = _IDADE_SIH_UNITS.get(cod_str)
-    if unit is None:
-        return str(n)
-    if cod_str == "5":
-        n += 100
-    singular, plural = unit
-    return f"{n} {singular if n == 1 else plural}"
-
-
-# ``x-display`` registry. Each transform takes (value, row) and returns the
-# decoded value. Single-value transforms can ignore ``row``.
-_DISPLAY_TRANSFORMS: dict[str, Callable[[Any, dict[str, Any]], Any]] = {
-    "time_hhmm": lambda v, row: _decode_time_hhmm(v),
-    "idade_sim": lambda v, row: _decode_idade_sim(v),
-    "idade_sih": _decode_idade_sih,
-}
 
 # ``type: date`` + ``x-format`` → decoder
 _DATE_FORMAT_DECODERS: dict[str, Callable[[Any], Any]] = {
@@ -247,10 +145,6 @@ class Dicionario:
     source_format: str
     version: str
     raw: dict[str, Any]
-
-    @property
-    def arrow_schema(self) -> pa.Schema:
-        return pa.schema([(f["name"], _TYPE_MAP.get(f["type"], pa.string())) for f in self.fields])
 
     def field_def(self, name: str) -> dict[str, Any] | None:
         """Return the field definition for ``name`` (case-insensitive)."""
@@ -317,14 +211,19 @@ class Dicionario:
             return upper
         return None
 
-    @staticmethod
-    def _decode_field(f: dict[str, Any], value: Any, row: dict[str, Any]) -> Any:
+    def _decode_field(self, f: dict[str, Any], value: Any, row: dict[str, Any]) -> Any:
         # 1) x-display transform takes precedence
         display = f.get("x-display")
-        if isinstance(display, str):
-            transform = _DISPLAY_TRANSFORMS.get(display)
-            if transform is not None:
-                return transform(value, row)
+        if display in ("idade_sim", "idade_sih"):
+            rule = self.raw.get("x-analytics", {}).get("age")
+            if rule is None:
+                return value
+            unit_key = self._row_key_for(row, rule.get("unit_field", ""))
+            age = decode_age(rule, value, row.get(unit_key) if unit_key else None)
+            label = age.display()
+            return value if label is None else label
+        if display == "time_hhmm":
+            return _decode_time_hhmm(value)
         # 2) Date with declared source format
         if f.get("type") == "date":
             fmt = f.get("x-format")
@@ -369,3 +268,12 @@ def load_dicionario(name_or_path: str | Path) -> Dicionario:
         version=raw.get("x-version", "0.0.0"),
         raw=raw,
     )
+
+
+def display_row(dataset: str, row: Mapping[str, Any]) -> dict[str, Any]:
+    """Format a row using packaged definitions, without mutating the input.
+
+    This presentation API is not an analytical conversion: unrecognized values
+    are preserved. Cross-field age decoders require the original unit field.
+    """
+    return load_dicionario(dataset).decode_row(dict(row))

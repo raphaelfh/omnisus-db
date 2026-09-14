@@ -19,7 +19,7 @@ schema:
     - name: codufmun
       type: string
       label: Município (IBGE)
-      x-transform: lpad_6
+      x-normalization-hint: lpad_6
       foreignKeys:
         - { fields: codufmun, reference: { resource: aux_municipios, fields: codigo_ibge } }
     - name: cnpj_man
