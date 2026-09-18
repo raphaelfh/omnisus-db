@@ -48,9 +48,8 @@ def test_every_notebook_declares_the_github_package():
         assert {"marimo", "omnisus-db", "polars"} <= nomes
         fonte = meta["tool"]["uv"]["sources"]["omnisus-db"]
         assert fonte["git"] == REPOSITORIO
-        assert set(fonte) <= {"git", "rev"}
-        if "rev" in fonte:
-            assert _SHA1.match(fonte["rev"]), f"{caminho.name}: rev must be a commit SHA"
+        assert set(fonte) == {"git", "rev"}
+        assert _SHA1.match(fonte["rev"]), f"{caminho.name}: rev must be a commit SHA"
 
 
 def test_bases_notebooks_import_private_helpers_and_declare_the_download_cap():
