@@ -24,6 +24,7 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
+    import polars as pl
 
     import omnisus_db as odb
     from omnisus_db._notebooks import (
@@ -38,21 +39,21 @@ def _():
 
     agravos = {"sinan_chagas": "Doença de Chagas aguda", "sinan_hanseniase": "Hanseníase"}
     MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
-    executar = run_without_buttons(mo.cli_args())
     return (
         MAX_DOWNLOAD_BYTES,
         agravos,
         asdict,
         asyncio,
-        reconcile,
-        executar,
-        save_plan,
+        default_target,
         load_dicionario,
         mo,
         odb,
+        pl,
+        reconcile,
         record_import,
         record_provenance,
-        default_target,
+        run_without_buttons,
+        save_plan,
     )
 
 
@@ -67,10 +68,10 @@ def _(mo):
     publicadas pelo DATASUS em **um arquivo nacional por ano**, com diretório final e
     preliminar. Este notebook percorre as seis etapas do
     [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) com
-    **Chagas aguda, 2022** (troque para hanseníase no seletor).
+    **Chagas aguda, 2022** (troque `AGRAVO` para `sinan_hanseniase`).
 
-    **Abrir este notebook não baixa nem grava nada.** Cada etapa com rede ou escrita
-    começa por um botão.
+    **Abrir este notebook não baixa nem grava nada.** Ponha `EXECUTAR = True` (ou
+    `-- --executar true`) para rede e escrita.
 
     Uma notificação não é um caso confirmado nem uma pessoa única. Leia os perfis de
     [Chagas](https://raphaelfh.github.io/omnisus-db/sources/sinan_chagas/) e
@@ -80,118 +81,106 @@ def _(mo):
 
 
 @app.cell
-def _(agravos, mo):
-    agravo = mo.ui.dropdown(
-        {rotulo: nome for nome, rotulo in agravos.items()},
-        value="Doença de Chagas aguda",
-        label="Agravo",
-    )
-    agravo
-    return (agravo,)
+def _(agravos, default_target, mo, run_without_buttons):
+    AGRAVO = "sinan_chagas"
+    ANO = 2022
+    EXECUTAR = False
+    target = default_target()
+    executar = EXECUTAR or run_without_buttons(mo.cli_args())
+    assert AGRAVO in agravos, f"agravo desconhecido: {AGRAVO}"
+    (AGRAVO, agravos[AGRAVO], ANO, target, executar)
+    return AGRAVO, ANO, executar, target
 
 
-@app.cell
-def _(agravo, load_dicionario, mo):
-    _dicionario = load_dicionario(agravo.value)
-    mo.vstack(
-        [
-            mo.md(
-                f"## 1 · O que `{agravo.value}` registra\n\n"
-                "Campos do dicionário que a biblioteca aplica na importação. "
-                "O significado dos códigos está no dicionário oficial citado no perfil."
-            ),
-            mo.ui.table(
-                [{"campo": f["name"], "tipo": f["type"]} for f in _dicionario.fields],
-                selection=None,
-                page_size=10,
-            ),
-        ]
-    )
+@app.cell(hide_code=True)
+def _(AGRAVO, mo):
+    mo.md(f"## 1 · O que `{AGRAVO}` registra")
     return
 
 
 @app.cell
-def _(mo):
-    descobrir = mo.ui.run_button(label="Consultar o que o DATASUS publica")
-    mo.vstack(
-        [
-            mo.md(
-                "## 2 · Descobrir\n\n"
-                "Lista agora os diretórios final e preliminar (`refresh=True`). Um ano "
-                "preliminar pode ser revisado e depois movido para o final com o mesmo nome."
-            ),
-            descobrir,
-        ]
+def _(AGRAVO, load_dicionario, pl):
+    campos = pl.DataFrame(
+        [{"campo": f["name"], "tipo": f["type"]} for f in load_dicionario(AGRAVO).fields]
     )
-    return (descobrir,)
+    campos
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 2 · Descobrir
+
+    Lista agora os diretórios final e preliminar (`refresh=True`). Um ano preliminar
+    pode ser revisado e depois movido para o final com o mesmo nome.
+    """)
+    return
 
 
 @app.cell
-async def _(agravo, asyncio, descobrir, executar, mo, odb):
-    mo.stop(not (executar or descobrir.value), mo.md("A consulta começa pelo botão acima."))
-    _publicados = await asyncio.to_thread(odb.available_releases, agravo.value, refresh=True)
-    mo.ui.table(
+async def _(AGRAVO, asyncio, executar, mo, odb, pl):
+    mo.stop(
+        not executar,
+        mo.md(
+            "Para consultar o DATASUS, defina `EXECUTAR = True` na célula de parâmetros "
+            "ou rode com `-- --executar true`."
+        ),
+    )
+    _publicados = await asyncio.to_thread(odb.available_releases, AGRAVO, refresh=True)
+    publicados = pl.DataFrame(
         [
             {"ano": e.ano, "abrangencia": "nacional", "diretorio": r}
             for e, r in sorted(_publicados.items(), key=lambda item: -item[0].ano)
-        ],
-        selection=None,
-        label=f"Arquivos de {agravo.value}",
+        ]
     )
+    publicados
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 3 · Planejar e importar
+
+    O arquivo é nacional: não há filtro de UF na importação. Filtre a geografia dos
+    registros depois, na análise. O notebook limita cada download comprimido a 25 MiB.
+    """)
     return
 
 
 @app.cell
-def _(mo, default_target):
-    ano = mo.ui.number(start=2000, stop=2100, step=1, value=2022, label="Ano do arquivo")
-    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
-    fixar = mo.ui.run_button(label="Fixar o plano")
-    mo.vstack(
-        [
-            mo.md(
-                "## 3 · Planejar e importar\n\n"
-                "O arquivo é nacional: não há filtro de UF na importação. Filtre a "
-                "geografia dos registros depois, na análise. O notebook limita cada "
-                "download comprimido a 25 MiB (`MAX_DOWNLOAD_BYTES` no próprio notebook); um "
-                "arquivo maior termina como `failed`, e pode ser importado subindo "
-                "esse limite ou com a chamada direta `odb.import_dataset` no perfil "
-                'desta base ("Como usar").'
-            ),
-            ano,
-            target,
-            fixar,
-        ]
+def _(AGRAVO, ANO, MAX_DOWNLOAD_BYTES, asdict, executar, mo, odb, save_plan, target):
+    mo.stop(
+        not executar,
+        mo.md("Defina `EXECUTAR = True` para gravar o plano e importar."),
     )
-    return ano, fixar, target
-
-
-@app.cell
-def _(MAX_DOWNLOAD_BYTES, agravo, ano, asdict, executar, fixar, save_plan, mo, odb, target):
-    mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
-    escopos = odb.scopes_for(agravo.value, years=[int(ano.value)])
+    escopos = odb.scopes_for(AGRAVO, years=[int(ANO)])
     plano, pasta = save_plan(
-        target.value,
-        dataset=agravo.value,
+        target,
+        dataset=AGRAVO,
         scopes=[asdict(e) for e in escopos],
         policy="skip_same",
         max_download_bytes=MAX_DOWNLOAD_BYTES,
     )
-    importar = mo.ui.run_button(label="Baixar e publicar este plano")
-    mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
-    return escopos, importar, pasta, plano
+    plano
+    return escopos, pasta, plano
 
 
 @app.cell
 async def _(
-    MAX_DOWNLOAD_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, record_import
+    MAX_DOWNLOAD_BYTES,
+    asyncio,
+    escopos,
+    executar,
+    mo,
+    odb,
+    pasta,
+    pl,
+    plano,
+    record_import,
 ):
-    mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
-    mo.output.append(
-        mo.md(
-            "Importando. Interromper a célula não cancela a thread: espere terminar "
-            "antes de outra escrita no mesmo lake."
-        )
-    )
+    mo.stop(not executar, mo.md("A importação segue `EXECUTAR` na célula de parâmetros."))
     try:
         relatorio = await asyncio.to_thread(
             odb.import_dataset,
@@ -207,31 +196,43 @@ async def _(
         _nao_resolvidos = ()
     except odb.ImportAbortedError as _erro:
         relatorio, _nao_resolvidos = _erro.report, _erro.unresolved
-    _linhas = record_import(pasta, relatorio, _nao_resolvidos)
+    desfechos = pl.DataFrame(record_import(pasta, relatorio, _nao_resolvidos))
     if executar and (relatorio.failed or _nao_resolvidos):
         raise RuntimeError(f"Importação incompleta; veja {pasta / 'resultado.json'}")
-    mo.vstack(
-        [
-            mo.ui.table(_linhas, selection=None, label="Desfecho por escopo"),
-            mo.md(
-                "`skipped` com *same source and parser version already published* quer "
-                "dizer que o mesmo arquivo já estava no lake. Um `failed` pedindo "
-                "`replace` quer dizer que o DATASUS publicou outra versão do arquivo."
-            ),
-        ]
-    )
+    desfechos
     return (relatorio,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    `skipped` com *same source and parser version already published* quer dizer que
+    o mesmo arquivo já estava no lake. Um `failed` pedindo `replace` quer dizer que
+    o DATASUS publicou outra versão do arquivo.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 4 · Conferir
+
+    `outdated` lista os anos que o DATASUS moveu entre preliminar e final desde a
+    importação; atualize-os com `policy="replace"` e um novo `run_id`.
+    """)
+    return
+
+
 @app.cell
-def _(reconcile, escopos, mo, odb, plano, relatorio):
+def _(escopos, mo, odb, plano, reconcile, relatorio):
     with odb.LakeReader(plano["target"]) as _leitor:
         mo.stop(
             plano["dataset"] not in _leitor.tables(),
             mo.md("Nenhuma tabela publicada; veja os desfechos acima."),
         )
-        _desta_execucao = _leitor.publications(run_id=plano["run_id"])
-        _conferencia, publicacoes = reconcile(_leitor, plano["dataset"], escopos)
+        desta_execucao = _leitor.publications(run_id=plano["run_id"])
+        conferencia, publicacoes = reconcile(_leitor, plano["dataset"], escopos)
         mo.stop(
             not publicacoes,
             mo.md(
@@ -239,30 +240,31 @@ def _(reconcile, escopos, mo, odb, plano, relatorio):
             ),
         )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-        # refresh=False usa a listagem em cache do FTP, preenchida pela etapa 2 ou
-        # pela própria importação: não faz um novo crawl do servidor público.
-        _desatualizados = odb.outdated(plano["dataset"], lake=_leitor)
-    mo.vstack(
-        [
-            mo.md(
-                "## 4 · Conferir\n\n"
-                f"O relatório informou **{relatorio.rows:,} linhas novas**. `outdated` "
-                "lista os anos que o DATASUS moveu entre preliminar e final desde a "
-                'importação; atualize-os com `policy="replace"` e um novo `run_id`.'
-            ),
-            mo.ui.table(_desta_execucao, selection=None, label="publications(run_id=...)"),
-            mo.ui.table(_conferencia, selection=None, label="Linhas no lake x publicadas"),
-            mo.md(
-                f"Desatualizados: `{[str(e) for e in _desatualizados]}` · snapshot `{snapshot_id}`"
-            ),
-        ]
-    )
+        desatualizados = odb.outdated(plano["dataset"], lake=_leitor)
+    {
+        "linhas_novas": relatorio.rows,
+        "publications": desta_execucao,
+        "lake_vs_publicado": conferencia,
+        "desatualizados": [str(e) for e in desatualizados],
+        "snapshot_id": snapshot_id,
+    }
     return publicacoes, snapshot_id
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 5 · Analisar
+
+    Os códigos aparecem como publicados; confira no dicionário oficial antes de
+    selecionar casos confirmados ou calcular incidência.
+    """)
+    return
+
+
 @app.cell
-def _(escopos, mo, odb, plano, snapshot_id):
-    _tabela = plano["dataset"]  # uma das duas chaves de agravos
+def _(escopos, odb, plano, snapshot_id):
+    _tabela = plano["dataset"]
     _recorte = f'FROM lake."{_tabela}" WHERE _source_ano = ?'
     _parametros = [escopos[0].ano]
     consultas = {
@@ -315,62 +317,29 @@ def _(escopos, mo, odb, plano, snapshot_id):
             nome: _leitor.connect().execute(consulta["sql"], consulta["parameters"]).pl()
             for nome, consulta in consultas.items()
         }
-    mo.vstack(
-        [
-            mo.md(
-                "## 5 · Analisar\n\n"
-                f"Consultas sobre o snapshot `{snapshot_id}`. Os códigos aparecem como "
-                "publicados; confira no dicionário oficial antes de selecionar casos "
-                "confirmados ou calcular incidência."
-            ),
-            mo.ui.tabs(
-                {
-                    nome: mo.vstack(
-                        [
-                            mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
-                        ]
-                    )
-                    for nome, tabela in resultados.items()
-                }
-            ),
-        ]
-    )
+    resultados
     return consultas, resultados
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 6 · Guardar
+
+    Resultados e `proveniencia.json` na pasta da execução. Veja
+    [Reprodutibilidade](https://raphaelfh.github.io/omnisus-db/pesquisa/reprodutibilidade/).
+    """)
+    return
+
+
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+def _(consultas, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
     record_provenance(
         pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")
-    mo.vstack(
-        [
-            mo.md(
-                "## 6 · Guardar\n\n"
-                f"Resultados e `proveniencia.json` gravados em `{pasta}`. Veja "
-                "[Reprodutibilidade](https://raphaelfh.github.io/omnisus-db/pesquisa/reprodutibilidade/)."
-            ),
-            mo.hstack(
-                [
-                    mo.download(
-                        (pasta / f"{nome}.csv").read_bytes(),
-                        filename=f"{plano['dataset']}-{nome}.csv",
-                        label=f"CSV · {nome}",
-                    )
-                    for nome in resultados
-                ],
-                wrap=True,
-            ),
-            mo.download(
-                (pasta / "proveniencia.json").read_bytes(),
-                filename=f"{plano['dataset']}-proveniencia.json",
-                label="proveniencia.json",
-            ),
-        ]
-    )
+    str(pasta)
     return
 
 

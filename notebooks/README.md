@@ -1,7 +1,10 @@
 # Notebooks
 
-Notebooks [marimo](https://marimo.io) em três pastas. Abrir um notebook não baixa
-nem grava nada: toda etapa com rede ou escrita começa por um botão.
+Notebooks [marimo](https://marimo.io) em três pastas, escritos como um Jupyter
+convencional (markdown, parâmetros em Python, última expressão como resultado).
+A estrutura marimo fica só no arquivo (células reativas, `.py` versionável).
+Abrir um notebook não baixa nem grava nada: rede e escrita ficam atrás de
+`EXECUTAR = False` até você mudar a constante (ou `-- --executar true`).
 
 No [molab](https://molab.marimo.io) dá para abrir no navegador, sem instalar nada.
 A badge **Open in molab** em cada notebook aponta para o arquivo correspondente

@@ -94,98 +94,31 @@ def _(comparisons, measurements, mo, report):
 
 
 @app.cell
-def _(mo, report):
-    _options = {
-        f"{c['dataset'].upper()} · {'DBF ampliado ' + str(c['repeat']) + 'x' if c['amplified'] else 'arquivo original'} · {c['declared_records']:,} registros": c[
-            "corpus"
-        ]
-        for c in report["cases"]
+def _(PHASES, comparisons, measurement_svg, measurements, mo, pl, report):
+    CORPUS = report["cases"][0]["corpus"]
+    PHASE = report["cases"][0]["phases"][0]["phase"]
+    METRIC = "time_ms"
+    selected_case = next(c for c in report["cases"] if c["corpus"] == CORPUS)
+    selected = [r for r in measurements if r["corpus"] == CORPUS and r["phase"] == PHASE]
+    _comparison = next(r for r in comparisons if r["corpus"] == CORPUS and r["phase"] == PHASE)
+    _unit = "ms" if METRIC == "time_ms" else "MiB"
+    mo.Html(measurement_svg(selected, METRIC, PHASES[PHASE], _unit))
+    {
+        "corpus": CORPUS,
+        "phase": PHASE,
+        "speedup": _comparison["speedup"],
+        "rss_ratio": _comparison["rss_ratio"],
+        "rodadas": pl.DataFrame(selected).select(
+            "backend", "round", "rows", "time_ms", "rss_mib", "disk_mib"
+        ),
+        "origem": selected_case["source_fixture"],
     }
-    corpus = mo.ui.dropdown(
-        _options,
-        value=next(iter(_options)),
-        label="Corpus",
-        allow_select_none=False,
-        full_width=True,
-    )
-    mo.vstack([mo.md("## 2 · Explore uma comparação"), corpus])
-    return (corpus,)
-
-
-@app.cell
-def _(METRICS, PHASES, corpus, mo, report):
-    selected_case = next(c for c in report["cases"] if c["corpus"] == corpus.value)
-    phase = mo.ui.dropdown(
-        {PHASES[p["phase"]]: p["phase"] for p in selected_case["phases"]},
-        value=PHASES[selected_case["phases"][0]["phase"]],
-        label="Etapa",
-        allow_select_none=False,
-        full_width=True,
-    )
-    metric = mo.ui.dropdown(METRICS, value="Tempo (ms)", label="Métrica", allow_select_none=False)
-    mo.hstack([phase, metric], widths=[2, 1])
-    return metric, phase, selected_case
-
-
-@app.cell
-def _(PHASES, comparisons, corpus, measurement_svg, measurements, metric, mo, phase, pl):
-    selected = [
-        r for r in measurements if r["corpus"] == corpus.value and r["phase"] == phase.value
-    ]
-    _comparison = next(
-        r for r in comparisons if r["corpus"] == corpus.value and r["phase"] == phase.value
-    )
-    _unit = "ms" if metric.value == "time_ms" else "MiB"
-    mo.vstack(
-        [
-            mo.Html(measurement_svg(selected, metric.value, PHASES[phase.value], _unit)),
-            mo.md(
-                f"**Aceleração: {_comparison['speedup']:.2f}x** · "
-                f"**RSS Rust/Python: {_comparison['rss_ratio']:.3f}**. "
-                "RSS abaixo de 1 indica menos memória. MiB = 1.048.576 bytes."
-            ),
-            mo.ui.table(
-                pl.DataFrame(selected).select(
-                    "backend", "round", "rows", "time_ms", "rss_mib", "disk_mib"
-                ),
-                selection=None,
-                page_size=14,
-                label="Rodadas medidas · exportação CSV disponível",
-            ),
-        ]
-    )
-    return (selected,)
-
-
-@app.cell(hide_code=True)
-def _(mo, selected_case):
-    mo.md(f"""
-    **Origem:** `{selected_case["source_fixture"]}` ·
-    tipos DBF: **{", ".join(selected_case["field_types"])}** · encoding: **{selected_case["encoding"]}**.
-
-    {"Este corpus repete os registros do DBF " + str(selected_case["repeat"]) + " vezes. Não é um DBC recomprimido; DBF → Parquet exclui descompactação." if selected_case["amplified"] else "Este é o arquivo DBC real versionado. DBC → Parquet inclui descompactação, parsing, IPC e escrita Parquet."}
-
-    Publicação usa um lake novo por rodada, com dados previamente preparados:
-    inclui criação do catálogo e commit, exclui parsing e encerramento do lake.
-    """)
     return
 
 
 @app.cell
-def _(PHASES, comparisons, mo, pl):
-    mo.vstack(
-        [
-            mo.md(
-                "## 3 · Todas as comparações\n\nMedianas calculadas a partir das rodadas, sem os aquecimentos."
-            ),
-            mo.ui.table(
-                pl.DataFrame([{**r, "phase": PHASES[r["phase"]]} for r in comparisons]),
-                selection=None,
-                page_size=12,
-                label="Tempo por backend e razão de memória",
-            ),
-        ]
-    )
+def _(PHASES, comparisons, pl):
+    pl.DataFrame([{**r, "phase": PHASES[r["phase"]]} for r in comparisons])
     return
 
 
@@ -215,28 +148,14 @@ def _(mo, report):
 
 
 @app.cell
-def _(json, mo, report, report_path):
-    mo.accordion(
-        {
-            "Proveniência: versões e hashes": mo.md(
-                f"Arquivo: `{report_path}`\n\n```json\n"
-                + json.dumps(
-                    {
-                        "packages": report["environment"]["packages"],
-                        "crates": report["environment"]["crates"],
-                        "source_sha256": report["environment"]["source_sha256"],
-                        "rust_wheel": report["rust_wheel"],
-                    },
-                    indent=2,
-                    ensure_ascii=False,
-                )
-                + "\n```"
-            ),
-            "Baixar a evidência completa": mo.download(
-                report_path.read_bytes(), filename=report_path.name, mimetype="application/json"
-            ),
-        }
-    )
+def _(json, report, report_path):
+    {
+        "arquivo": str(report_path),
+        "packages": report["environment"]["packages"],
+        "crates": report["environment"]["crates"],
+        "source_sha256": report["environment"]["source_sha256"],
+        "rust_wheel": report["rust_wheel"],
+    }
     return
 
 
@@ -258,8 +177,7 @@ def _(mo):
     apenas essa célula recarrega o JSON; os filtros não iniciam trabalho pesado.
 
     Consulte `reports/rust-dbf-validation.md` para testes de correção e instalação.
-    O HTML exportado é uma fotografia dos resultados; os filtros reativos funcionam
-    com `marimo edit` ou `marimo run`.
+    Altere `CORPUS`, `PHASE` e `METRIC` na célula de comparação.
     """)
     return
 

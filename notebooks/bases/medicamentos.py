@@ -25,6 +25,7 @@ def _():
     from uuid import uuid4
 
     import marimo as mo
+    import polars as pl
 
     import omnisus_db as odb
     from omnisus_db._notebooks import (
@@ -42,25 +43,25 @@ def _():
 
     dataset = "sia_apac_medicamentos"
     MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
-    executar = run_without_buttons(mo.cli_args())
     return (
         MAX_DOWNLOAD_BYTES,
         asdict,
         asyncio,
-        reconcile,
+        data_root,
         dataset,
-        executar,
+        default_target,
         fetch_stock_page,
-        save_plan,
         load_dicionario,
         mo,
         odb,
-        data_root,
+        pl,
+        reconcile,
         record_import,
         record_provenance,
-        write_json,
-        default_target,
+        run_without_buttons,
+        save_plan,
         uuid4,
+        write_json,
     )
 
 
@@ -80,8 +81,8 @@ def _(mo):
       guardada com proveniência, sem publicar no lake.
     - **C · O que não existe publicamente** — eventos de dispensação.
 
-    **Abrir este notebook não baixa nem grava nada.** Cada etapa com rede ou escrita
-    começa por um botão. Leia o
+    **Abrir este notebook não baixa nem grava nada.** Ponha `EXECUTAR = True` (ou
+    `-- --executar true`) para rede e escrita. Leia o
     [perfil de medicamentos](https://raphaelfh.github.io/omnisus-db/sources/medicamentos/)
     antes de interpretar números: um registro de APAC não é uma dose nem uma dispensação.
     """)
@@ -89,103 +90,122 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, load_dicionario, mo):
-    _dicionario = load_dicionario(dataset)
-    mo.vstack(
-        [
-            mo.md("## A1 · O que a APAC de medicamentos registra"),
-            mo.ui.table(
-                [
-                    {"campo": f["name"], "tipo": f["type"], "rótulo": f.get("label", "")}
-                    for f in _dicionario.fields
-                ],
-                selection=None,
-                page_size=10,
-            ),
-        ]
-    )
+def _(default_target, mo, run_without_buttons):
+    UF = "RR"
+    ANO = 2024
+    MES = 1
+    CODIGO_UF = "14"
+    DATA_ESTOQUE = ""
+    EXECUTAR = False
+    target = default_target()
+    executar = EXECUTAR or run_without_buttons(mo.cli_args())
+    (UF, ANO, MES, CODIGO_UF, DATA_ESTOQUE, target, executar)
+    return ANO, CODIGO_UF, DATA_ESTOQUE, MES, UF, executar, target
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## A1 · O que a APAC de medicamentos registra
+    """)
     return
 
 
 @app.cell
+def _(dataset, load_dicionario, pl):
+    campos = pl.DataFrame(
+        [
+            {"campo": f["name"], "tipo": f["type"], "rótulo": f.get("label", "")}
+            for f in load_dicionario(dataset).fields
+        ]
+    )
+    campos
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
-    descobrir = mo.ui.run_button(label="Consultar o que o DATASUS publica")
-    mo.vstack([mo.md("## A2 · Descobrir"), descobrir])
-    return (descobrir,)
+    mo.md(r"""
+    ## A2 · Descobrir
+    """)
+    return
 
 
 @app.cell
-async def _(asyncio, dataset, descobrir, executar, mo, odb):
-    mo.stop(not (executar or descobrir.value), mo.md("A consulta começa pelo botão acima."))
+async def _(asyncio, dataset, executar, mo, odb, pl):
+    mo.stop(
+        not executar,
+        mo.md(
+            "Para consultar o DATASUS, defina `EXECUTAR = True` na célula de parâmetros "
+            "ou rode com `-- --executar true`."
+        ),
+    )
     _publicados = await asyncio.to_thread(odb.available, dataset, ufs=["RR"], refresh=True)
-    mo.ui.table(
+    publicados = pl.DataFrame(
         [
             {"uf": e.uf, "ano": e.ano, "mes": e.mes}
             for e in sorted(_publicados, key=lambda e: (-e.ano, -(e.mes or 0)))
-        ],
-        selection=None,
-        label="Arquivos SIA-AM publicados para RR",
+        ]
     )
+    publicados
     return
 
 
-@app.cell
-def _(mo, odb, default_target):
-    uf = mo.ui.dropdown(list(odb.ALL_UFS), value="RR", label="UF do arquivo")
-    ano = mo.ui.number(start=2008, stop=2100, step=1, value=2024, label="Ano")
-    mes = mo.ui.number(start=1, stop=12, step=1, value=1, label="Mês de processamento")
-    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
-    fixar = mo.ui.run_button(label="Fixar o plano")
-    mo.vstack(
-        [
-            mo.md(
-                "## A3 · Planejar e importar\n\n"
-                "Fixar o plano grava `plano.json` com um `run_id` antes de qualquer "
-                "download. O notebook limita cada download comprimido a 25 MiB "
-                "(`MAX_DOWNLOAD_BYTES` no próprio notebook); um arquivo maior (por exemplo outra "
-                "UF) termina como `failed`, e pode ser importado subindo esse limite "
-                "ou com a chamada direta `odb.import_dataset` no perfil desta base "
-                '("Como usar").'
-            ),
-            mo.hstack([uf, ano, mes]),
-            target,
-            fixar,
-        ]
-    )
-    return ano, fixar, mes, target, uf
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## A3 · Planejar e importar
+
+    Gravar o plano cria `plano.json` com um `run_id` antes de qualquer download.
+    O notebook limita cada download comprimido a 25 MiB.
+    """)
+    return
 
 
 @app.cell
 def _(
-    MAX_DOWNLOAD_BYTES, ano, asdict, dataset, executar, fixar, save_plan, mes, mo, odb, target, uf
+    ANO,
+    MAX_DOWNLOAD_BYTES,
+    MES,
+    UF,
+    asdict,
+    dataset,
+    executar,
+    mo,
+    odb,
+    save_plan,
+    target,
 ):
-    mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
-    escopos = odb.scopes_for(
-        dataset, years=[int(ano.value)], ufs=[uf.value], months=[int(mes.value)]
+    mo.stop(
+        not executar,
+        mo.md("Defina `EXECUTAR = True` para gravar o plano e importar."),
     )
+    escopos = odb.scopes_for(dataset, years=[int(ANO)], ufs=[UF], months=[int(MES)])
     plano, pasta = save_plan(
-        target.value,
+        target,
         dataset=dataset,
         scopes=[asdict(e) for e in escopos],
         policy="skip_same",
         max_download_bytes=MAX_DOWNLOAD_BYTES,
     )
-    importar = mo.ui.run_button(label="Baixar e publicar este plano")
-    mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
-    return escopos, importar, pasta, plano
+    plano
+    return escopos, pasta, plano
 
 
 @app.cell
 async def _(
-    MAX_DOWNLOAD_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, record_import
+    MAX_DOWNLOAD_BYTES,
+    asyncio,
+    escopos,
+    executar,
+    mo,
+    odb,
+    pasta,
+    pl,
+    plano,
+    record_import,
 ):
-    mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
-    mo.output.append(
-        mo.md(
-            "Importando. Interromper a célula não cancela a thread: espere terminar "
-            "antes de outra escrita no mesmo lake."
-        )
-    )
+    mo.stop(not executar, mo.md("A importação segue `EXECUTAR` na célula de parâmetros."))
     try:
         relatorio = await asyncio.to_thread(
             odb.import_dataset,
@@ -201,31 +221,42 @@ async def _(
         _nao_resolvidos = ()
     except odb.ImportAbortedError as _erro:
         relatorio, _nao_resolvidos = _erro.report, _erro.unresolved
-    _linhas = record_import(pasta, relatorio, _nao_resolvidos)
+    desfechos = pl.DataFrame(record_import(pasta, relatorio, _nao_resolvidos))
     if executar and (relatorio.failed or _nao_resolvidos):
         raise RuntimeError(f"Importação incompleta; veja {pasta / 'resultado.json'}")
-    mo.vstack(
-        [
-            mo.ui.table(_linhas, selection=None, label="Desfecho por escopo"),
-            mo.md(
-                "`skipped` com *same source and parser version already published* quer "
-                "dizer que o mesmo arquivo já estava no lake: nada foi duplicado. "
-                "Um arquivo que o DATASUS não publica também aparece como `skipped`."
-            ),
-        ]
-    )
+    desfechos
     return (relatorio,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    `skipped` com *same source and parser version already published* quer dizer que
+    o mesmo arquivo já estava no lake. Um arquivo que o DATASUS não publica também
+    aparece como `skipped`.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## A4 · Conferir
+
+    O SIA é publicado num único diretório, então `outdated` não se aplica.
+    """)
+    return
+
+
 @app.cell
-def _(reconcile, dataset, escopos, mo, odb, plano, relatorio):
+def _(dataset, escopos, mo, odb, plano, reconcile, relatorio):
     with odb.LakeReader(plano["target"]) as _leitor:
         mo.stop(
             dataset not in _leitor.tables(),
             mo.md("Nenhuma tabela publicada; veja os desfechos acima."),
         )
-        _desta_execucao = _leitor.publications(run_id=plano["run_id"])
-        _conferencia, publicacoes = reconcile(_leitor, dataset, escopos)
+        desta_execucao = _leitor.publications(run_id=plano["run_id"])
+        conferencia, publicacoes = reconcile(_leitor, dataset, escopos)
         mo.stop(
             not publicacoes,
             mo.md(
@@ -233,23 +264,28 @@ def _(reconcile, dataset, escopos, mo, odb, plano, relatorio):
             ),
         )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-    mo.vstack(
-        [
-            mo.md(
-                "## A4 · Conferir\n\n"
-                f"O relatório informou **{relatorio.rows:,} linhas novas**. O SIA é "
-                "publicado num único diretório, então `outdated` não se aplica."
-            ),
-            mo.ui.table(_desta_execucao, selection=None, label="publications(run_id=...)"),
-            mo.ui.table(_conferencia, selection=None, label="Linhas no lake x publicadas"),
-            mo.md(f"Snapshot `{snapshot_id}`"),
-        ]
-    )
+    {
+        "linhas_novas": relatorio.rows,
+        "publications": desta_execucao,
+        "lake_vs_publicado": conferencia,
+        "snapshot_id": snapshot_id,
+    }
     return publicacoes, snapshot_id
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## A5 · Analisar
+
+    Registros de APAC por procedimento principal e valor aprovado. Não são doses nem
+    pacientes únicos.
+    """)
+    return
+
+
 @app.cell
-def _(escopos, mo, odb, plano, snapshot_id):
+def _(escopos, odb, plano, snapshot_id):
     _parametros = [escopos[0].uf, escopos[0].ano, escopos[0].mes]
     consultas = {
         "apac_por_procedimento_principal": {
@@ -268,101 +304,71 @@ def _(escopos, mo, odb, plano, snapshot_id):
             nome: _leitor.connect().execute(consulta["sql"], consulta["parameters"]).pl()
             for nome, consulta in consultas.items()
         }
-    mo.vstack(
-        [
-            mo.md(
-                "## A5 · Analisar\n\n"
-                f"Registros de APAC por procedimento principal e valor aprovado, sobre o "
-                f"snapshot `{snapshot_id}`. Não são doses nem pacientes únicos."
-            ),
-            mo.ui.table(resultados["apac_por_procedimento_principal"], selection=None),
-            mo.accordion(
-                {
-                    "SQL": mo.md(
-                        f"```sql\n{consultas['apac_por_procedimento_principal']['sql']}\n```"
-                    )
-                }
-            ),
-        ]
-    )
+    resultados
     return consultas, resultados
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## A6 · Guardar
+    """)
+    return
+
+
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+def _(consultas, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
     record_provenance(
         pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")
-    mo.vstack(
-        [
-            mo.md(f"## A6 · Guardar\n\nResultados e `proveniencia.json` gravados em `{pasta}`."),
-            mo.download(
-                (pasta / "apac_por_procedimento_principal.csv").read_bytes(),
-                filename="sia_apac_medicamentos-apac_por_procedimento_principal.csv",
-                label="CSV",
-            ),
-            mo.download(
-                (pasta / "proveniencia.json").read_bytes(),
-                filename="sia_apac_medicamentos-proveniencia.json",
-                label="proveniencia.json",
-            ),
-        ]
-    )
+    str(pasta)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## B · Estoque BNAFAR/Hórus
+
+    Uma página da API pública de **posição de estoque**. Não publica no lake. Uma
+    página vazia não demonstra ausência de estoque, e uma página curta não demonstra
+    completude. Filtros: `CODIGO_UF` e `DATA_ESTOQUE` (AAAA-MM-DD, opcional).
+    """)
     return
 
 
 @app.cell
-def _(mo):
-    codigo_uf = mo.ui.text(value="14", label="Código IBGE da UF")
-    data_estoque = mo.ui.text(value="", label="Data da posição AAAA-MM-DD (opcional)")
-    consultar_estoque = mo.ui.run_button(label="Consultar uma página (até 20 registros)")
-    mo.vstack(
-        [
-            mo.md(
-                "## B · Estoque BNAFAR/Hórus\n\n"
-                "Uma página da API pública de **posição de estoque**. Não publica no lake. "
-                "Uma página vazia não demonstra ausência de estoque, e uma página curta "
-                "não demonstra completude."
-            ),
-            mo.hstack([codigo_uf, data_estoque]),
-            consultar_estoque,
-        ]
-    )
-    return codigo_uf, consultar_estoque, data_estoque
-
-
-@app.cell
 async def _(
+    CODIGO_UF,
+    DATA_ESTOQUE,
     asyncio,
-    codigo_uf,
-    consultar_estoque,
-    data_estoque,
+    data_root,
     executar,
     fetch_stock_page,
     mo,
-    data_root,
-    write_json,
+    pl,
     uuid4,
+    write_json,
 ):
     mo.stop(
-        not (executar or consultar_estoque.value), mo.md("A consulta começa pelo botão acima.")
+        not executar,
+        mo.md("Defina `EXECUTAR = True` para consultar o estoque."),
     )
-    _filtros = {"codigo_uf": codigo_uf.value.strip()}
-    if data_estoque.value.strip():
-        _filtros["data_posicao_estoque"] = data_estoque.value.strip()
-    _pagina = await asyncio.to_thread(fetch_stock_page, filters=_filtros, limit=20)
-    _pasta = data_root() / "estoque" / uuid4().hex
-    _pasta.mkdir(parents=True)
-    (_pasta / "resposta.json").write_bytes(_pagina.raw)
-    write_json(_pasta / "proveniencia.json", _pagina.provenance())
-    mo.vstack(
-        [
-            mo.md(f"Observação salva em `{_pasta}`. SHA-256 da resposta: `{_pagina.sha256}`."),
-            mo.ui.table(_pagina.records, selection=None),
-        ]
-    )
+    _filtros = {"codigo_uf": CODIGO_UF.strip()}
+    if DATA_ESTOQUE.strip():
+        _filtros["data_posicao_estoque"] = DATA_ESTOQUE.strip()
+    pagina = await asyncio.to_thread(fetch_stock_page, filters=_filtros, limit=20)
+    pasta_estoque = data_root() / "estoque" / uuid4().hex
+    pasta_estoque.mkdir(parents=True)
+    (pasta_estoque / "resposta.json").write_bytes(pagina.raw)
+    write_json(pasta_estoque / "proveniencia.json", pagina.provenance())
+    {
+        "pasta": str(pasta_estoque),
+        "sha256": pagina.sha256,
+        "registros": pl.DataFrame(pagina.records),
+    }
     return
 
 

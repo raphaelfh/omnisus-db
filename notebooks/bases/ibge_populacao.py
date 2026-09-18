@@ -24,6 +24,7 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
+    import polars as pl
 
     import omnisus_db as odb
     from omnisus_db._notebooks import (
@@ -36,20 +37,20 @@ def _():
     from omnisus_db.sources.ibge.products import CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS
     from omnisus_db.transforms.dictionaries import load_dicionario
 
-    executar = run_without_buttons(mo.cli_args())
     return (
         CENSUS_YEARS,
         ESTIMATE_UNAVAILABLE_YEARS,
         asdict,
         asyncio,
-        executar,
-        save_plan,
+        default_target,
         load_dicionario,
         mo,
         odb,
+        pl,
         record_provenance,
+        run_without_buttons,
+        save_plan,
         write_json,
-        default_target,
     )
 
 
@@ -65,8 +66,8 @@ def _(mo):
     [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) com o
     **censo de 2022** e, se o SIM estiver no mesmo lake, calcula óbitos por 100 mil.
 
-    **Abrir este notebook não baixa nem grava nada.** Cada etapa com rede ou escrita
-    começa por um botão.
+    **Abrir este notebook não baixa nem grava nada.** Ponha `EXECUTAR = True` (ou
+    `-- --executar true`) para rede e escrita.
 
     Censo e estimativa têm datas de referência diferentes. Leia o
     [perfil da população IBGE](https://raphaelfh.github.io/omnisus-db/sources/ibge_populacao/)
@@ -76,109 +77,112 @@ def _(mo):
 
 
 @app.cell
-def _(load_dicionario, mo):
-    _dicionario = load_dicionario("ibge_populacao")
-    mo.vstack(
+def _(default_target, mo, run_without_buttons):
+    PRODUTO = "census"
+    ANO = 2022
+    CODIGO_UF = "14"
+    EXECUTAR = False
+    target = default_target()
+    executar = EXECUTAR or run_without_buttons(mo.cli_args())
+    (PRODUTO, ANO, CODIGO_UF, target, executar)
+    return ANO, CODIGO_UF, EXECUTAR, PRODUTO, executar, target
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 1 · O que a base registra
+
+    Colunas da visão `ibge_populacao`.
+    """)
+    return
+
+
+@app.cell
+def _(load_dicionario, pl):
+    campos = pl.DataFrame(
         [
-            mo.md("## 1 · O que a base registra\n\nColunas da visão `ibge_populacao`."),
-            mo.ui.table(
-                [
-                    {"campo": f["name"], "tipo": f["type"], "rótulo": f.get("label", "")}
-                    for f in _dicionario.fields
-                ],
-                selection=None,
-            ),
+            {"campo": f["name"], "tipo": f["type"], "rótulo": f.get("label", "")}
+            for f in load_dicionario("ibge_populacao").fields
+        ]
+    )
+    campos
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 2 · Descobrir
+
+    Não há inventário de arquivos: a biblioteca aceita edições conhecidas. Esta
+    tabela vem do pacote, sem rede. Uma estimativa só é aceita na edição mais
+    recente do agregado; anos recusados não têm universo territorial verificado.
+    """)
+    return
+
+
+@app.cell
+def _(CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS, pl):
+    pl.DataFrame(
+        [
+            {"produto": "census", "anos": ", ".join(map(str, CENSUS_YEARS))},
+            {
+                "produto": "estimate",
+                "anos_recusados": ", ".join(map(str, ESTIMATE_UNAVAILABLE_YEARS)),
+            },
         ]
     )
     return
 
 
-@app.cell
-def _(CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS, mo):
-    mo.vstack(
-        [
-            mo.md(
-                "## 2 · Descobrir\n\n"
-                "Não há inventário de arquivos: a biblioteca aceita edições conhecidas. "
-                "Esta tabela vem do pacote, sem rede."
-            ),
-            mo.ui.table(
-                [
-                    {"produto": "census", "anos_aceitos": ", ".join(map(str, CENSUS_YEARS))},
-                    {
-                        "produto": "estimate",
-                        "anos_recusados": ", ".join(map(str, ESTIMATE_UNAVAILABLE_YEARS)),
-                    },
-                ],
-                selection=None,
-            ),
-            mo.md(
-                "Uma estimativa só é aceita na edição mais recente do agregado; anos "
-                "recusados não têm universo territorial verificado."
-            ),
-        ]
-    )
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 3 · Planejar e importar
+
+    Use o mesmo lake do SIM para poder calcular taxas. Uma edição já importada não
+    é importada de novo: a visão `ibge_populacao` falha quando um município e ano
+    têm duas publicações. Trocar o código da UF depois de gravar o plano exige um
+    novo plano.
+    """)
     return
 
 
 @app.cell
-def _(mo, default_target):
-    produto = mo.ui.dropdown(["census", "estimate"], value="census", label="Produto")
-    ano = mo.ui.number(start=2000, stop=2100, step=1, value=2022, label="Ano da edição")
-    codigo_uf = mo.ui.text(value="14", label="Código IBGE da UF para a análise (14 = RR)")
-    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
-    fixar = mo.ui.run_button(label="Fixar o plano")
-    mo.vstack(
-        [
-            mo.md(
-                "## 3 · Planejar e importar\n\n"
-                "Use o mesmo lake do SIM para poder calcular taxas. Uma edição já "
-                "importada não é importada de novo: a visão `ibge_populacao` falha "
-                "quando um município e ano têm duas publicações. O código da UF "
-                "também entra no plano: trocá-lo depois de fixado não sobrescreve a "
-                "execução, é preciso fixar um novo plano."
-            ),
-            mo.hstack([produto, ano]),
-            codigo_uf,
-            target,
-            fixar,
-        ]
+def _(ANO, CODIGO_UF, PRODUTO, executar, mo, save_plan, target):
+    mo.stop(
+        not executar,
+        mo.md("Defina `EXECUTAR = True` para gravar o plano e importar."),
     )
-    return ano, codigo_uf, fixar, produto, target
-
-
-@app.cell
-def _(ano, codigo_uf, executar, fixar, save_plan, mo, produto, target):
-    mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
     plano, pasta = save_plan(
-        target.value,
+        target,
         dataset="ibge_populacao",
-        product=produto.value,
-        ano=int(ano.value),
-        codigo_uf=codigo_uf.value.strip(),
+        product=PRODUTO,
+        ano=int(ANO),
+        codigo_uf=CODIGO_UF.strip(),
     )
-    importar = mo.ui.run_button(label="Baixar e publicar esta edição")
-    mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
-    return importar, pasta, plano
+    plano
+    return pasta, plano
 
 
 @app.cell
-async def _(asdict, asyncio, executar, importar, mo, odb, pasta, plano, write_json):
-    mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
+async def _(asdict, asyncio, executar, mo, odb, pasta, pl, plano, write_json):
+    mo.stop(not executar, mo.md("A importação segue `EXECUTAR` na célula de parâmetros."))
     _sql = (
         "SELECT publication_id, product, ano, sha256, url, collected_at "
         "FROM lake.ibge_population_manifest WHERE product = ? AND ano = ?"
     )
     try:
         with odb.LakeReader(plano["target"]) as _leitor:
-            _existentes = (
+            existentes = (
                 _leitor.connect().execute(_sql, [plano["product"], plano["ano"]]).pl().to_dicts()
                 if "ibge_population_manifest" in _leitor.tables()
                 else []
             )
     except odb.CatalogAttachError:
-        _existentes = []  # o lake ainda não existe
-    if _existentes:
+        existentes = []
+    if existentes:
         importadas = []
     else:
         importadas = await asyncio.to_thread(
@@ -189,23 +193,25 @@ async def _(asdict, asyncio, executar, importar, mo, odb, pasta, plano, write_js
         )
     write_json(
         pasta / "resultado.json",
-        {"ja_publicadas": _existentes, "importadas": [asdict(r) for r in importadas]},
+        {"ja_publicadas": existentes, "importadas": [asdict(r) for r in importadas]},
     )
-    mo.vstack(
-        [
-            mo.md(
-                "Edição já estava no lake; nada foi importado."
-                if _existentes
-                else f"Importadas **{sum(r.rows for r in importadas):,} linhas**."
-            ),
-            mo.ui.table(_existentes or [asdict(r) for r in importadas], selection=None),
-        ]
-    )
+    pl.DataFrame(existentes or [asdict(r) for r in importadas])
     return (importadas,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 4 · Conferir
+
+    O manifesto guarda URL, SHA-256 e data de coleta de cada publicação; a contagem
+    lê a visão, que falharia se houvesse publicações ambíguas.
+    """)
+    return
+
+
 @app.cell
-def _(importadas, mo, odb, plano):
+def _(importadas, odb, plano):
     with odb.LakeReader(plano["target"]) as _leitor:
         publicacoes = (
             _leitor.connect()
@@ -217,7 +223,7 @@ def _(importadas, mo, odb, plano):
             .pl()
             .to_dicts()
         )
-        _resumo = (
+        resumo = (
             _leitor.connect()
             .execute(
                 "SELECT count(*) AS municipios, sum(populacao) AS populacao_total "
@@ -227,24 +233,29 @@ def _(importadas, mo, odb, plano):
             .pl()
         )
         snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
-    mo.vstack(
-        [
-            mo.md(
-                "## 4 · Conferir\n\n"
-                f"Esta execução importou {len(importadas)} edição(ões). O manifesto guarda "
-                "URL, SHA-256 e data de coleta de cada publicação; a contagem abaixo lê a "
-                "visão, que falharia se houvesse publicações ambíguas."
-            ),
-            mo.ui.table(publicacoes, selection=None, label="ibge_population_manifest"),
-            mo.ui.table(_resumo, selection=None),
-            mo.md(f"Snapshot `{snapshot_id}`"),
-        ]
-    )
+    {
+        "edicoes_importadas_nesta_execucao": len(importadas),
+        "manifesto": publicacoes,
+        "resumo": resumo,
+        "snapshot_id": snapshot_id,
+    }
     return publicacoes, snapshot_id
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 5 · Analisar
+
+    A taxa junta os municípios pelos **6 primeiros dígitos**. Óbitos entram pelo
+    município de residência (`codmunres`) e só os arquivos do SIM presentes no lake
+    são contados.
+    """)
+    return
+
+
 @app.cell
-def _(mo, odb, plano, snapshot_id):
+def _(odb, plano, snapshot_id):
     _ano, _uf = plano["ano"], plano["codigo_uf"]
     _consultas = {
         "populacao_por_municipio": (
@@ -291,67 +302,29 @@ def _(mo, odb, plano, snapshot_id):
         nome: {"sql": sql, "parameters": parametros}
         for nome, (sql, parametros) in _consultas.items()
     }
-    _texto = (
-        "A taxa junta os municípios pelos **6 primeiros dígitos**: confira nas tabelas de "
-        "dígitos que os dois lados têm o formato esperado antes de usar o resultado. "
-        "Óbitos entram pelo município de residência (`codmunres`) e só os arquivos do SIM "
-        "presentes no lake são contados; veja o perfil do SIM sobre como os arquivos "
-        "são organizados."
-        if _tem_sim
-        else f"`sim_obitos` não está neste lake. Importe SIM {_ano} no notebook "
-        "`bases/sim_obitos.py`, com o mesmo lake, para calcular óbitos por 100 mil."
-    )
-    mo.vstack(
-        [
-            mo.md(f"## 5 · Analisar\n\nConsultas sobre o snapshot `{snapshot_id}`. {_texto}"),
-            mo.ui.tabs(
-                {
-                    nome: mo.vstack(
-                        [
-                            mo.ui.table(tabela, selection=None),
-                            mo.accordion({"SQL": mo.md(f"```sql\n{consultas[nome]['sql']}\n```")}),
-                        ]
-                    )
-                    for nome, tabela in resultados.items()
-                }
-            ),
-        ]
-    )
+    resultados
     return consultas, resultados
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 6 · Guardar
+
+    Resultados e `proveniencia.json` na pasta da execução. Veja
+    [Reprodutibilidade](https://raphaelfh.github.io/omnisus-db/pesquisa/reprodutibilidade/).
+    """)
+    return
+
+
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+def _(consultas, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
     record_provenance(
         pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")
-    mo.vstack(
-        [
-            mo.md(
-                "## 6 · Guardar\n\n"
-                f"Resultados e `proveniencia.json` gravados em `{pasta}`. Veja "
-                "[Reprodutibilidade](https://raphaelfh.github.io/omnisus-db/pesquisa/reprodutibilidade/)."
-            ),
-            mo.hstack(
-                [
-                    mo.download(
-                        (pasta / f"{nome}.csv").read_bytes(),
-                        filename=f"ibge_populacao-{nome}.csv",
-                        label=f"CSV · {nome}",
-                    )
-                    for nome in resultados
-                ],
-                wrap=True,
-            ),
-            mo.download(
-                (pasta / "proveniencia.json").read_bytes(),
-                filename="ibge_populacao-proveniencia.json",
-                label="proveniencia.json",
-            ),
-        ]
-    )
+    str(pasta)
     return
 
 

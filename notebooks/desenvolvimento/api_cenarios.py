@@ -44,10 +44,10 @@ def _(mo):
     ao terminar a célula. As tabelas exibidas ficam materializadas em memória.
     DuckDB pode baixar a extensão DuckLake na primeira execução.
 
-    As chamadas ao DATASUS ficam na seção 6 e exigem um clique. Cada importação
-    cria um destino próprio em `data/lake/marimo-runs/`, relativo ao diretório
-    de execução, e mantém os arquivos para inspeção. Use **um escritor por lake**.
-    Execute pela raiz do checkout atual; a tag histórica `v0.1.0` tem outra API.
+    As chamadas ao DATASUS ficam na seção 6: ponha `EXECUTAR_LIVE = True`. Cada
+    importação cria um destino próprio em `data/lake/marimo-runs/`. Use **um
+    escritor por lake**. Execute pela raiz do checkout atual; a tag histórica
+    `v0.1.0` tem outra API.
     """)
     return
 
@@ -87,16 +87,15 @@ def _(mo):
 
 
 @app.cell
-def _(asdict, mo, odb):
-    annual_scopes = odb.scopes_for("sim_obitos", years=[2022, 2023], ufs=["RR", "SP"])
-    monthly_scopes = odb.scopes_for("sih_aih_reduzida", years=[2024], ufs=["RR"], months=[1, 2])
-    mo.vstack(
-        [
-            mo.md("`scopes_for` monta combinações; a existência no FTP ainda não foi verificada."),
-            mo.ui.table([asdict(s) for s in annual_scopes], label="SIM · anual"),
-            mo.ui.table([asdict(s) for s in monthly_scopes], label="SIH · mensal"),
-        ]
-    )
+def _(asdict, odb):
+    annual_scopes = [
+        asdict(s) for s in odb.scopes_for("sim_obitos", years=[2022, 2023], ufs=["RR", "SP"])
+    ]
+    monthly_scopes = [
+        asdict(s)
+        for s in odb.scopes_for("sih_aih_reduzida", years=[2024], ufs=["RR"], months=[1, 2])
+    ]
+    {"sim_anual": annual_scopes, "sih_mensal": monthly_scopes}
     return
 
 
@@ -230,77 +229,60 @@ def _(Path, TemporaryDirectory, asdict, odb, pl):
 
 
 @app.cell
-def _(mo):
-    query_uf = mo.ui.dropdown(["Todas", "RR", "SP"], value="Todas", label="UF da consulta")
-    query_uf
-    return (query_uf,)
-
-
-@app.cell
-def _(demo_data, demo_parquet, mo, pl, query_uf):
-    _filtered = (
-        demo_data
-        if query_uf.value == "Todas"
-        else demo_data.filter(pl.col("uf") == query_uf.value)
-    )
-    _summary = (
-        _filtered.group_by("uf", "ano")
+def _(demo_data, demo_parquet, pl):
+    QUERY_UF = "Todas"
+    filtrado = demo_data if QUERY_UF == "Todas" else demo_data.filter(pl.col("uf") == QUERY_UF)
+    resumo_consulta = (
+        filtrado.group_by("uf", "ano")
         .agg(pl.len().alias("atendimentos"), pl.col("valor").sum().alias("valor_total"))
         .sort("uf", "ano")
     )
-    mo.vstack(
-        [
-            mo.ui.table(_filtered, label="Registros fictícios · SQL → Polars"),
-            mo.ui.table(_summary, label="Agregação com Polars"),
-            mo.download(
-                demo_parquet,
-                filename="demo_atendimentos.parquet",
-                label="Baixar exemplo completo em Parquet",
-            ),
-        ]
-    )
+    {"registros": filtrado, "agregacao": resumo_consulta, "parquet_bytes": len(demo_parquet)}
     return
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 3 · Commit, rollback e histórico
+    """)
+    return
+
+
+@app.cell
 def _(
     commit_summary,
     demo_tables,
-    mo,
     rollback_message,
     rollback_summary,
     snapshot_before_commit,
     snapshot_history,
 ):
-    mo.vstack(
-        [
-            mo.md("## 3 · Commit, rollback e histórico"),
-            mo.md(
-                f"Snapshot dentro da transação: `{snapshot_before_commit}`. Tabelas: `{demo_tables}`."
-            ),
-            mo.json(commit_summary),
-            mo.md(f"**Erro controlado:** {rollback_message}"),
-            mo.json(rollback_summary),
-            mo.ui.table(snapshot_history, label="Snapshots do catálogo, não apenas de uma tabela"),
-            mo.md(
-                "`bytes_written` mede o Parquet temporário. Um `snapshot_id=None` isolado não prova falha do commit; consulte o recibo. Transações gerenciadas não podem ser aninhadas."
-            ),
-        ]
-    )
+    {
+        "snapshot_antes_do_commit": snapshot_before_commit,
+        "tabelas": demo_tables,
+        "commit": commit_summary,
+        "erro_controlado": rollback_message,
+        "rollback": rollback_summary,
+        "historico": snapshot_history,
+    }
     return
 
 
 @app.cell(hide_code=True)
-def _(append_summary, mo):
-    mo.vstack(
-        [
-            mo.md("## 4 · Reprocessamento: append pode duplicar"),
-            mo.ui.table(append_summary),
-            mo.md(
-                "Duas chamadas com o mesmo registro geram duas linhas. Antes de repetir um escopo real, inspecione os resultados e o catálogo. O notebook cria um lake novo por importação real para permitir comparar tentativas."
-            ),
-        ]
-    )
+def _(mo):
+    mo.md("""
+    ## 4 · Reprocessamento: append pode duplicar
+
+    Duas chamadas com o mesmo registro geram duas linhas. Antes de repetir um
+    escopo real, inspecione os resultados e o catálogo.
+    """)
+    return
+
+
+@app.cell
+def _(append_summary):
+    append_summary
     return
 
 
@@ -344,20 +326,16 @@ def _(odb):
     return report_rows, simulated_abort, simulated_report
 
 
-@app.cell(hide_code=True)
-def _(mo, report_rows, simulated_abort, simulated_report):
-    mo.vstack(
-        [
-            mo.ui.table(report_rows(simulated_report)),
-            mo.md(
-                f"Confirmados: **{len(simulated_report.ok)}** · Ausentes: **{len(simulated_report.skipped)}** · Falhos: **{len(simulated_report.failed)}** · Linhas: **{simulated_report.rows}**"
-            ),
-            mo.md(f"Aborto simulado, posições não resolvidas: `{simulated_abort.unresolved}`."),
-            mo.md(
-                "Inspecione `report.failed`, não `bool(report)`. `skipped` significa ausência reconhecida, não falha de conexão. Em `ImportAbortedError`, `report` contém desfechos conhecidos e `unresolved` traz índices da entrada original. Um commit incerto exige inspeção antes de retry; não reimporte automaticamente."
-            ),
-        ]
-    )
+@app.cell
+def _(report_rows, simulated_abort, simulated_report):
+    {
+        "desfechos": report_rows(simulated_report),
+        "ok": len(simulated_report.ok),
+        "skipped": len(simulated_report.skipped),
+        "failed": len(simulated_report.failed),
+        "linhas": simulated_report.rows,
+        "unresolved": simulated_abort.unresolved,
+    }
     return
 
 
@@ -366,57 +344,66 @@ def _(mo):
     mo.md(r"""
     ## 6 · Descobrir e importar dados reais — opcional
 
-    Escolha os parâmetros, confirme o formulário e consulte o inventário. A UF e
-    os meses são filtrados em Python: `available()` aceita `years` e `refresh`.
+    Edite os parâmetros Python e ponha `EXECUTAR_LIVE = True`. A UF e os meses
+    são filtrados em Python: `available()` aceita `years` e `refresh`.
     Limitamos a importação a até três escopos; um arquivo ainda pode ser grande.
-    `concurrency` limita downloads; o parser pode manter um escopo inteiro em memória.
-    `batch_size` define quantos escopos compartilham uma transação.
-    Interromper uma célula não garante encerrar o importador na thread: aguarde
-    sua conclusão e inspecione o destino exibido antes de iniciar outra tentativa.
+    Interromper uma célula não garante encerrar o importador na thread.
     """)
     return
 
 
 @app.cell
-def _(mo, odb):
-    live_config = mo.ui.dictionary(
-        {
-            "dataset": mo.ui.dropdown(
-                [
-                    "sim_obitos",
-                    "sinasc_nascidos_vivos",
-                    "sih_aih_reduzida",
-                    "cnes_estabelecimentos",
-                    "sia_bpa_individualizado",
-                ],
-                value="sim_obitos",
-                label="Dataset",
-            ),
-            "year": mo.ui.number(start=2008, stop=2100, value=2023, label="Ano"),
-            "uf": mo.ui.dropdown(list(odb.ALL_UFS), value="RR", label="UF"),
-            "months": mo.ui.multiselect(
-                list(range(1, 13)), value=[1], label="Meses (ignorados para anual)"
-            ),
-            "limit": mo.ui.number(start=1, stop=3, value=1, label="Máximo de escopos"),
-            "refresh": mo.ui.checkbox(value=False, label="Atualizar cache do inventário"),
-        }
-    ).form(submit_button_label="Confirmar parâmetros")
-    live_config
-    return (live_config,)
+def _():
+    DATASET_LIVE = "sim_obitos"
+    ANO_LIVE = 2023
+    UF_LIVE = "RR"
+    MESES_LIVE = [1]
+    LIMITE_LIVE = 1
+    REFRESH_LIVE = False
+    EXECUTAR_LIVE = False
+    (
+        DATASET_LIVE,
+        ANO_LIVE,
+        UF_LIVE,
+        MESES_LIVE,
+        LIMITE_LIVE,
+        REFRESH_LIVE,
+        EXECUTAR_LIVE,
+    )
+    return (
+        ANO_LIVE,
+        DATASET_LIVE,
+        EXECUTAR_LIVE,
+        LIMITE_LIVE,
+        MESES_LIVE,
+        REFRESH_LIVE,
+        UF_LIVE,
+    )
 
 
 @app.cell
-def _(mo):
-    discover_button = mo.ui.run_button(label="Consultar inventário DATASUS")
-    discover_button
-    return (discover_button,)
-
-
-@app.cell
-async def discover_live(asdict, asyncio, discover_button, live_config, mo, odb):
-    mo.stop(not discover_button.value, mo.md("Inventário aguardando clique."))
-    mo.stop(live_config.value is None, mo.md("Confirme os parâmetros primeiro."))
-    selected_config = dict(live_config.value)
+async def discover_live(
+    ANO_LIVE,
+    DATASET_LIVE,
+    EXECUTAR_LIVE,
+    LIMITE_LIVE,
+    MESES_LIVE,
+    REFRESH_LIVE,
+    UF_LIVE,
+    asdict,
+    asyncio,
+    mo,
+    odb,
+):
+    mo.stop(not EXECUTAR_LIVE, mo.md("Defina `EXECUTAR_LIVE = True` para consultar o DATASUS."))
+    selected_config = {
+        "dataset": DATASET_LIVE,
+        "year": ANO_LIVE,
+        "uf": UF_LIVE,
+        "months": MESES_LIVE,
+        "limit": LIMITE_LIVE,
+        "refresh": REFRESH_LIVE,
+    }
     _dataset = odb.resolve(selected_config["dataset"])
     try:
         _available = await asyncio.to_thread(
@@ -437,24 +424,15 @@ async def discover_live(asdict, asyncio, discover_button, live_config, mo, odb):
         not selected_scopes,
         mo.md("Nenhum escopo encontrado. Altere os parâmetros e consulte novamente."),
     )
-    mo.ui.table([asdict(scope) for scope in selected_scopes], label="Escopos que serão importados")
+    [asdict(scope) for scope in selected_scopes]
     return selected_config, selected_scopes
 
 
 @app.cell
-def _(mo, selected_scopes):
-    import_button = mo.ui.run_button(
-        label=f"Importar {len(selected_scopes)} escopo(s) em um lake novo"
-    )
-    import_button
-    return (import_button,)
-
-
-@app.cell
 async def execute_live_import(
+    EXECUTAR_LIVE,
     Path,
     asyncio,
-    import_button,
     mo,
     odb,
     report_rows,
@@ -462,13 +440,11 @@ async def execute_live_import(
     selected_scopes,
     uuid4,
 ):
-    mo.stop(not import_button.value, mo.md("Importação aguardando clique."))
+    mo.stop(not EXECUTAR_LIVE, mo.md("Defina `EXECUTAR_LIVE = True` para importar."))
     live_directory = (Path.cwd() / "data/lake/marimo-runs" / uuid4().hex).resolve()
     live_target = f"ducklake:{live_directory / 'dados.ducklake'}"
-    mo.output.append(mo.md(f"**Tentativa em andamento:** `{live_target}`"))
 
     def _import_live():
-        # Os wrappers síncronos usam asyncio.run: execute fora do loop do notebook.
         if selected_config["dataset"] == "cnes_estabelecimentos":
             return odb.import_cnes_estabelecimentos(scopes=selected_scopes, target=live_target)
         return odb.import_dataset(
@@ -487,31 +463,22 @@ async def execute_live_import(
         _report = _error.report
         _unresolved = _error.unresolved
         _aborted = True
-    mo.vstack(
-        [
-            mo.md(f"Destino desta tentativa: `{live_target}`"),
-            mo.md(
-                f"Aborto: **{_aborted}** · ok: **{len(_report.ok)}** · skipped: **{len(_report.skipped)}** · failed: **{len(_report.failed)}**"
-            ),
-            mo.ui.table(report_rows(_report)),
-            mo.md(f"Entradas não resolvidas: `{_unresolved}`. Inspecione antes de repetir."),
-        ]
-    )
+    {
+        "destino": live_target,
+        "aborto": _aborted,
+        "ok": len(_report.ok),
+        "skipped": len(_report.skipped),
+        "failed": len(_report.failed),
+        "desfechos": report_rows(_report),
+        "unresolved": _unresolved,
+    }
     return (live_target,)
 
 
 @app.cell
-def _(live_target, mo, odb):
-    # A célula só recebe o destino depois que o escritor terminou e fechou o lake.
+def _(live_target, odb):
     with odb.LakeReader(live_target) as _read_lake:
-        _tables = _read_lake.tables()
-        _snapshots = _read_lake.snapshots()
-    mo.vstack(
-        [
-            mo.md(f"Tabelas encontradas ao reabrir: `{_tables}`"),
-            mo.ui.table(_snapshots, label="Histórico persistido"),
-        ]
-    )
+        {"tabelas": _read_lake.tables(), "snapshots": _read_lake.snapshots()}
     return
 
 
@@ -574,8 +541,7 @@ def _(mo):
 
     Referências: `docs/api.md`, `docs/guides/inventory.md`,
     `docs/sources/cnes_estabelecimentos.md`, `docs/sources/ibge_populacao.md`.
-    O controle das operações externas segue o
-    [run button do marimo](https://docs.marimo.io/api/inputs/run_button/).
+    A seção 6 só acessa a rede quando `EXECUTAR_LIVE = True`.
     """)
     return
 

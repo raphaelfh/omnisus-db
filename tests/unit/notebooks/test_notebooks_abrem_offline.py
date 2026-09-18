@@ -1,8 +1,8 @@
 """Opening a notebook opens no network connection; a bases/ notebook writes nothing.
 
 Every notebook runs in-process with `app.run()`, as `marimo export` would.
-Button-gated cells stop at `mo.stop`, so anything reaching the network or the
-research lake on open is a failure. The unit conftest also refuses FTP listings.
+Cells gated by `EXECUTAR` stop at `mo.stop`, so anything reaching the network or
+the research lake on open is a failure. The unit conftest also refuses FTP listings.
 
 The guard below patches `socket.socket.connect`, which is what both `ftplib` and
 `httpx` use to open a connection. It does not intercept `connect_ex`, DuckDB's
@@ -66,6 +66,12 @@ def test_notebooks_index_links_every_notebook_in_molab():
     indice = (NOTEBOOKS / "README.md").read_text(encoding="utf-8")
     for rel in sorted(ESPERADOS):
         assert f"{MOLAB_SHIELD}({MOLAB}{rel})" in indice
+
+
+@pytest.mark.parametrize("caminho", TODOS, ids=lambda p: p.relative_to(NOTEBOOKS).as_posix())
+def test_notebooks_are_not_marimo_apps(caminho):
+    texto = caminho.read_text(encoding="utf-8")
+    assert "mo.ui." not in texto, f"{caminho.name} still uses marimo widgets"
 
 
 @pytest.mark.parametrize("caminho", TODOS, ids=lambda p: p.relative_to(NOTEBOOKS).as_posix())
