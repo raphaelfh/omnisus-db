@@ -5,11 +5,12 @@
 ### Added
 
 - **Notebooks declare PEP 723 dependencies.** Each marimo notebook installs
-  `omnisus-db` from GitHub (`[tool.uv.sources]`), so `marimo edit --sandbox`
-  and molab (ephemeral server, not WebAssembly) can run without a prior
-  `uv sync`. The `bases/` helpers live in `omnisus_db.notebooks` so they
-  install with the package; `explorar/` still imports the sibling `_acervo/`
-  package, which is not on the wheel.
+  `omnisus-db` from GitHub (`[tool.uv.sources]`, pinned to a commit SHA until a
+  release tag exists), so `marimo edit --sandbox` and molab (ephemeral server,
+  not WebAssembly) can run without a prior `uv sync`. The `bases/` I/O helpers
+  live in the private `omnisus_db._notebooks` package; the 25 MiB download cap
+  is a constant in each notebook. `explorar/` still imports the sibling
+  `_acervo/` package, which is not on the wheel.
 - **A researcher guide** (`docs/pesquisa/`): a starting point, indicators and
   reproducibility, in Portuguese. The source profiles in `docs/sources/` follow a
   shared outline with cited sources; SIA now has a profile too.

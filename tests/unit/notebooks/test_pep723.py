@@ -8,6 +8,7 @@ from pathlib import Path
 
 NOTEBOOKS = Path(__file__).resolve().parents[3] / "notebooks"
 REPOSITORIO = "https://github.com/raphaelfh/omnisus-db.git"
+_SHA1 = re.compile(r"^[0-9a-f]{40}$")
 
 # PEP 723: a comment block that starts with `# /// script` and ends with `# ///`.
 _BLOCO = re.compile(r"(?m)^# /// script\n((?:#(?: |$).*\n)*)# ///")
@@ -47,16 +48,19 @@ def test_every_notebook_declares_the_github_package():
         assert {"marimo", "omnisus-db", "polars"} <= nomes
         fonte = meta["tool"]["uv"]["sources"]["omnisus-db"]
         assert fonte["git"] == REPOSITORIO
-        assert set(fonte) == {"git"}, (
-            f"{caminho.name}: pin a branch/rev only if the notebook needs an unpublished commit"
-        )
+        assert set(fonte) <= {"git", "rev"}
+        if "rev" in fonte:
+            assert _SHA1.match(fonte["rev"]), f"{caminho.name}: rev must be a commit SHA"
 
 
-def test_bases_notebooks_import_helpers_from_the_installed_package():
-    """A sibling `_comum.py` is invisible to molab and to `marimo edit --sandbox`."""
+def test_bases_notebooks_import_private_helpers_and_declare_the_download_cap():
     for caminho in sorted((NOTEBOOKS / "bases").glob("*.py")):
         if caminho.name.startswith("_"):
             continue
         texto = caminho.read_text(encoding="utf-8")
         assert "from _comum import" not in texto, caminho.name
-        assert "from omnisus_db.notebooks import" in texto, caminho.name
+        assert "from omnisus_db.notebooks import" not in texto, caminho.name
+        assert "from omnisus_db._notebooks import" in texto, caminho.name
+        if caminho.stem != "ibge_populacao":
+            assert "MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024" in texto, caminho.name
+            assert "LIMITE_BYTES" not in texto, caminho.name

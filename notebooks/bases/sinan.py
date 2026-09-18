@@ -26,33 +26,33 @@ def _():
     import marimo as mo
 
     import omnisus_db as odb
-    from omnisus_db.notebooks import (
-        LIMITE_BYTES,
-        conferir,
-        executar_sem_botoes,
-        fixar_plano,
-        registrar_importacao,
-        registrar_proveniencia,
-        target_padrao,
+    from omnisus_db._notebooks import (
+        default_target,
+        reconcile,
+        record_import,
+        record_provenance,
+        run_without_buttons,
+        save_plan,
     )
     from omnisus_db.transforms.dictionaries import load_dicionario
 
     agravos = {"sinan_chagas": "Doença de Chagas aguda", "sinan_hanseniase": "Hanseníase"}
-    executar = executar_sem_botoes(mo.cli_args())
+    MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
+    executar = run_without_buttons(mo.cli_args())
     return (
-        LIMITE_BYTES,
+        MAX_DOWNLOAD_BYTES,
         agravos,
         asdict,
         asyncio,
-        conferir,
+        reconcile,
         executar,
-        fixar_plano,
+        save_plan,
         load_dicionario,
         mo,
         odb,
-        registrar_importacao,
-        registrar_proveniencia,
-        target_padrao,
+        record_import,
+        record_provenance,
+        default_target,
     )
 
 
@@ -140,9 +140,9 @@ async def _(agravo, asyncio, descobrir, executar, mo, odb):
 
 
 @app.cell
-def _(mo, target_padrao):
+def _(mo, default_target):
     ano = mo.ui.number(start=2000, stop=2100, step=1, value=2022, label="Ano do arquivo")
-    target = mo.ui.text(value=target_padrao(), label="Lake", full_width=True)
+    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
     fixar = mo.ui.run_button(label="Fixar o plano")
     mo.vstack(
         [
@@ -150,7 +150,7 @@ def _(mo, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "O arquivo é nacional: não há filtro de UF na importação. Filtre a "
                 "geografia dos registros depois, na análise. O notebook limita cada "
-                "download comprimido a 25 MiB (`LIMITE_BYTES` em `omnisus_db.notebooks`); um "
+                "download comprimido a 25 MiB (`MAX_DOWNLOAD_BYTES` no próprio notebook); um "
                 "arquivo maior termina como `failed`, e pode ser importado subindo "
                 "esse limite ou com a chamada direta `odb.import_dataset` no perfil "
                 'desta base ("Como usar").'
@@ -164,15 +164,15 @@ def _(mo, target_padrao):
 
 
 @app.cell
-def _(LIMITE_BYTES, agravo, ano, asdict, executar, fixar, fixar_plano, mo, odb, target):
+def _(MAX_DOWNLOAD_BYTES, agravo, ano, asdict, executar, fixar, save_plan, mo, odb, target):
     mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
     escopos = odb.scopes_for(agravo.value, years=[int(ano.value)])
-    plano, pasta = fixar_plano(
+    plano, pasta = save_plan(
         target.value,
         dataset=agravo.value,
-        escopos=[asdict(e) for e in escopos],
+        scopes=[asdict(e) for e in escopos],
         policy="skip_same",
-        limite_bytes=LIMITE_BYTES,
+        max_download_bytes=MAX_DOWNLOAD_BYTES,
     )
     importar = mo.ui.run_button(label="Baixar e publicar este plano")
     mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
@@ -181,7 +181,7 @@ def _(LIMITE_BYTES, agravo, ano, asdict, executar, fixar, fixar_plano, mo, odb, 
 
 @app.cell
 async def _(
-    LIMITE_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, registrar_importacao
+    MAX_DOWNLOAD_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, record_import
 ):
     mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
     mo.output.append(
@@ -199,13 +199,13 @@ async def _(
             policy="skip_same",
             run_id=plano["run_id"],
             concurrency=1,
-            max_payload_bytes=LIMITE_BYTES,
-            max_inflight_bytes=LIMITE_BYTES,
+            max_payload_bytes=MAX_DOWNLOAD_BYTES,
+            max_inflight_bytes=MAX_DOWNLOAD_BYTES,
         )
         _nao_resolvidos = ()
     except odb.ImportAbortedError as _erro:
         relatorio, _nao_resolvidos = _erro.report, _erro.unresolved
-    _linhas = registrar_importacao(pasta, relatorio, _nao_resolvidos)
+    _linhas = record_import(pasta, relatorio, _nao_resolvidos)
     if executar and (relatorio.failed or _nao_resolvidos):
         raise RuntimeError(f"Importação incompleta; veja {pasta / 'resultado.json'}")
     mo.vstack(
@@ -222,14 +222,14 @@ async def _(
 
 
 @app.cell
-def _(conferir, escopos, mo, odb, plano, relatorio):
+def _(reconcile, escopos, mo, odb, plano, relatorio):
     with odb.LakeReader(plano["target"]) as _leitor:
         mo.stop(
             plano["dataset"] not in _leitor.tables(),
             mo.md("Nenhuma tabela publicada; veja os desfechos acima."),
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
-        _conferencia, publicacoes = conferir(_leitor, plano["dataset"], escopos)
+        _conferencia, publicacoes = reconcile(_leitor, plano["dataset"], escopos)
         mo.stop(
             not publicacoes,
             mo.md(
@@ -269,7 +269,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                 SELECT _source_release AS diretorio, count(*) AS notificacoes {_recorte}
                 GROUP BY ALL
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
         "notificacoes_por_uf_de_notificacao": {
             "sql": f"""
@@ -277,7 +277,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                        count(*) AS notificacoes {_recorte}
                 GROUP BY ALL ORDER BY notificacoes DESC
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
         "notificacoes_por_uf_de_residencia": {
             "sql": f"""
@@ -285,7 +285,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                        count(*) AS notificacoes {_recorte}
                 GROUP BY ALL ORDER BY notificacoes DESC
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
     }
     if _tabela == "sinan_chagas":
@@ -296,7 +296,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                        count(*) AS notificacoes {_recorte}
                 GROUP BY ALL ORDER BY classi_fin, evolucao
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         }
     else:
         consultas["modo_de_entrada_e_alta"] = {
@@ -306,11 +306,11 @@ def _(escopos, mo, odb, plano, snapshot_id):
                        count(*) AS notificacoes {_recorte}
                 GROUP BY ALL ORDER BY modoentr, tpalta_n
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parameters"]).pl()
             for nome, consulta in consultas.items()
         }
     mo.vstack(
@@ -338,9 +338,9 @@ def _(escopos, mo, odb, plano, snapshot_id):
 
 
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, registrar_proveniencia, resultados, snapshot_id):
-    registrar_proveniencia(
-        pasta, plano=plano, publicacoes=publicacoes, snapshot_id=snapshot_id, consultas=consultas
+def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+    record_provenance(
+        pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")
