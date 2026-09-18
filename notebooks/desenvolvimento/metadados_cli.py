@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git" }
+# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
 # ///
 
 """Consulta real dos metadados documentais pelo terminal, dentro do checkout."""
