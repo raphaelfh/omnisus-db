@@ -20,7 +20,7 @@ import pytest
 
 NOTEBOOKS = Path(__file__).resolve().parents[3] / "notebooks"
 
-# Helper modules are not notebooks: `_comum.py`, `_performance_dbf.py`, `_acervo/`.
+# Helper modules are not notebooks: `_performance_dbf.py`, `_acervo/`.
 TODOS = sorted(
     p
     for p in NOTEBOOKS.rglob("*.py")

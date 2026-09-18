@@ -12,7 +12,22 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
+```bash
+uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
+```
+
 [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
+
+Os notebooks de `bases/` importam helpers privados de `omnisus_db._notebooks`
+(vão no pacote instalado). O teto de download (`MAX_DOWNLOAD_BYTES`) fica no
+próprio notebook. `explorar/panorama_datasus.py` ainda usa `_acervo/` ao lado do
+arquivo; `desenvolvimento/performance_dbf.py` usa `_performance_dbf.py`. DuckDB,
+FTP e o lake local não rodam em `/wasm`.
+
+No checkout, rode o `marimo` a partir da **raiz do repositório** (ou defina
+`OMNISUS_NOTEBOOK_DATA`) para SIM e IBGE compartilharem o lake. `uv run --locked
+--extra notebooks` usa o código local; `--sandbox` instala o commit pinado no
+cabeçalho PEP 723.
 
 ## `bases/` — uma base por notebook, para pesquisa
 
@@ -55,5 +70,5 @@ uv run --locked --extra notebooks marimo export html notebooks/bases/sim_obitos.
 | [metadados_cli.py](desenvolvimento/metadados_cli.py) | [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/metadados_cli.py) | Metadados por coluna pelo terminal |
 | [performance_dbf.py](desenvolvimento/performance_dbf.py) | [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/performance_dbf.py) | Medições do leitor DBF Python × Rust |
 
-Arquivos com `_` no início (`_comum.py`, `_acervo/`, `_performance_dbf.py`) são
-módulos auxiliares, não notebooks.
+Arquivos com `_` no início (`_acervo/`, `_performance_dbf.py`) são módulos
+auxiliares, não notebooks.

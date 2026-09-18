@@ -1,3 +1,15 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo>=0.23.16,<0.25",
+#     "omnisus-db",
+#     "polars>=1.44.2,<2.0",
+# ]
+#
+# [tool.uv.sources]
+# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
+# ///
+
 """IBGE · população: a edição que serve de denominador, com proveniência."""
 
 import marimo
@@ -12,32 +24,32 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
-    from _comum import (
-        executar_sem_botoes,
-        fixar_plano,
-        registrar_proveniencia,
-        salvar_json,
-        target_padrao,
-    )
 
     import omnisus_db as odb
+    from omnisus_db._notebooks import (
+        default_target,
+        record_provenance,
+        run_without_buttons,
+        save_plan,
+        write_json,
+    )
     from omnisus_db.sources.ibge.products import CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS
     from omnisus_db.transforms.dictionaries import load_dicionario
 
-    executar = executar_sem_botoes(mo.cli_args())
+    executar = run_without_buttons(mo.cli_args())
     return (
         CENSUS_YEARS,
         ESTIMATE_UNAVAILABLE_YEARS,
         asdict,
         asyncio,
         executar,
-        fixar_plano,
+        save_plan,
         load_dicionario,
         mo,
         odb,
-        registrar_proveniencia,
-        salvar_json,
-        target_padrao,
+        record_provenance,
+        write_json,
+        default_target,
     )
 
 
@@ -110,11 +122,11 @@ def _(CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS, mo):
 
 
 @app.cell
-def _(mo, target_padrao):
+def _(mo, default_target):
     produto = mo.ui.dropdown(["census", "estimate"], value="census", label="Produto")
     ano = mo.ui.number(start=2000, stop=2100, step=1, value=2022, label="Ano da edição")
     codigo_uf = mo.ui.text(value="14", label="Código IBGE da UF para a análise (14 = RR)")
-    target = mo.ui.text(value=target_padrao(), label="Lake", full_width=True)
+    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
     fixar = mo.ui.run_button(label="Fixar o plano")
     mo.vstack(
         [
@@ -136,9 +148,9 @@ def _(mo, target_padrao):
 
 
 @app.cell
-def _(ano, codigo_uf, executar, fixar, fixar_plano, mo, produto, target):
+def _(ano, codigo_uf, executar, fixar, save_plan, mo, produto, target):
     mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
-    plano, pasta = fixar_plano(
+    plano, pasta = save_plan(
         target.value,
         dataset="ibge_populacao",
         product=produto.value,
@@ -151,7 +163,7 @@ def _(ano, codigo_uf, executar, fixar, fixar_plano, mo, produto, target):
 
 
 @app.cell
-async def _(asdict, asyncio, executar, importar, mo, odb, pasta, plano, salvar_json):
+async def _(asdict, asyncio, executar, importar, mo, odb, pasta, plano, write_json):
     mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
     _sql = (
         "SELECT publication_id, product, ano, sha256, url, collected_at "
@@ -175,7 +187,7 @@ async def _(asdict, asyncio, executar, importar, mo, odb, pasta, plano, salvar_j
             product=plano["product"],
             target=plano["target"],
         )
-    salvar_json(
+    write_json(
         pasta / "resultado.json",
         {"ja_publicadas": _existentes, "importadas": [asdict(r) for r in importadas]},
     )
@@ -276,7 +288,7 @@ def _(mo, odb, plano, snapshot_id):
             for nome, (sql, parametros) in _consultas.items()
         }
     consultas = {
-        nome: {"sql": sql, "parametros": parametros}
+        nome: {"sql": sql, "parameters": parametros}
         for nome, (sql, parametros) in _consultas.items()
     }
     _texto = (
@@ -309,9 +321,9 @@ def _(mo, odb, plano, snapshot_id):
 
 
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, registrar_proveniencia, resultados, snapshot_id):
-    registrar_proveniencia(
-        pasta, plano=plano, publicacoes=publicacoes, snapshot_id=snapshot_id, consultas=consultas
+def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+    record_provenance(
+        pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")

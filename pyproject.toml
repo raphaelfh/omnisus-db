@@ -109,7 +109,7 @@ extend-immutable-calls = ["typer.Argument", "typer.Option"]
 
 [tool.ruff.lint.per-file-ignores]
 # marimo displays final expressions and injects imported classes as cell arguments.
-"notebooks/**/*.py" = ["B018", "N803"]
+"notebooks/**/*.py" = ["B018", "N803", "N806"]
 
 [tool.ruff.format]
 quote-style = "double"

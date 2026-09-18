@@ -74,5 +74,9 @@ uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 
 [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
 
+Os notebooks declaram `omnisus-db` no cabeçalho PEP 723, instalado a partir do
+GitHub no molab (servidor efêmero, não WebAssembly) ou com
+`uvx marimo edit --sandbox notebooks/bases/sim_obitos.py`.
+
 Abrir um notebook não baixa nada. Outros notebooks, para explorar o DATASUS e
 para quem desenvolve a biblioteca, estão no [índice](notebooks/README.md).

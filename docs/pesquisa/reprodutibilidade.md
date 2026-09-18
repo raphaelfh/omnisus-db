@@ -12,7 +12,7 @@ o que registrar e onde cada informação fica.
   `run_id` repetido essa conclusão não vale
   ([reprocessing and maintenance](../guides/reprocessing-and-maintenance.md#inspect-an-interrupted-run)).
   Os notebooks geram um `run_id` novo e o gravam em `plano.json` antes do download
-  (`notebooks/bases/_comum.py`, `fixar_plano`).
+  (`omnisus_db._notebooks.save_plan`).
 - **Use `policy="skip_same"`.** A política padrão é `append`, que acrescenta de novo um
   escopo já importado. `skip_same` pula o escopo só quando todas as publicações ativas
   dele têm o mesmo SHA-256 de origem e a mesma versão do parser, e falha nos outros
@@ -175,8 +175,7 @@ Onde encontrar cada valor:
 - `<snapshot_id>`: o snapshot em que você leu os dados.
 
 Nos notebooks, `proveniencia.json` junta o plano (com o `run_id` e a versão), as
-publicações, o `snapshot_id` e as consultas (`notebooks/bases/_comum.py`,
-`registrar_proveniencia`).
+publicações, o `snapshot_id` e as consultas (`omnisus_db._notebooks.record_provenance`).
 
 Para a população do IBGE, sugestão deste guia: troque o arquivo pelo `url`, o
 `source_sha256` pelo `sha256`, a data pela de `collected_at` e a execução pelo

@@ -1,3 +1,15 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo>=0.23.16,<0.25",
+#     "omnisus-db",
+#     "polars>=1.44.2,<2.0",
+# ]
+#
+# [tool.uv.sources]
+# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
+# ///
+
 """SINASC · nascidos vivos: do arquivo do DATASUS a uma tabela citável, em seis etapas."""
 
 import marimo
@@ -12,35 +24,35 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
-    from _comum import (
-        LIMITE_BYTES,
-        conferir,
-        executar_sem_botoes,
-        fixar_plano,
-        registrar_importacao,
-        registrar_proveniencia,
-        target_padrao,
-    )
 
     import omnisus_db as odb
+    from omnisus_db._notebooks import (
+        default_target,
+        reconcile,
+        record_import,
+        record_provenance,
+        run_without_buttons,
+        save_plan,
+    )
     from omnisus_db.transforms.dictionaries import load_dicionario
 
     dataset = "sinasc_nascidos_vivos"
-    executar = executar_sem_botoes(mo.cli_args())
+    MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
+    executar = run_without_buttons(mo.cli_args())
     return (
-        LIMITE_BYTES,
+        MAX_DOWNLOAD_BYTES,
         asdict,
         asyncio,
-        conferir,
+        reconcile,
         dataset,
         executar,
-        fixar_plano,
+        save_plan,
         load_dicionario,
         mo,
         odb,
-        registrar_importacao,
-        registrar_proveniencia,
-        target_padrao,
+        record_import,
+        record_provenance,
+        default_target,
     )
 
 
@@ -123,10 +135,10 @@ async def _(asyncio, dataset, descobrir, executar, mo, odb):
 
 
 @app.cell
-def _(mo, odb, target_padrao):
+def _(mo, odb, default_target):
     uf = mo.ui.dropdown(list(odb.ALL_UFS), value="RR", label="UF do arquivo")
     ano = mo.ui.number(start=1994, stop=2100, step=1, value=2022, label="Ano")
-    target = mo.ui.text(value=target_padrao(), label="Lake", full_width=True)
+    target = mo.ui.text(value=default_target(), label="Lake", full_width=True)
     fixar = mo.ui.run_button(label="Fixar o plano")
     mo.vstack(
         [
@@ -134,7 +146,7 @@ def _(mo, odb, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "Confira o ano na etapa 2. Fixar o plano grava `plano.json` com um "
                 "`run_id` antes de qualquer download. O notebook limita cada download "
-                "comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um arquivo maior "
+                "comprimido a 25 MiB (`MAX_DOWNLOAD_BYTES` no próprio notebook); um arquivo maior "
                 "(por exemplo outra UF) termina como `failed`, e pode ser importado "
                 "subindo esse limite ou com a chamada direta `odb.import_dataset` no "
                 'perfil desta base ("Como usar").'
@@ -148,15 +160,15 @@ def _(mo, odb, target_padrao):
 
 
 @app.cell
-def _(LIMITE_BYTES, ano, asdict, dataset, executar, fixar, fixar_plano, mo, odb, target, uf):
+def _(MAX_DOWNLOAD_BYTES, ano, asdict, dataset, executar, fixar, save_plan, mo, odb, target, uf):
     mo.stop(not (executar or fixar.value), mo.md("Fixe o plano para continuar."))
     escopos = odb.scopes_for(dataset, years=[int(ano.value)], ufs=[uf.value])
-    plano, pasta = fixar_plano(
+    plano, pasta = save_plan(
         target.value,
         dataset=dataset,
-        escopos=[asdict(e) for e in escopos],
+        scopes=[asdict(e) for e in escopos],
         policy="skip_same",
-        limite_bytes=LIMITE_BYTES,
+        max_download_bytes=MAX_DOWNLOAD_BYTES,
     )
     importar = mo.ui.run_button(label="Baixar e publicar este plano")
     mo.vstack([mo.md(f"Plano gravado em `{pasta / 'plano.json'}`."), mo.json(plano), importar])
@@ -165,7 +177,7 @@ def _(LIMITE_BYTES, ano, asdict, dataset, executar, fixar, fixar_plano, mo, odb,
 
 @app.cell
 async def _(
-    LIMITE_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, registrar_importacao
+    MAX_DOWNLOAD_BYTES, asyncio, escopos, executar, importar, mo, odb, pasta, plano, record_import
 ):
     mo.stop(not (executar or importar.value), mo.md("O download só começa pelo botão acima."))
     mo.output.append(
@@ -183,13 +195,13 @@ async def _(
             policy="skip_same",
             run_id=plano["run_id"],
             concurrency=1,
-            max_payload_bytes=LIMITE_BYTES,
-            max_inflight_bytes=LIMITE_BYTES,
+            max_payload_bytes=MAX_DOWNLOAD_BYTES,
+            max_inflight_bytes=MAX_DOWNLOAD_BYTES,
         )
         _nao_resolvidos = ()
     except odb.ImportAbortedError as _erro:
         relatorio, _nao_resolvidos = _erro.report, _erro.unresolved
-    _linhas = registrar_importacao(pasta, relatorio, _nao_resolvidos)
+    _linhas = record_import(pasta, relatorio, _nao_resolvidos)
     if executar and (relatorio.failed or _nao_resolvidos):
         raise RuntimeError(f"Importação incompleta; veja {pasta / 'resultado.json'}")
     mo.vstack(
@@ -206,14 +218,14 @@ async def _(
 
 
 @app.cell
-def _(conferir, dataset, escopos, mo, odb, plano, relatorio):
+def _(reconcile, dataset, escopos, mo, odb, plano, relatorio):
     with odb.LakeReader(plano["target"]) as _leitor:
         mo.stop(
             dataset not in _leitor.tables(),
             mo.md("Nenhuma tabela publicada; veja os desfechos acima."),
         )
         _desta_execucao = _leitor.publications(run_id=plano["run_id"])
-        _conferencia, publicacoes = conferir(_leitor, dataset, escopos)
+        _conferencia, publicacoes = reconcile(_leitor, dataset, escopos)
         mo.stop(
             not publicacoes,
             mo.md(
@@ -253,7 +265,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                 FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
                 GROUP BY ALL ORDER BY nascidos_vivos DESC
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
         "peso_ao_nascer": {
             "sql": """
@@ -263,7 +275,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                            AS peso_abaixo_de_2500_g
                 FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
         "consultas_pre_natal": {
             "sql": """
@@ -272,7 +284,7 @@ def _(escopos, mo, odb, plano, snapshot_id):
                 FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
                 GROUP BY ALL ORDER BY consultas_codigo
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
         "tipo_de_parto": {
             "sql": """
@@ -280,12 +292,12 @@ def _(escopos, mo, odb, plano, snapshot_id):
                 FROM lake.sinasc_nascidos_vivos WHERE uf = ? AND ano = ?
                 GROUP BY ALL ORDER BY parto_codigo
             """,
-            "parametros": _parametros,
+            "parameters": _parametros,
         },
     }
     with odb.LakeReader(plano["target"], snapshot_id=snapshot_id) as _leitor:
         resultados = {
-            nome: _leitor.connect().execute(consulta["sql"], consulta["parametros"]).pl()
+            nome: _leitor.connect().execute(consulta["sql"], consulta["parameters"]).pl()
             for nome, consulta in consultas.items()
         }
     mo.vstack(
@@ -313,9 +325,9 @@ def _(escopos, mo, odb, plano, snapshot_id):
 
 
 @app.cell
-def _(consultas, mo, pasta, plano, publicacoes, registrar_proveniencia, resultados, snapshot_id):
-    registrar_proveniencia(
-        pasta, plano=plano, publicacoes=publicacoes, snapshot_id=snapshot_id, consultas=consultas
+def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, snapshot_id):
+    record_provenance(
+        pasta, plan=plano, publications=publicacoes, snapshot_id=snapshot_id, queries=consultas
     )
     for _nome, _tabela in resultados.items():
         _tabela.write_csv(pasta / f"{_nome}.csv")

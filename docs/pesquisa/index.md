@@ -18,6 +18,18 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
+Sem clonar, o notebook instala `omnisus-db` do GitHub (cabeçalho PEP 723):
+
+```bash
+uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
+```
+
+`--sandbox` e o molab instalam `omnisus-db` do GitHub no **commit pinado** no
+cabeçalho PEP 723 do notebook, não o checkout local. Abra os notebooks a partir
+da raiz do repositório (ou defina `OMNISUS_NOTEBOOK_DATA`) para SIM e IBGE
+gravairem no mesmo lake. Use a prévia em **servidor**, não WebAssembly. Para
+desenvolver a biblioteca, use `uv sync --locked --extra notebooks`.
+
 No [molab](https://molab.marimo.io) o mesmo notebook abre no navegador, sem
 instalar o ambiente local:
 
@@ -59,7 +71,7 @@ qualquer download. A importação usa esse `run_id` e
 `odb.import_dataset(dataset, scopes=..., target=..., policy="skip_same", run_id=...)`,
 para que repetir a etapa não duplique linhas. A população usa
 `odb.import_ibge_populacao`. Nos notebooks com download por FTP, esta etapa limita o
-arquivo comprimido a 25 MiB (`LIMITE_BYTES` em `notebooks/bases/_comum.py`); um arquivo
+arquivo comprimido a 25 MiB (`MAX_DOWNLOAD_BYTES` no próprio notebook); um arquivo
 maior (por exemplo outra UF) termina como `failed`, e pode ser importado subindo esse
 limite ou com a chamada direta `odb.import_dataset` no perfil da base ("Como usar"). A
 população do IBGE não baixa pelo FTP, então esse limite não se aplica a ela.
@@ -83,7 +95,7 @@ publicações, o `snapshot_id`, as consultas e a versão da biblioteca. Veja
 Os notebooks gravam no mesmo lake, `data/lake/pesquisa/dados.ducklake`, e cada execução
 ganha uma pasta própria em `data/lake/pesquisa/execucoes/<run_id>/`, com `plano.json`,
 `resultado.json`, os CSVs e `proveniencia.json`
-(`notebooks/bases/_comum.py`, `raiz_dados` e `fixar_plano`). A variável de ambiente
+(`omnisus_db._notebooks.data_root` e `save_plan`). A variável de ambiente
 `OMNISUS_NOTEBOOK_DATA` troca essa pasta.
 
 O lake é um só porque uma taxa precisa de duas bases: óbitos por 100 mil habitantes
