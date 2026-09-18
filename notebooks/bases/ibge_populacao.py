@@ -232,7 +232,7 @@ def _(importadas, odb, plano):
             )
             .pl()
         )
-        snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
+        snapshot_id = odb.latest_snapshot_id(_leitor)
     {
         "edicoes_importadas_nesta_execucao": len(importadas),
         "manifesto": publicacoes,
@@ -257,6 +257,8 @@ def _(mo):
 @app.cell
 def _(odb, plano, snapshot_id):
     _ano, _uf = plano["ano"], plano["codigo_uf"]
+    _mun_obito = odb.municipality_join_key_sql("codmunres")
+    _mun_pop = odb.municipality_join_key_sql("codigo_ibge")
     _consultas = {
         "populacao_por_municipio": (
             "SELECT codigo_ibge, populacao FROM lake.ibge_populacao "
@@ -278,13 +280,13 @@ def _(odb, plano, snapshot_id):
                 [_ano],
             )
             _consultas["obitos_por_100_mil"] = (
-                """
+                f"""
                 WITH obitos AS (
-                    SELECT left(trim(CAST(codmunres AS VARCHAR)), 6) AS municipio,
+                    SELECT {_mun_obito} AS municipio,
                            count(*) AS obitos
                     FROM lake.sim_obitos WHERE ano = ? GROUP BY ALL
                 ), populacao AS (
-                    SELECT left(codigo_ibge, 6) AS municipio, populacao
+                    SELECT {_mun_pop} AS municipio, populacao
                     FROM lake.ibge_populacao WHERE ano = ? AND left(codigo_ibge, 2) = ?
                 )
                 SELECT municipio, obitos, populacao,

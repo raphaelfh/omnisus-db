@@ -213,3 +213,35 @@ def test_provenance_rejects_a_query_without_its_parameters(tmp_path):
 def test_helpers_are_not_on_the_public_import_surface():
     assert "notebooks" not in odb.__all__
     assert "_notebooks" not in odb.__all__
+
+
+_BASES = Path(__file__).resolve().parents[3] / "notebooks/bases"
+_FTP_NOTEBOOKS = (
+    "sim_obitos.py",
+    "sinasc_nascidos_vivos.py",
+    "sih_aih_reduzida.py",
+    "sia.py",
+    "sinan.py",
+    "medicamentos.py",
+)
+
+
+@pytest.mark.parametrize("nome", _FTP_NOTEBOOKS)
+def test_ftp_research_notebooks_import_without_append(nome):
+    texto = (_BASES / nome).read_text(encoding="utf-8")
+    assert "odb.import_research" in texto
+    assert "odb.import_dataset," not in texto
+    assert "odb.latest_snapshot_id" in texto
+
+
+def test_cnes_notebook_refreshes_aux_view_and_pins_snapshot():
+    texto = (_BASES / "cnes_estabelecimentos.py").read_text(encoding="utf-8")
+    assert "odb.import_cnes_estabelecimentos" in texto
+    assert "odb.latest_snapshot_id" in texto
+
+
+def test_ibge_notebook_joins_municipality_with_the_public_helper():
+    texto = (_BASES / "ibge_populacao.py").read_text(encoding="utf-8")
+    assert "odb.municipality_join_key_sql" in texto
+    assert "odb.latest_snapshot_id" in texto
+    assert "left(trim(CAST(codmunres AS VARCHAR)), 6)" not in texto

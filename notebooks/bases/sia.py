@@ -208,11 +208,10 @@ async def _(
     mo.stop(not executar, mo.md("A importação segue `EXECUTAR` na célula de parâmetros."))
     try:
         relatorio = await asyncio.to_thread(
-            odb.import_dataset,
+            odb.import_research,
             plano["dataset"],
             scopes=escopos,
             target=plano["target"],
-            policy="skip_same",
             run_id=plano["run_id"],
             concurrency=1,
             max_payload_bytes=MAX_DOWNLOAD_BYTES,
@@ -263,7 +262,7 @@ def _(escopos, mo, odb, plano, reconcile, relatorio):
                 "Nenhuma publicação ativa para os escopos deste plano; veja os desfechos acima."
             ),
         )
-        snapshot_id = _leitor.snapshots()[-1]["snapshot_id"]
+        snapshot_id = odb.latest_snapshot_id(_leitor)
     {
         "linhas_novas": relatorio.rows,
         "publications": desta_execucao,
