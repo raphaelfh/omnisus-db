@@ -65,6 +65,8 @@ def _(mo):
     mo.md("""
     # Acessar metadados pelo terminal
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/metadados_cli.py)
+
     Este notebook **executa subprocessos reais** e transforma suas saídas JSON
     em tabelas. Funciona offline com os arquivos versionados do checkout.
 

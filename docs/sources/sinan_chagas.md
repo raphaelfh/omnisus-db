@@ -158,7 +158,8 @@ with odb.LakeReader(alvo) as leitor:
 ```
 
 Passo a passo com Chagas e hanseníase, análise e proveniência:
-[notebooks/bases/sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py).
+[notebooks/bases/sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py).
 
 ## Fontes
 

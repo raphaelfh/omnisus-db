@@ -46,6 +46,8 @@ def _(mo):
     mo.md(r"""
     # IBGE · população
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py)
+
     População municipal publicada pelo IBGE, importada de uma **edição explícita**:
     censo ou estimativa, e um ano. Este notebook percorre as seis etapas do
     [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) com o

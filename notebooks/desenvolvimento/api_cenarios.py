@@ -25,6 +25,8 @@ def _(mo):
     mo.md(r"""
     # omnisus-db · API na prática
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/api_cenarios.py)
+
     Um roteiro executável: **planejar → gravar → consultar → verificar → importar**.
     Os exemplos locais usam dados fictícios e um lake temporário que é removido
     ao terminar a célula. As tabelas exibidas ficam materializadas em memória.

@@ -31,6 +31,8 @@ def _(mo):
     mo.md("""
     # Python x Rust: quanto muda na leitura DBF?
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/performance_dbf.py)
+
     **Explore tempo, memória e disco a partir de medições reais e reproduzíveis.**
 
     O leitor Rust substitui a conversão DBF → Arrow. Descompactação, staging

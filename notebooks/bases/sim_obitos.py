@@ -49,6 +49,8 @@ def _(mo):
     mo.md(r"""
     # SIM · óbitos
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
+
     Base de óbitos do Sistema de Informações sobre Mortalidade (SIM), publicada
     pelo DATASUS. Este notebook percorre as seis etapas do
     [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) com um

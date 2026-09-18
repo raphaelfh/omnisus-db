@@ -152,7 +152,8 @@ with odb.LakeReader(alvo) as leitor:
 ```
 
 Passo a passo com análise e proveniência:
-[notebooks/bases/sim_obitos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py).
+[notebooks/bases/sim_obitos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py).
 
 ## Fontes
 
