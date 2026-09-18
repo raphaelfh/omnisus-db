@@ -127,7 +127,7 @@ jobs:
             -o pythonpath= --require-rust-dbf -m 'not e2e and not perf' \
             tests/unit/sources/datasus_ftp tests/integration/test_rust_dbf_pipeline.py \
             tests/unit/lake/test_publication.py native/omnisus-db-dbf/tests/test_bindings.py -q
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: native-wheel-${{ matrix.platform.target }}
           path: dist/native/*.whl
@@ -193,7 +193,7 @@ jobs:
           cd "$NATIVE_SMOKE"
           uv run --no-project --no-sync --python "$NATIVE_GATE" \
             python -I -m pytest -q -c pytest.ini smoke_native_wheel.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: native-sdist
           path: dist/sdist/*.tar.gz
