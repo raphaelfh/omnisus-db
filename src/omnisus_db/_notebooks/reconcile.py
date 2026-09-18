@@ -29,7 +29,9 @@ def reconcile(
     for scope in scopes:
         where, args = scope_filter(scope)
         sql = f"SELECT count(*) FROM {qualified(reader.alias, dataset)} WHERE {where}"
-        (in_lake,) = reader.connect().execute(sql, args).fetchone()
+        counted = reader.connect().execute(sql, args).fetchone()
+        assert counted is not None
+        (in_lake,) = counted
         published = sum(row["rows"] for row in active if row["scope"] == scope)
         comparison.append(
             {
