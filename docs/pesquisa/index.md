@@ -18,6 +18,17 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
+Sem clonar, o notebook instala `omnisus-db` do GitHub (cabeçalho PEP 723). No
+[molab](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
+use a prévia em servidor, não WebAssembly. Localmente, isolado:
+
+```bash
+uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
+```
+
+`--sandbox` e o molab instalam a `main` publicada no GitHub, não o checkout
+local. Para desenvolver a biblioteca, use `uv sync --locked --extra notebooks`.
+
 ## Qual base responde minha pergunta?
 
 | Pergunta | Base | Perfil | Notebook |

@@ -1,3 +1,15 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo>=0.23.16,<0.25",
+#     "omnisus-db",
+#     "polars>=1.44.2,<2.0",
+# ]
+#
+# [tool.uv.sources]
+# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git" }
+# ///
+
 """CNES · estabelecimentos: do arquivo do DATASUS a uma tabela citável, em seis etapas."""
 
 import marimo

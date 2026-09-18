@@ -1,3 +1,15 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo>=0.23.16,<0.25",
+#     "omnisus-db",
+#     "polars>=1.44.2,<2.0",
+# ]
+#
+# [tool.uv.sources]
+# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git" }
+# ///
+
 """Medicamentos: APAC do SIA no lake, uma página de estoque do Hórus e o que não existe."""
 
 import marimo

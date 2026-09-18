@@ -8,6 +8,22 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
+Cada notebook declara as dependências no cabeçalho [PEP 723](https://peps.python.org/pep-0723/).
+`omnisus-db` ainda não está no PyPI: o sandbox e o [molab](https://docs.marimo.io/guides/molab/)
+instalam a biblioteca a partir do GitHub.
+
+```bash
+uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
+```
+
+No molab, espelhe o arquivo no GitHub (servidor efêmero, não a prévia WebAssembly):
+[sim_obitos.py no molab](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py).
+O repositório inteiro precisa estar disponível — `_comum.py` e `_acervo/` não vão no
+pacote instalado. DuckDB, FTP e o lake local não rodam em `/wasm`.
+
+No checkout, continue com `uv run --locked --extra notebooks`: isso usa o código
+local. `--sandbox` baixa `omnisus-db` de `main` no GitHub.
+
 ## `bases/` — uma base por notebook, para pesquisa
 
 Comece pelo [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/).
