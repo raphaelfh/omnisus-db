@@ -69,6 +69,8 @@ def _(mo):
     mo.md(r"""
     # SIA · produção ambulatorial
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py)
+
     O Sistema de Informações Ambulatoriais do SUS (SIA/SUS) é publicado pelo DATASUS
     em várias tabelas, por UF e mês; a biblioteca importa sete. Escolha uma e siga as
     seis etapas do [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/)

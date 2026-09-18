@@ -50,6 +50,24 @@ def test_every_notebook_is_checked():
     assert {p.relative_to(NOTEBOOKS).as_posix() for p in TODOS} == ESPERADOS
 
 
+MOLAB = "https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/"
+MOLAB_SHIELD = "[![Open in molab](https://molab.marimo.io/molab-shield.svg)]"
+
+
+@pytest.mark.parametrize("caminho", TODOS, ids=lambda p: p.relative_to(NOTEBOOKS).as_posix())
+def test_every_notebook_has_molab_badge(caminho):
+    rel = caminho.relative_to(NOTEBOOKS).as_posix()
+    texto = caminho.read_text(encoding="utf-8")
+    esperado = f"{MOLAB_SHIELD}({MOLAB}{rel})"
+    assert esperado in texto
+
+
+def test_notebooks_index_links_every_notebook_in_molab():
+    indice = (NOTEBOOKS / "README.md").read_text(encoding="utf-8")
+    for rel in sorted(ESPERADOS):
+        assert f"{MOLAB_SHIELD}({MOLAB}{rel})" in indice
+
+
 @pytest.mark.parametrize("caminho", TODOS, ids=lambda p: p.relative_to(NOTEBOOKS).as_posix())
 def test_opening_downloads_and_writes_nothing(caminho, monkeypatch, tmp_path):
     real_connect = socket.socket.connect

@@ -61,6 +61,8 @@ def _(mo):
     mo.md(r"""
     # CNES · estabelecimentos
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py)
+
     Arquivo de estabelecimentos (ST) do Cadastro Nacional de Estabelecimentos de
     Saúde (CNES), publicado pelo DATASUS por UF e competência. Este notebook percorre
     as seis etapas do [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/)

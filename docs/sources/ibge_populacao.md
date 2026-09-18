@@ -130,7 +130,8 @@ Rodar a importação duas vezes para a mesma edição faz a visão `ibge_populac
 porque o município e ano passam a ter duas publicações.
 
 Passo a passo com análise e proveniência, que consulta o manifesto antes de importar:
-[notebooks/bases/ibge_populacao.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py).
+[notebooks/bases/ibge_populacao.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py).
 
 ## Fontes
 

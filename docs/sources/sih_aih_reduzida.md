@@ -149,7 +149,8 @@ with odb.LakeReader(alvo) as leitor:
 ```
 
 Passo a passo com análise e proveniência:
-[notebooks/bases/sih_aih_reduzida.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py).
+[notebooks/bases/sih_aih_reduzida.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py).
 
 ## Fontes
 

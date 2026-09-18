@@ -57,6 +57,8 @@ def _(mo):
     mo.md("""
     # Conhecer o DATASUS com dados reais
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/explorar/panorama_datasus.py)
+
     **18 categorias → arquivos originais → amostras de tabelas → mapa de colunas.**
 
     Comece pela visão geral, escolha uma categoria e explore as tabelas, campos e

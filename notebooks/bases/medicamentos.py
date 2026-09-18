@@ -69,6 +69,8 @@ def _(mo):
     mo.md(r"""
     # Medicamentos: o que dá para estudar com dados abertos
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py)
+
     Três partes:
 
     - **A · APAC de medicamentos (SIA-AM)** — as seis etapas do

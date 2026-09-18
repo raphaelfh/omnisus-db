@@ -61,6 +61,8 @@ def _(mo):
     mo.md(r"""
     # SINASC · nascidos vivos
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py)
+
     Base do Sistema de Informações sobre Nascidos Vivos (SINASC), publicada pelo
     DATASUS. Este notebook percorre as seis etapas do
     [guia do pesquisador](https://raphaelfh.github.io/omnisus-db/pesquisa/) com um

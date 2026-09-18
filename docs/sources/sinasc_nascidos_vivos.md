@@ -122,7 +122,8 @@ with odb.LakeReader(alvo) as leitor:
 ```
 
 Passo a passo com análise e proveniência:
-[notebooks/bases/sinasc_nascidos_vivos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py).
+[notebooks/bases/sinasc_nascidos_vivos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py).
 
 ## Fontes
 

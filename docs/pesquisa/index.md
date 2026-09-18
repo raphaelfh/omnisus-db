@@ -18,9 +18,7 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
-Sem clonar, o notebook instala `omnisus-db` do GitHub (cabeçalho PEP 723). No
-[molab](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
-use a prévia em servidor, não WebAssembly. Localmente, isolado:
+Sem clonar, o notebook instala `omnisus-db` do GitHub (cabeçalho PEP 723):
 
 ```bash
 uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
@@ -29,22 +27,27 @@ uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
 `--sandbox` e o molab instalam `omnisus-db` do GitHub no **commit pinado** no
 cabeçalho PEP 723 do notebook, não o checkout local. Abra os notebooks a partir
 da raiz do repositório (ou defina `OMNISUS_NOTEBOOK_DATA`) para SIM e IBGE
-gravairem no mesmo lake. Para desenvolver a biblioteca, use
-`uv sync --locked --extra notebooks`.
+gravairem no mesmo lake. Use a prévia em **servidor**, não WebAssembly. Para
+desenvolver a biblioteca, use `uv sync --locked --extra notebooks`.
+
+No [molab](https://molab.marimo.io) o mesmo notebook abre no navegador, sem
+instalar o ambiente local:
+
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
 
 ## Qual base responde minha pergunta?
 
 | Pergunta | Base | Perfil | Notebook |
 | --- | --- | --- | --- |
-| Quantas pessoas morreram, de quê, onde moravam? | SIM · óbitos | [perfil](../sources/sim_obitos.md) | [sim_obitos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py) |
-| Quantos nasceram, com que peso, com quantas consultas de pré-natal? | SINASC · nascidos vivos | [perfil](../sources/sinasc_nascidos_vivos.md) | [sinasc_nascidos_vivos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py) |
-| Quantas internações hospitalares foram registradas, por qual diagnóstico? | SIH · AIH reduzida | [perfil](../sources/sih_aih_reduzida.md) | [sih_aih_reduzida.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py) |
-| Que produção ambulatorial foi registrada (sete tabelas: BPA-I, APAC, RAAS)? | SIA · produção ambulatorial | [perfil](../sources/sia.md) | [sia.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py) |
-| Quais estabelecimentos de saúde existem, onde, de que tipo? | CNES · estabelecimentos | [perfil](../sources/cnes_estabelecimentos.md) | [cnes_estabelecimentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py) |
-| Qual população usar como denominador de uma taxa? | IBGE · população | [perfil](../sources/ibge_populacao.md) | [ibge_populacao.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py) |
-| Quantas notificações de doença de Chagas aguda? | SINAN · Chagas aguda | [perfil](../sources/sinan_chagas.md) | [sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) |
-| Quantas notificações de hanseníase, e como terminou o tratamento? | SINAN · hanseníase | [perfil](../sources/sinan_hanseniase.md) | [sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) |
-| Que medicamentos o SUS registrou em APAC, e que estoque aparece? | Medicamentos | [perfil](../sources/medicamentos.md) | [medicamentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py) |
+| Quantas pessoas morreram, de quê, onde moravam? | SIM · óbitos | [perfil](../sources/sim_obitos.md) | [sim_obitos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py) |
+| Quantos nasceram, com que peso, com quantas consultas de pré-natal? | SINASC · nascidos vivos | [perfil](../sources/sinasc_nascidos_vivos.md) | [sinasc_nascidos_vivos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinasc_nascidos_vivos.py) |
+| Quantas internações hospitalares foram registradas, por qual diagnóstico? | SIH · AIH reduzida | [perfil](../sources/sih_aih_reduzida.md) | [sih_aih_reduzida.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py) |
+| Que produção ambulatorial foi registrada (sete tabelas: BPA-I, APAC, RAAS)? | SIA · produção ambulatorial | [perfil](../sources/sia.md) | [sia.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py) |
+| Quais estabelecimentos de saúde existem, onde, de que tipo? | CNES · estabelecimentos | [perfil](../sources/cnes_estabelecimentos.md) | [cnes_estabelecimentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py) |
+| Qual população usar como denominador de uma taxa? | IBGE · população | [perfil](../sources/ibge_populacao.md) | [ibge_populacao.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/ibge_populacao.py) |
+| Quantas notificações de doença de Chagas aguda? | SINAN · Chagas aguda | [perfil](../sources/sinan_chagas.md) | [sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) |
+| Quantas notificações de hanseníase, e como terminou o tratamento? | SINAN · hanseníase | [perfil](../sources/sinan_hanseniase.md) | [sinan.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py) |
+| Que medicamentos o SUS registrou em APAC, e que estoque aparece? | Medicamentos | [perfil](../sources/medicamentos.md) | [medicamentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py) [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py) |
 
 Leia o perfil antes de contar: ele diz o que uma linha representa, de onde vêm as datas
 e os municípios e o que ainda está em aberto.
