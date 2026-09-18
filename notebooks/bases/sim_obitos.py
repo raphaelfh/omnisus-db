@@ -2,12 +2,12 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo>=0.23.16,<0.25",
-#     "omnisus-db",
+#     "omnisusdb",
 #     "polars>=1.44.2,<2.0",
 # ]
 #
 # [tool.uv.sources]
-# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
+# omnisusdb = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
 # ///
 
 """SIM · óbitos: do arquivo do DATASUS a uma tabela citável, em seis etapas."""
@@ -339,7 +339,7 @@ def _(consultas, mo, pasta, plano, publicacoes, record_provenance, resultados, s
                 "## 6 · Guardar\n\n"
                 f"Resultados e `proveniencia.json` gravados em `{pasta}`. Para citar: "
                 "arquivo e SHA-256 de cada publicação, `snapshot_id`, versão do "
-                "omnisus-db e data de acesso — veja "
+                "omnisusdb e data de acesso — veja "
                 "[Reprodutibilidade](https://raphaelfh.github.io/omnisus-db/pesquisa/reprodutibilidade/)."
             ),
             mo.hstack(

@@ -5,7 +5,7 @@
 ### Added
 
 - **Notebooks declare PEP 723 dependencies.** Each marimo notebook installs
-  `omnisus-db` from GitHub (`[tool.uv.sources]`, pinned to a commit SHA until a
+  `omnisusdb` from GitHub (`[tool.uv.sources]`, pinned to a commit SHA until a
   release tag exists), so `marimo edit --sandbox` and molab (ephemeral server,
   not WebAssembly) can run without a prior `uv sync`. The `bases/` I/O helpers
   live in the private `omnisus_db._notebooks` package; the 25 MiB download cap
@@ -24,14 +24,18 @@
 
 ### Changed
 
+- **PyPI and CLI names have no hyphen.** The distributions are `omnisusdb` and
+  `omnisusdbdbf`; the command is `omnisusdb`. The import remains `omnisus_db`
+  (Python cannot use a hyphen in a module name). The GitHub repository is still
+  `raphaelfh/omnisus-db`.
 - **marimo is no longer installed with the package.** A base install pulls
   only what imports need. The notebooks need the extra:
   `uv sync --locked --extra notebooks` (or `pip install ".[notebooks]"`).
 - **Installs from wheels on Python 3.13 and 3.14.** DBC decompression no
   longer uses `datasus-dbc`, which has no 3.13 wheels for macOS, Windows or
-  Linux x86_64 and made `pip install` need Rust there. `omnisus-db` now ports
+  Linux x86_64 and made `pip install` need Rust there. `omnisusdb` now ports
   zlib's `blast.c` to pure Python, byte-exact with `datasus-dbc` on every test
-  fixture. The optional `omnisus-db-dbf` wheel carries the same decoder in Rust
+  fixture. The optional `omnisusdbdbf` wheel carries the same decoder in Rust
   (API version 2, one abi3 wheel for 3.12+) and is used automatically when
   installed; `OMNISUS_DBC_BACKEND=python|rust|auto` chooses explicitly.
   Malformed payloads raise `InvalidDbcError`, a `ValueError`.
@@ -90,14 +94,14 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   CLI's `--plan inventory` now delegates to it rather than post-filtering.
 - `sinan_hanseniase` (SINAN HANS, 2001–, final and preliminary).
 - `scripts/gen_dicionario.py`: physical-inventory YAML from one DBC file.
-- Optional `omnisus-db-dbf` Rust extension for C/N DBF decoding directly to Arrow
+- Optional `omnisusdbdbf` Rust extension for C/N DBF decoding directly to Arrow
   batches, with exact integer/string semantics and a shared staging writer.
   `OMNISUS_DBF_BACKEND=python|rust|auto` selects the backend. The default is
   `auto`: Rust when the extension is installed, otherwise Python. Unsupported
   metadata can fall back before parsing, while corrupt data and late failures
   remain errors. Native wheels have independent build/install
   checks, fixture parity tests and resource benchmarks.
-- **`pip install omnisus-db` works without a Rust toolchain on Python 3.12.**
+- **`pip install omnisusdb` works without a Rust toolchain on Python 3.12.**
   `requires-python` was `>=3.13` for no recorded reason — there is no 3.13-only
   syntax in the package and the full suite passes on 3.12 — while `datasus-dbc`
   ships cp313 wheels only for manylinux aarch64/armv7l/ppc64le/s390x. So every
@@ -121,18 +125,18 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   rows were already committed, so `import_sim(years=range(2000, 2026))` fired
   702 blind fetches and died on scope 3 with no partial results and no resume.
   Inspect `report.failed`; never the report's truthiness.
-- **`--plan inventory`.** `omnisus-db import <ds> --plan inventory` asks the
+- **`--plan inventory`.** `omnisusdb import <ds> --plan inventory` asks the
   server what it publishes and imports only that, instead of the blind
   cartesian product. Implies a cache refresh, because a 23-hour-old listing
   would silently omit a month published this morning. In Python this needs no
   flag — pass `available(...)` instead of `scopes_for(...)` as `scopes`.
-- `omnisus-db import` exits non-zero **if and only if** a scope failed. A
+- `omnisusdb import` exits non-zero **if and only if** a scope failed. A
   skipped scope exits zero, so an orchestrator can tell "nothing to do" from
   "something broke".
 - `concurrency` (default 6) and `batch_size` (default 24) on `import_dataset`.
 - Generated `docs/datasets.md` (all 11 datasets, rendered from the registry and
   checked for staleness in CI), an API reference page, and a guide to the
-  inventory — `available`, `browse` and `omnisus-db inventory` shipped
+  inventory — `available`, `browse` and `omnisusdb inventory` shipped
   undocumented.
 - `release.yml`: PyPI Trusted Publishing (OIDC) with PEP 740 attestations,
   gated on a wheel-only install. `dependabot.yml` for actions and uv.
@@ -152,11 +156,11 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   actually publishes (registry-decoded); `browse(path, depth=)` lists any FTP
   path, reaching subsystems this package does not model (SINAN, CIHA, PCE).
   Both come from one listing primitive and need no lake. Listings cache to
-  Parquet under `${XDG_CACHE_HOME:-~/.cache}/omnisus-db/inventory/`
+  Parquet under `${XDG_CACHE_HOME:-~/.cache}/omnisusdb/inventory/`
   (override with `OMNISUS_CACHE_DIR`), 24h TTL, `refresh=True` to bypass.
   DuckDB reads those files directly.
-- **CLI:** `omnisus-db inventory <dataset>` and
-  `omnisus-db inventory --path <ftp-path> [--depth N]`.
+- **CLI:** `omnisusdb inventory <dataset>` and
+  `omnisusdb inventory --path <ftp-path> [--depth N]`.
 - **Tier 3 ground-truth probe** (`tests/integration/test_registry_probe.py`,
   weekly `probe.yml`): validates every registry row's `ftp_dir`, `prefix` and
   `coverage` against the live server — the only tier that catches a wrong row
@@ -313,7 +317,7 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   pool is full. Only a 550 is terminal now, as `inventory.py` already had it.
   The two modules had diverged because `FTP_HOST` and the transient-error tuple
   were each stated twice; both now live in one module.
-- **`omnisus-db lake snapshots` never worked.** It asked
+- **`omnisusdb lake snapshots` never worked.** It asked
   `ducklake_snapshots('lake.<table>')`, which does not bind. Snapshots are
   catalog-wide in DuckLake, and the command now lists them (it no longer takes
   a table argument).
@@ -350,7 +354,7 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   an unwritable `OMNISUS_CACHE_DIR`, a read-only `$HOME`, or a full disk
   now only logs a warning and returns the listing (spec I8: the cache is
   never authoritative).
-- **`omnisus-db inventory` no longer lists a rejected dataset name in its
+- **`omnisusdb inventory` no longer lists a rejected dataset name in its
   own error message.** The command's help and its "unknown dataset" error
   now enumerate only the FTP-backed names it actually accepts, not the
   full `import`-command set (which includes `ibge-pop`/`ibge_pop`, which
@@ -366,7 +370,7 @@ and the short-name aliases are gone, so 0.1.0 callers break.
   `list_dir_cached("/x/")` returned `.path == "/x/"` on a cache hit and
   `"/x"` on a miss; a hit now reads the canonical path recorded at write
   time, matching what `list_dir` itself always promised.
-- **`omnisus-db inventory --path ... --depth N` bounds `--depth` to 1-4.**
+- **`omnisusdb inventory --path ... --depth N` bounds `--depth` to 1-4.**
   `--depth 0` previously surfaced a raw traceback; an unbounded depth could
   sequentially LIST an entire DATASUS subtree against the shared public
   server (spec I7).
@@ -401,7 +405,7 @@ Initial release. Greenfield Python library replacing the old
 - **Datasets:** SIM-DO, SINASC-NV, SIH-RD (monthly), IBGE-pop, CNES-ST (monthly)
 - **Auxiliary tables:** `aux_uf` (27 rows), `aux_municipios` (5571 rows), `aux_cid10` (16 seed rows) — bundled in `auxiliares-bootstrap.zip`
 - **8 Frictionless Table Schema YAMLs** (validated in CI via `frictionless validate`)
-- **CLI** (`omnisus-db`): `init`, `import`, `query`, `lake {tables, describe, snapshots, optimize, vacuum, update-auxiliares}`, `doctor`
+- **CLI** (`omnisusdb`): `init`, `import`, `query`, `lake {tables, describe, snapshots, optimize, vacuum, update-auxiliares}`, `doctor`
 - **Top-level Python API:** `import_sim`, `import_sinasc`, `import_sih`, `import_ibge_pop`, `import_cnes_st`, `Lake`, `ImportResult`, `ScopeKey`, `ALL_UFS`
 - **DBC pipeline:** `datasus-dbc` (Rust) → `dbfread2` streaming → Polars batches (100k rows) → `sink_parquet` (zstd, 1M row groups) → DuckLake `INSERT` (atomic snapshot)
 - **DBF terminator patch** for CNES-ST and similar DBC files with malformed headers

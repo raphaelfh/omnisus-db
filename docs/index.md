@@ -1,4 +1,4 @@
-# omnisus-db
+# omnisusdb
 
 A Python library for ingesting Brazilian public health databases (DATASUS, IBGE, CNES)
 into a [DuckLake](https://ducklake.select)-backed lakehouse.

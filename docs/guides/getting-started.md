@@ -22,7 +22,7 @@ uv sync --locked --all-extras
 ## 2. Initialize a lake
 
 ```bash
-omnisus-db init
+omnisusdb init
 ```
 
 This creates `./omnisus.ducklake/` (Parquet storage) and `./omnisus-catalog.sqlite`
@@ -31,8 +31,8 @@ This creates `./omnisus.ducklake/` (Parquet storage) and `./omnisus-catalog.sqli
 ## 3. Import some data
 
 ```bash
-omnisus-db inventory sim_obitos --refresh
-omnisus-db import sim_obitos --plan inventory --year 2023 --ufs RR
+omnisusdb inventory sim_obitos --refresh
+omnisusdb import sim_obitos --plan inventory --year 2023 --ufs RR
 ```
 
 If the listing has no matching scope, choose one it actually lists. Imports
@@ -47,7 +47,7 @@ and interrupted imports.
 After the scope has imported successfully:
 
 ```bash
-omnisus-db query "SELECT count(*) FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'"
+omnisusdb query "SELECT count(*) FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'"
 ```
 
 Or in Python:
@@ -69,8 +69,8 @@ connection or lazy relations. Open `Lake.local` only to write.
 ## 5. Bigger imports
 
 ```bash
-omnisus-db import sim_obitos --plan inventory --years 2020-2024 --ufs SP,RJ,MG
-omnisus-db import sinasc_nascidos_vivos --plan inventory --years 2020-2024
+omnisusdb import sim_obitos --plan inventory --years 2020-2024 --ufs SP,RJ,MG
+omnisusdb import sinasc_nascidos_vivos --plan inventory --years 2020-2024
 ```
 
 A completed FTP import reports every requested position. The CLI exits 1 for
@@ -80,7 +80,7 @@ The separate [IBGE population importer](../sources/ibge_populacao.md) requires a
 product and edition and returns a list of results. For example:
 
 ```bash
-omnisus-db import ibge_populacao --year 2022 --population-product census
+omnisusdb import ibge_populacao --year 2022 --population-product census
 ```
 
 Historical estimates without a verified territorial universe are unavailable.
@@ -91,7 +91,7 @@ Commands that operate on a lake accept `--target/-t`; inventory does not use a
 lake. PostgreSQL catalog targets use this form:
 
 ```bash
-omnisus-db import sim_obitos --year 2023 --ufs RR \
+omnisusdb import sim_obitos --year 2023 --ufs RR \
   --target "ducklake:postgresql://user:pwd@host/db?storage=s3://bucket/lake"
 ```
 

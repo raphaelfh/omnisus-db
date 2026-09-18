@@ -46,7 +46,7 @@ def test_cache_dir_honours_the_env_override(tmp_path: Path) -> None:
 def test_cache_dir_falls_back_to_xdg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("OMNISUS_CACHE_DIR", raising=False)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
-    assert cache_dir() == tmp_path / "xdg" / "omnisus-db" / "inventory"
+    assert cache_dir() == tmp_path / "xdg" / "omnisusdb" / "inventory"
 
 
 def test_cache_path_is_a_readable_slug_not_a_hash() -> None:

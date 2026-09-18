@@ -44,7 +44,7 @@ def cache_dir() -> Path:
         return Path(override)
     xdg = os.environ.get("XDG_CACHE_HOME")
     base = Path(xdg) if xdg else Path.home() / ".cache"
-    return base / "omnisus-db" / "inventory"
+    return base / "omnisusdb" / "inventory"
 
 
 def cache_path(remote_path: str) -> Path:

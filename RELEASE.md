@@ -19,7 +19,7 @@ manual dispatch and `dbf-v*` tags. It does not publish packages. Every
 native-only installation must use binary dependencies and pass outside the
 checkout.
 
-`omnisus-db` does not depend on this package: it decodes DBF and DBC in pure
+`omnisusdb` does not depend on this package: it decodes DBF and DBC in pure
 Python without it. Before a native PyPI release, configure its own Trusted
 Publisher and promote the artifacts that passed the complete matrix. Use
 `dbf-v<version>` for the native package; `v<version>` continues to identify
@@ -62,7 +62,7 @@ channel is the wheel file built from the tag:
 ```bash
 git checkout v0.2.0
 uv build --wheel --out-dir dist
-pip install dist/omnisus_db-0.2.0-py3-none-any.whl
+pip install dist/omnisusdb-0.2.0-py3-none-any.whl
 ```
 
 `release.yml` still runs on every `v*` tag. Its install gate is useful, and its
@@ -70,7 +70,7 @@ pip install dist/omnisus_db-0.2.0-py3-none-any.whl
 exists. That failure is expected, as in the `v0.2.0` run; do not re-run it.
 
 To publish later, the PyPI account owner adds a pending Trusted Publisher
-(project `omnisus-db`, owner `raphaelfh`, repository `omnisus-db`, workflow
+(project `omnisusdb`, owner `raphaelfh`, repository `omnisus-db`, workflow
 `release.yml`, environment `pypi`) and re-runs only the failed job with
 `gh run rerun <run-id> --failed`.
 

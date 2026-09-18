@@ -172,8 +172,8 @@ Passo a passo com análise e proveniência:
 ### Linha de comando
 
 ```bash
-omnisus-db inventory sim_obitos --refresh
-omnisus-db import sim_obitos --plan inventory --years 2020-2024 --ufs RR
+omnisusdb inventory sim_obitos --refresh
+omnisusdb import sim_obitos --plan inventory --years 2020-2024 --ufs RR
 ```
 
 As importações acrescentam linhas a `lake.sim_obitos`. Ao terminar, a importação

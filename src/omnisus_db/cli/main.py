@@ -1,4 +1,4 @@
-"""omnisus-db CLI entry point (Typer + Rich)."""
+"""omnisusdb CLI entry point (Typer + Rich)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from omnisus_db.sources._base import ScopeKey
 from omnisus_db.sources.datasus_ftp.datasets import REGISTRY, Dataset, resolve
 
 app = typer.Typer(
-    name="omnisus-db",
+    name="omnisusdb",
     help="Brazilian public health database ingestion lib.",
     no_args_is_help=True,
     add_completion=False,
@@ -35,12 +35,12 @@ is composition (spec §5.1); this is CLI sugar over the same two functions."""
 
 
 def dataset_choices() -> list[str]:
-    """Every name ``omnisus-db import`` accepts — derived, never listed by hand."""
+    """Every name ``omnisusdb import`` accepts — derived, never listed by hand."""
     return sorted({*REGISTRY, *_NON_FTP})
 
 
 def ftp_dataset_choices() -> list[str]:
-    """Every name ``omnisus-db inventory`` accepts.
+    """Every name ``omnisusdb inventory`` accepts.
 
     A subset of :func:`dataset_choices`: the inventory reads the DATASUS FTP
     server, so datasets that do not come from it (``_NON_FTP``) have nothing
@@ -402,7 +402,7 @@ def doctor() -> None:
 
     from omnisus_db._version import __version__ as v
 
-    console.print(f"omnisus-db: {v}")
+    console.print(f"omnisusdb: {v}")
     console.print(f"DuckDB:     {duckdb.__version__}")
     console.print(f"Polars:     {pl.__version__}")
     console.print(f"PyArrow:    {pa.__version__}")

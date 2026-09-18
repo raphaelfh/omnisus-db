@@ -211,8 +211,8 @@ fístula (`ACF`) e acompanhamento multiprofissional (`AMP`), e atenção domicil
 ### Linha de comando
 
 ```bash
-omnisus-db inventory sia_bpa_individualizado --refresh
-omnisus-db import sia_bpa_individualizado --plan inventory --years 2020-2024 --ufs RR
+omnisusdb inventory sia_bpa_individualizado --refresh
+omnisusdb import sia_bpa_individualizado --plan inventory --years 2020-2024 --ufs RR
 ```
 
 As importações acrescentam linhas à tabela do dataset, por exemplo

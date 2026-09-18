@@ -16,7 +16,7 @@ class CatalogURI:
 
 
 def parse_target(target: str) -> CatalogURI:
-    """Parse an ``omnisus-db`` target string.
+    """Parse an ``omnisusdb`` target string.
 
     Forms accepted:
         ``ducklake:./omnisus.ducklake``

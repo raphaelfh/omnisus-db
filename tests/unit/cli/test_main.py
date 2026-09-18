@@ -1,4 +1,4 @@
-"""Tests for the omnisus-db CLI entry point."""
+"""Tests for the omnisusdb CLI entry point."""
 
 from __future__ import annotations
 

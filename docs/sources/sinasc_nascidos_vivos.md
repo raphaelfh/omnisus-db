@@ -140,8 +140,8 @@ Passo a passo com análise e proveniência:
 ### Linha de comando
 
 ```bash
-omnisus-db inventory sinasc_nascidos_vivos --refresh
-omnisus-db import sinasc_nascidos_vivos --plan inventory --years 2020-2024 --ufs RR
+omnisusdb inventory sinasc_nascidos_vivos --refresh
+omnisusdb import sinasc_nascidos_vivos --plan inventory --years 2020-2024 --ufs RR
 ```
 
 As importações acrescentam linhas a `lake.sinasc_nascidos_vivos`. Ao terminar, a

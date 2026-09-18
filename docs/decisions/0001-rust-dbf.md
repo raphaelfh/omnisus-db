@@ -2,8 +2,8 @@
 
 **Date:** 2026-05-02
 **Status:** Decided — Option B (Rust crate justified), deferred to v0.2.0
-**Spec ref:** §7.5 of the omnisus-db design spec
-(`omnisus/docs/superpowers/specs/2026-05-02-omnisus-db-design.md`
+**Spec ref:** §7.5 of the omnisusdb design spec
+(`omnisus/docs/superpowers/specs/2026-05-02-omnisusdb-design.md`
 in the parent `omnisus` repository)
 
 This ADR records the May 2026 measurements and roadmap decision. Its benchmark
@@ -32,7 +32,7 @@ unchanged historical record.
 
 Per spec §7.5, Phase 3 includes a profile-then-Rust gate: if DBF parse
 dominates >40% of the wall-clock for the DBC→DBF→Polars pipeline,
-implement a small Rust extension package (`omnisus-db-dbf`) using PyO3 +
+implement a small Rust extension package (`omnisusdbdbf`) using PyO3 +
 the `dbase` crate to deliver Arrow batches directly.
 
 `dbfread2` is the only Python-native step in the pipeline; everything
@@ -79,7 +79,7 @@ We *defer* the Rust work to v0.2.0 for these reasons:
    is fast enough that real-world wall-clock is dominated by FTP fetch
    for the typical (uf, year) scope. The benefit is largest at full
    national scale, which v0.1.0 doesn't claim to optimize.
-2. **A Rust crate is its own package** (per §7.5: separate `omnisus-db-dbf`
+2. **A Rust crate is its own package** (per §7.5: separate `omnisusdbdbf`
    pip-installable, plugged in via try-import). It fits cleanly into the
    v0.x roadmap without coupling to v0.1.0's API.
 3. **Real bottleneck verification at scale** — before investing in Rust, we
@@ -91,7 +91,7 @@ We *defer* the Rust work to v0.2.0 for these reasons:
 
 - **For v0.1.0:** ship with `dbfread2`. Pipeline works end-to-end. No
   blockers.
-- **For v0.2.0+:** open follow-up to create `omnisus-db-dbf` separate
+- **For v0.2.0+:** open follow-up to create `omnisusdbdbf` separate
   package. PyO3 + `dbase` crate, ~300 LOC target. Drop-in via try-import
   in `omnisus_db.sources.datasus_ftp.parse`:
 

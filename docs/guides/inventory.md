@@ -41,8 +41,8 @@ cannot be listed is logged and skipped rather than truncating the walk.
 ## From the command line
 
 ```bash
-omnisus-db inventory sim_obitos
-omnisus-db inventory --path /dissemin/publicos/SINAN --depth 2
+omnisusdb inventory sim_obitos
+omnisusdb inventory --path /dissemin/publicos/SINAN --depth 2
 ```
 
 ## `available_releases` — which directory is each scope in?
@@ -55,7 +55,7 @@ declares and returns, per scope, which one (`final` or `prelim`) it came from;
 CLI table shows the same fact in a `Release` column:
 
 ```bash
-omnisus-db inventory sim_obitos
+omnisusdb inventory sim_obitos
 ```
 
 A scope listed in both directories is a server inconsistency and raises,
@@ -67,7 +67,7 @@ The point of all this. `--plan inventory` asks the server first and imports only
 what it lists:
 
 ```bash
-omnisus-db import sim_obitos --plan inventory --years 1996-2024 --ufs RR,AC
+omnisusdb import sim_obitos --plan inventory --years 1996-2024 --ufs RR,AC
 ```
 
 In Python the same thing is composition — no flag, just a different function
@@ -115,7 +115,7 @@ report.skipped       # outside coverage, missing upstream, or identical managed 
 report.failed        # download, parsing or write failures; inspect each reason
 ```
 
-Inspect `report.failed`; never the report's truthiness. `omnisus-db import`
+Inspect `report.failed`; never the report's truthiness. `omnisusdb import`
 exits 1 for a completed FTP report with failures or for `ImportAbortedError`.
 Skipped scopes alone do not fail the run. Invalid arguments and other exceptions
 can also produce a non-zero exit status.

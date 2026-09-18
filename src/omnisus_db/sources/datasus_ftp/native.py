@@ -1,4 +1,4 @@
-"""Optional ``omnisus-db-dbf`` lookup shared by the DBF reader and DBC decompressor."""
+"""Optional ``omnisusdbdbf`` lookup shared by the DBF reader and DBC decompressor."""
 
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ def load_native(requested: str) -> ModuleType | None:
         if exc.name != "omnisus_db_dbf":
             raise
         if requested == "rust":
-            raise ImportError("Rust backend requires the optional omnisus-db-dbf package") from exc
+            raise ImportError("Rust backend requires the optional omnisusdbdbf package") from exc
         return None
     if getattr(native, "API_VERSION", None) != API_VERSION:
-        raise ImportError(f"Incompatible omnisus-db-dbf API; expected API_VERSION={API_VERSION}")
+        raise ImportError(f"Incompatible omnisusdbdbf API; expected API_VERSION={API_VERSION}")
     return native

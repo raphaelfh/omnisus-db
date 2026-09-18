@@ -1,4 +1,4 @@
-# omnisus-db
+# omnisusdb
 
 Python library for ingesting Brazilian public health databases (DATASUS, IBGE, CNES)
 into a DuckLake-backed lakehouse.
@@ -74,7 +74,7 @@ uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 
 [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py)
 
-Os notebooks declaram `omnisus-db` no cabeçalho PEP 723, instalado a partir do
+Os notebooks declaram `omnisusdb` no cabeçalho PEP 723, instalado a partir do
 GitHub no molab (servidor efêmero, não WebAssembly) ou com
 `uvx marimo edit --sandbox notebooks/bases/sim_obitos.py`.
 

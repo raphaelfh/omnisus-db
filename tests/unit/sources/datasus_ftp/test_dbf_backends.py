@@ -73,7 +73,7 @@ def test_missing_optional_module(monkeypatch, backend):
     data = make_dbf([("X", "C", 1, 0)], [b" a"])
     if backend == "rust":
         with (
-            pytest.raises(ImportError, match="omnisus-db-dbf"),
+            pytest.raises(ImportError, match="omnisusdbdbf"),
             module.open_dbf_batches(data, encoding="latin-1", batch_rows=1, backend=backend),
         ):
             pass

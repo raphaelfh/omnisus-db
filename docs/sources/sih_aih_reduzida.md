@@ -168,8 +168,8 @@ Passo a passo com análise e proveniência:
 ### Linha de comando
 
 ```bash
-omnisus-db inventory sih_aih_reduzida --refresh
-omnisus-db import sih_aih_reduzida --plan inventory --years 2020-2024 --ufs RR
+omnisusdb inventory sih_aih_reduzida --refresh
+omnisusdb import sih_aih_reduzida --plan inventory --years 2020-2024 --ufs RR
 ```
 
 As importações acrescentam linhas a `lake.sih_aih_reduzida`. Ao terminar, a importação

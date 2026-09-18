@@ -1,4 +1,4 @@
-"""omnisus-db inventory (spec §4.5)."""
+"""omnisusdb inventory (spec §4.5)."""
 
 from __future__ import annotations
 

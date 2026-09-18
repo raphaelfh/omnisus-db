@@ -1,6 +1,6 @@
-# omnisus-db-dbf
+# omnisusdbdbf
 
-Optional DBF → Arrow reader and DBC decompressor for `omnisus-db`.
+Optional DBF → Arrow reader and DBC decompressor for `omnisusdb`.
 The main package keeps its Python build backend and does not require Rust.
 This package is not published yet; install a locally built wheel when testing
 the native backend.
@@ -8,7 +8,7 @@ the native backend.
 ```sh
 python -m pip install maturin==1.12.6
 maturin build --release --locked --manifest-path native/omnisus-db-dbf/Cargo.toml
-python -m pip install native/omnisus-db-dbf/target/wheels/omnisus_db_dbf-*.whl
+python -m pip install native/omnisus-db-dbf/target/wheels/omnisusdbdbf-*.whl
 ```
 
 ```python

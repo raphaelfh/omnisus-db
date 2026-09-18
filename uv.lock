@@ -1769,7 +1769,7 @@ wheels = [
 ]
 
 [[package]]
-name = "omnisus-db"
+name = "omnisusdb"
 source = { editable = "." }
 dependencies = [
     { name = "dbfread2" },
