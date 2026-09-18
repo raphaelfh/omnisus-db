@@ -106,8 +106,9 @@ Na validação de 2026-09-13, com o censo 2022 e o SIM de Roraima 2022
 | `digitos_codmunres_sim` | 6 | 3246 óbitos |
 
 O documento do SIM declara `codmunres` com 7 caracteres (Estrutura do SIM 2025, p. 3),
-mas os 3246 registros tinham 6. Por isso a junção compara os 6 primeiros dígitos. A
-importação não ajusta o comprimento dos códigos
+mas os 3246 registros tinham 6. Por isso a junção compara os 6 primeiros dígitos, com
+`odb.municipality_join_key` / `odb.municipality_join_key_sql` — a importação não
+ajusta o comprimento dos códigos
 ([perfil do SIM](../sources/sim_obitos.md#datas-e-geografia)); confira os seus dados,
 ano a ano, antes de supor o mesmo formato.
 
@@ -117,20 +118,31 @@ A consulta `obitos_por_100_mil` do notebook da população
 (`notebooks/bases/ibge_populacao.py`). Os parâmetros são, em ordem, o ano dos óbitos,
 o ano da população e o código IBGE da UF (`'14'` para Roraima):
 
-```sql
+```python
+import omnisus_db as odb
+
+mun_obito = odb.municipality_join_key_sql("codmunres")
+mun_pop = odb.municipality_join_key_sql("codigo_ibge")
+sql = f"""
 WITH obitos AS (
-    SELECT left(trim(CAST(codmunres AS VARCHAR)), 6) AS municipio,
+    SELECT {mun_obito} AS municipio,
            count(*) AS obitos
     FROM lake.sim_obitos WHERE ano = ? GROUP BY ALL
 ), populacao AS (
-    SELECT left(codigo_ibge, 6) AS municipio, populacao
+    SELECT {mun_pop} AS municipio, populacao
     FROM lake.ibge_populacao WHERE ano = ? AND left(codigo_ibge, 2) = ?
 )
 SELECT municipio, obitos, populacao,
        round(100000.0 * obitos / populacao, 1) AS obitos_por_100_mil
 FROM populacao JOIN obitos USING (municipio)
 ORDER BY municipio
+"""
 ```
+
+`municipality_join_key_sql("codmunres")` gera
+`left(trim(CAST("codmunres" AS VARCHAR)), 6)`. Em Python,
+`odb.municipality_join_key("1400100")` devolve `"140010"`. Não complete 6
+dígitos para 7: isso inventaria o dígito verificador.
 
 Para ler o resultado com um snapshot fixo, com `sql` guardando a consulta acima:
 

@@ -38,6 +38,10 @@ The FTP importers return `ImportReport`; inspect `report.failed`, `report.skippe
 and `report.ok`. `import_ibge_populacao` returns `list[ImportResult]`, while
 `import_cnes_master` returns the number of records written.
 
+`import_research` is the researcher door: it requires `run_id` and defaults to
+`policy="skip_same"`. It refuses `append`. `import_dataset` remains the operator
+API and still appends unless a policy is set.
+
 `ImportAbortedError` interrupts an FTP run when it cannot safely continue.
 Inspect its `report` for determined outcomes and `unresolved` for
 `(input_index, ScopeKey)` pairs before retrying. Imports append data unless an
@@ -47,6 +51,7 @@ explicit replay `policy` is selected. FTP imports accept `append` (default),
 scope restrictions, run IDs and byte budgets.
 
 ::: omnisus_db.import_dataset
+::: omnisus_db.import_research
 ::: omnisus_db.import_cnes_estabelecimentos
 ::: omnisus_db.import_ibge_populacao
 ::: omnisus_db.import_cnes_master
@@ -122,6 +127,21 @@ a deprecated physical cleanup alias; it does not expire snapshots.
 ::: omnisus_db.Lake
 ::: omnisus_db.LakeReader
 ::: omnisus_db.DEFAULT_TARGET
+
+## Research citations and joins
+
+`import_research` is above. `cite` reads the publication manifest (or
+`ibge_population_manifest`) and returns Portuguese text matching the
+[reproducibility guide](pesquisa/reprodutibilidade.md). `latest_snapshot_id`
+is the newest catalog snapshot. Municipality helpers take the leftmost 6 or 7
+digits; they do not pad and they do not rewrite stored columns.
+
+::: omnisus_db.Citation
+::: omnisus_db.cite
+::: omnisus_db.citation_from_publications
+::: omnisus_db.latest_snapshot_id
+::: omnisus_db.municipality_join_key
+::: omnisus_db.municipality_join_key_sql
 
 ## Registry
 

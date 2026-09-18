@@ -7,7 +7,12 @@ These pages describe the repository version; the historical `v0.1.0` tag predate
 ## 1. Install
 
 Python 3.12 or newer is required. Python 3.12, 3.13 and 3.14 are tested.
-From the repository root:
+
+```bash
+python -m pip install omnisus-db
+```
+
+From the repository root, the same checkout:
 
 ```bash
 python -m pip install .
@@ -55,16 +60,27 @@ Or in Python:
 ```python
 import omnisus_db as odb
 
+report = odb.import_research(
+    "sim_obitos",
+    scopes=odb.available("sim_obitos", years=[2023], ufs=["RR"]),
+    target=odb.DEFAULT_TARGET,
+    run_id="sim-rr-2023-01",
+)
 with odb.LakeReader(odb.DEFAULT_TARGET) as reader:
+    snapshot_id = odb.latest_snapshot_id(reader)
+    citacao = odb.cite(reader, dataset="sim_obitos", snapshot_id=snapshot_id, run_id="sim-rr-2023-01")
     df = reader.connect().sql(
         "SELECT count(*) AS obitos FROM lake.sim_obitos WHERE ano=2023 AND uf='RR'"
     ).pl()
+print(citacao.text)
 ```
 
-Every explicit lake target must start with `ducklake:`, for example
-`ducklake:./omnisus.ducklake`. A `LakeReader` takes no writer lock, so it can
-run while an import is in progress; keep its context open while using the
-connection or lazy relations. Open `Lake.local` only to write.
+`import_research` skips a scope that is already published with the same source
+and parser (`skip_same`). Repeating `import_dataset` without a policy appends
+again. Pin `snapshot_id` on a second `LakeReader` if another import may run
+after you print the count. Every explicit lake target must start with
+`ducklake:`, for example `ducklake:./omnisus.ducklake`. A `LakeReader` takes no
+writer lock; open `Lake.local` only to write.
 
 ## 5. Bigger imports
 

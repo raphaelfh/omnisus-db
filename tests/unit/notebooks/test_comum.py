@@ -189,6 +189,9 @@ def test_provenance_names_what_a_citation_needs(tmp_path):
     assert saved["plan"] == plan
     assert saved["publications"][0]["scope"] == str(RR_2022)
     assert saved["snapshot_id"] == 3
+    assert "sim_obitos" in saved["citation"]
+    assert "ab" in saved["citation"]
+    assert "r1" in saved["citation"]
     assert saved["queries"] == {
         "obitos_por_mes": {"sql": "SELECT 1 WHERE uf = ?", "parameters": ["RR"]}
     }

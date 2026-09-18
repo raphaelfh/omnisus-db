@@ -69,8 +69,8 @@ a biblioteca aceita.
 
 **3 · Planejar e importar.** Gravar o plano cria `plano.json` com um `run_id` antes de
 qualquer download. A importação usa esse `run_id` e
-`odb.import_dataset(dataset, scopes=..., target=..., policy="skip_same", run_id=...)`,
-para que repetir a etapa não duplique linhas. A população usa
+`odb.import_research` (nos notebooks, `import_dataset` com `policy="skip_same"` e o
+mesmo `run_id`), para que repetir a etapa não duplique linhas. A população usa
 `odb.import_ibge_populacao`. Nos notebooks com download por FTP, esta etapa limita o
 arquivo comprimido a 25 MiB (`MAX_DOWNLOAD_BYTES` no próprio notebook); um arquivo
 maior (por exemplo outra UF) termina como `failed`, e pode ser importado subindo esse
@@ -84,12 +84,12 @@ SINASC, SINAN); as demais bases do DATASUS são publicadas num único diretório
 notebook não chama `outdated` para elas.
 
 **5 · Analisar.** Roda as consultas SQL num leitor preso a esse snapshot,
-`LakeReader(alvo, snapshot_id=...)`, para que o resultado não mude se outra importação
-acontecer depois.
+`LakeReader(alvo, snapshot_id=odb.latest_snapshot_id(...))`, para que o resultado
+não mude se outra importação acontecer depois.
 
 **6 · Guardar.** Grava os resultados em CSV e um `proveniencia.json` com o plano, as
-publicações, o `snapshot_id`, as consultas e a versão da biblioteca. Veja
-[Reprodutibilidade](reprodutibilidade.md).
+publicações, o `snapshot_id`, o parágrafo de `odb.cite`, as consultas e a versão da
+biblioteca. Veja [Reprodutibilidade](reprodutibilidade.md).
 
 ## O lake de pesquisa
 

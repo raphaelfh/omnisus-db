@@ -10,6 +10,15 @@ from omnisus_db.lake import DEFAULT_TARGET, CatalogAttachError, Lake, LakeReader
 from omnisus_db.lake.publication import DeletionResult, ImportPolicy
 from omnisus_db.metadata import describe_dataset
 from omnisus_db.products import Product, datasets, products
+from omnisus_db.research import (
+    Citation,
+    citation_from_publications,
+    cite,
+    import_research,
+    latest_snapshot_id,
+    municipality_join_key,
+    municipality_join_key_sql,
+)
 from omnisus_db.sources._base import (
     ImportAbortedError,
     ImportReport,
@@ -348,6 +357,7 @@ __all__ = [
     "DEFAULT_TARGET",
     "AnalyticalProjection",
     "CatalogAttachError",
+    "Citation",
     "Dataset",
     "DeletionResult",
     "DerivedColumn",
@@ -370,6 +380,8 @@ __all__ = [
     "available",
     "available_releases",
     "browse",
+    "citation_from_publications",
+    "cite",
     "datasets",
     "describe_dataset",
     "display_row",
@@ -377,6 +389,10 @@ __all__ = [
     "import_cnes_master",
     "import_dataset",
     "import_ibge_populacao",
+    "import_research",
+    "latest_snapshot_id",
+    "municipality_join_key",
+    "municipality_join_key_sql",
     "outdated",
     "products",
     "resolve",

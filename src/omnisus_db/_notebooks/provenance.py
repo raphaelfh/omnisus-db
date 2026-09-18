@@ -9,6 +9,7 @@ from typing import Any
 
 from omnisus_db._notebooks.plan import write_json
 from omnisus_db._version import __version__
+from omnisus_db.research import citation_from_publications
 
 
 def record_provenance(
@@ -32,6 +33,12 @@ def record_provenance(
         "plan": dict(plan),
         "publications": [dict(row) for row in publications],
         "snapshot_id": snapshot_id,
+        "citation": citation_from_publications(
+            publications,
+            snapshot_id=snapshot_id,
+            dataset=plan.get("dataset") if isinstance(plan.get("dataset"), str) else None,
+            run_id=plan.get("run_id") if isinstance(plan.get("run_id"), str) else None,
+        ).text,
         "queries": {
             name: {"sql": query["sql"], "parameters": list(query["parameters"])}
             for name, query in queries.items()

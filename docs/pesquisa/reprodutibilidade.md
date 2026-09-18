@@ -24,12 +24,16 @@ import omnisus_db as odb
 
 alvo = "ducklake:./data/lake/pesquisa/dados.ducklake"
 escopos = odb.available("sim_obitos", years=[2022], ufs=["RR"], refresh=True)
-relatorio = odb.import_dataset(
-    "sim_obitos", scopes=escopos, target=alvo, policy="skip_same", run_id="sim-rr-2022-01"
+relatorio = odb.import_research(
+    "sim_obitos", scopes=escopos, target=alvo, run_id="sim-rr-2022-01"
 )
 for desfecho in relatorio.outcomes:
     print(desfecho.scope, desfecho.status, desfecho.reason)
 ```
+
+`import_research` exige `run_id` e usa `policy="skip_same"`. Recusa `append`.
+`import_dataset(..., policy="append")` continua sendo o comportamento do
+importador genérico.
 
 O que cada desfecho quer dizer:
 
@@ -157,6 +161,15 @@ notebook da população consulta esse manifesto e não importa uma edição que 
 (`notebooks/bases/ibge_populacao.py`).
 
 ## Como citar
+
+Use `odb.cite` no lake que você leu. O texto segue o modelo abaixo; os notebooks
+gravam o mesmo parágrafo em `proveniencia.json` (`citacao`).
+
+```python
+with odb.LakeReader(alvo) as leitor:
+    snapshot_id = odb.latest_snapshot_id(leitor)
+    print(odb.cite(leitor, dataset="sim_obitos", snapshot_id=snapshot_id).text)
+```
 
 Modelo para uma base do DATASUS:
 

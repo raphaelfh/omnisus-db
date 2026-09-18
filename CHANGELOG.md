@@ -27,6 +27,12 @@
   live in the private `omnisus_db._notebooks` package; the 25 MiB download cap
   is a constant in each notebook. `explorar/` still imports the sibling
   `_acervo/` package, which is not on the wheel.
+- **Research import, citation and municipality join key.** `import_research`
+  requires `run_id` and defaults to `skip_same` (it refuses `append`).
+  `cite` / `citation_from_publications` emit the Portuguese citation from the
+  reproducibility guide; `latest_snapshot_id` pins the catalog snapshot.
+  `municipality_join_key` takes the leftmost 6 or 7 IBGE digits without padding.
+  Notebooks store the citation paragraph in `proveniencia.json`.
 - **A researcher guide** (`docs/pesquisa/`): a starting point, indicators and
   reproducibility, in Portuguese. The source profiles in `docs/sources/` follow a
   shared outline with cited sources; SIA now has a profile too.

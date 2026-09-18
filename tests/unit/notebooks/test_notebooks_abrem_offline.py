@@ -41,6 +41,7 @@ ESPERADOS = {
     "desenvolvimento/performance_dbf.py",
     "explorar/inventario_dados_reais.py",
     "explorar/panorama_datasus.py",
+    "explorar/molab_pysus.py",
 }
 
 _LOOPBACK = {"127.0.0.1", "::1", "localhost"}

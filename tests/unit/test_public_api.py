@@ -102,6 +102,7 @@ def test_public_import_functions_are_the_readable_ones() -> None:
         "import_cnes_master",
         "import_dataset",
         "import_ibge_populacao",
+        "import_research",
     ]
 
 

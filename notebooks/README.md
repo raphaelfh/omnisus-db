@@ -64,6 +64,7 @@ uv run --locked --extra notebooks marimo export html notebooks/bases/sim_obitos.
 | --- | --- | --- |
 | [panorama_datasus.py](explorar/panorama_datasus.py) | [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/explorar/panorama_datasus.py) | Amostras reais das 18 categorias do portal |
 | [inventario_dados_reais.py](explorar/inventario_dados_reais.py) | [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/explorar/inventario_dados_reais.py) | Inventário do FTP, seleção e importação de arquivos |
+| [molab_pysus.py](explorar/molab_pysus.py) | [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/explorar/molab_pysus.py) | Laboratório da API do PySUS |
 
 ## `desenvolvimento/` — comportamento da biblioteca
 
