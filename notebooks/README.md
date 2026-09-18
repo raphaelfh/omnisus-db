@@ -18,8 +18,10 @@ uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
 
 No molab, espelhe o arquivo no GitHub (servidor efêmero, não a prévia WebAssembly):
 [sim_obitos.py no molab](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sim_obitos.py).
-O repositório inteiro precisa estar disponível — `_comum.py` e `_acervo/` não vão no
-pacote instalado. DuckDB, FTP e o lake local não rodam em `/wasm`.
+Os notebooks de `bases/` importam os helpers de `omnisus_db.notebooks` (vão no
+pacote instalado). `explorar/panorama_datasus.py` ainda usa `_acervo/` ao lado do
+arquivo; `desenvolvimento/performance_dbf.py` usa `_performance_dbf.py`. DuckDB,
+FTP e o lake local não rodam em `/wasm`.
 
 No checkout, continue com `uv run --locked --extra notebooks`: isso usa o código
 local. `--sandbox` baixa `omnisus-db` de `main` no GitHub.
@@ -65,5 +67,5 @@ uv run --locked --extra notebooks marimo export html notebooks/bases/sim_obitos.
 | [metadados_cli.py](desenvolvimento/metadados_cli.py) | Metadados por coluna pelo terminal |
 | [performance_dbf.py](desenvolvimento/performance_dbf.py) | Medições do leitor DBF Python × Rust |
 
-Arquivos com `_` no início (`_comum.py`, `_acervo/`, `_performance_dbf.py`) são
-módulos auxiliares, não notebooks.
+Arquivos com `_` no início (`_acervo/`, `_performance_dbf.py`) são módulos
+auxiliares, não notebooks.

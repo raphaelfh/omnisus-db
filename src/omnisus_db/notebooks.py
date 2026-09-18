@@ -1,8 +1,11 @@
-"""O que se repete nos notebooks de bases/: onde uma execução fica e o que ela registra.
+"""Helpers shared by the `notebooks/bases/` marimo notebooks.
 
-As chamadas da biblioteca que cada notebook ensina (`available`, `import_dataset`,
-`LakeReader`, `publications`, `outdated`) ficam visíveis nas células. Este módulo
-só grava arquivos, monta o filtro de um escopo e confere contagens.
+The teaching surface stays in the notebook cells (`available`, `import_dataset`,
+`LakeReader`, `publications`, `outdated`). This module only chooses where a run
+lives, writes the JSON a citation needs, and reconciles row counts.
+
+It lives in the installable package so a notebook opened on molab or with
+``marimo edit --sandbox`` does not depend on a sibling ``_comum.py``.
 """
 
 from __future__ import annotations
@@ -15,19 +18,46 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-import omnisus_db as odb
+from omnisus_db._version import __version__
+from omnisus_db.lake import LakeReader
 from omnisus_db.lake.publication import scope_fields
 from omnisus_db.lake.sql import qualified
+from omnisus_db.sources._base import ImportReport, ScopeKey
 
 LIMITE_BYTES = 25 * 1024 * 1024
 """Teto do arquivo comprimido baixado nos recortes didáticos."""
 
-_REPOSITORIO = Path(__file__).resolve().parents[2]
+_NOME_PROJETO = 'name = "omnisus-db"'
+
+
+def _checkout_raiz() -> Path | None:
+    """Raiz do repositório se o cwd estiver dentro de um checkout do omnisus-db."""
+    here = Path.cwd().resolve()
+    for candidate in (here, *here.parents):
+        marker = candidate / "pyproject.toml"
+        if not marker.is_file():
+            continue
+        try:
+            texto = marker.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if _NOME_PROJETO in texto and (candidate / "notebooks" / "bases").is_dir():
+            return candidate
+    return None
 
 
 def raiz_dados() -> Path:
-    """Pasta do lake de pesquisa compartilhado; `OMNISUS_NOTEBOOK_DATA` a substitui."""
-    return Path(os.environ.get("OMNISUS_NOTEBOOK_DATA") or _REPOSITORIO / "data/lake/pesquisa")
+    """Pasta do lake de pesquisa compartilhado; `OMNISUS_NOTEBOOK_DATA` a substitui.
+
+    No checkout, é ``data/lake/pesquisa`` na raiz do repositório. Fora dele
+    (molab, sandbox), é ``data/lake/pesquisa`` relativo ao diretório de trabalho.
+    """
+    if env := os.environ.get("OMNISUS_NOTEBOOK_DATA"):
+        return Path(env)
+    checkout = _checkout_raiz()
+    if checkout is not None:
+        return checkout / "data/lake/pesquisa"
+    return Path.cwd() / "data/lake/pesquisa"
 
 
 def target_padrao() -> str:
@@ -59,14 +89,14 @@ def fixar_plano(target: str, **detalhes: Any) -> tuple[dict[str, Any], Path]:
         **detalhes,
         "target": target,
         "run_id": run_id,
-        "omnisus_db": odb.__version__,
+        "omnisus_db": __version__,
         "fixado_em_utc": agora.isoformat(),
     }
     salvar_json(pasta / "plano.json", plano)
     return plano, pasta
 
 
-def desfechos(relatorio: odb.ImportReport) -> list[dict[str, Any]]:
+def desfechos(relatorio: ImportReport) -> list[dict[str, Any]]:
     return [
         {
             "escopo": str(o.scope),
@@ -80,8 +110,8 @@ def desfechos(relatorio: odb.ImportReport) -> list[dict[str, Any]]:
 
 def registrar_importacao(
     pasta: Path,
-    relatorio: odb.ImportReport,
-    nao_resolvidos: Iterable[tuple[int, odb.ScopeKey]] = (),
+    relatorio: ImportReport,
+    nao_resolvidos: Iterable[tuple[int, ScopeKey]] = (),
 ) -> list[dict[str, Any]]:
     """Grava `resultado.json` e devolve a tabela de desfechos para exibir."""
     linhas = desfechos(relatorio)
@@ -96,14 +126,14 @@ def registrar_importacao(
     return linhas
 
 
-def filtro_escopo(escopo: odb.ScopeKey) -> tuple[str, list[object]]:
+def filtro_escopo(escopo: ScopeKey) -> tuple[str, list[object]]:
     """`WHERE` que seleciona as linhas de um escopo, nas colunas que a biblioteca grava."""
     campos = scope_fields(escopo)
     return " AND ".join(f'"{nome}" = ?' for nome in campos), list(campos.values())
 
 
 def conferir(
-    leitor: odb.LakeReader, dataset: str, escopos: Sequence[odb.ScopeKey]
+    leitor: LakeReader, dataset: str, escopos: Sequence[ScopeKey]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Linhas no lake contra linhas publicadas, por escopo, e as publicações ativas."""
     ativas = [
@@ -157,7 +187,7 @@ def registrar_proveniencia(
             nome: {"sql": consulta["sql"], "parametros": list(consulta["parametros"])}
             for nome, consulta in consultas.items()
         },
-        "omnisus_db": odb.__version__,
+        "omnisus_db": __version__,
         "gerado_em_utc": datetime.now(UTC).isoformat(),
     }
     salvar_json(pasta / "proveniencia.json", registro)

@@ -24,15 +24,15 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
-    from _comum import (
+
+    import omnisus_db as odb
+    from omnisus_db.notebooks import (
         executar_sem_botoes,
         fixar_plano,
         registrar_proveniencia,
         salvar_json,
         target_padrao,
     )
-
-    import omnisus_db as odb
     from omnisus_db.sources.ibge.products import CENSUS_YEARS, ESTIMATE_UNAVAILABLE_YEARS
     from omnisus_db.transforms.dictionaries import load_dicionario
 

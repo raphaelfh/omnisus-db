@@ -65,7 +65,7 @@ qualquer download. A importação usa esse `run_id` e
 `odb.import_dataset(dataset, scopes=..., target=..., policy="skip_same", run_id=...)`,
 para que repetir a etapa não duplique linhas. A população usa
 `odb.import_ibge_populacao`. Nos notebooks com download por FTP, esta etapa limita o
-arquivo comprimido a 25 MiB (`LIMITE_BYTES` em `notebooks/bases/_comum.py`); um arquivo
+arquivo comprimido a 25 MiB (`LIMITE_BYTES` em `omnisus_db.notebooks`); um arquivo
 maior (por exemplo outra UF) termina como `failed`, e pode ser importado subindo esse
 limite ou com a chamada direta `odb.import_dataset` no perfil da base ("Como usar"). A
 população do IBGE não baixa pelo FTP, então esse limite não se aplica a ela.
@@ -89,7 +89,7 @@ publicações, o `snapshot_id`, as consultas e a versão da biblioteca. Veja
 Os notebooks gravam no mesmo lake, `data/lake/pesquisa/dados.ducklake`, e cada execução
 ganha uma pasta própria em `data/lake/pesquisa/execucoes/<run_id>/`, com `plano.json`,
 `resultado.json`, os CSVs e `proveniencia.json`
-(`notebooks/bases/_comum.py`, `raiz_dados` e `fixar_plano`). A variável de ambiente
+(`omnisus_db.notebooks`, `raiz_dados` e `fixar_plano`). A variável de ambiente
 `OMNISUS_NOTEBOOK_DATA` troca essa pasta.
 
 O lake é um só porque uma taxa precisa de duas bases: óbitos por 100 mil habitantes

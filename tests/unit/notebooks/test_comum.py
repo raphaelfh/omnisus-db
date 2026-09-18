@@ -1,6 +1,5 @@
 """The bases/ notebook helpers: where a run lives, what it records, how rows reconcile."""
 
-import importlib.util
 import json
 from pathlib import Path
 
@@ -8,20 +7,25 @@ import duckdb
 import pytest
 
 import omnisus_db as odb
+from omnisus_db import notebooks as comum
 
-_PATH = Path(__file__).resolve().parents[3] / "notebooks/bases/_comum.py"
-_spec = importlib.util.spec_from_file_location("_comum_under_test", _PATH)
-comum = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(comum)
+ROOT = Path(__file__).resolve().parents[3]
 
 RR_2022 = odb.ScopeKey(uf="RR", ano=2022)
 
 
 def test_data_root_defaults_to_the_shared_research_lake(monkeypatch):
     monkeypatch.delenv("OMNISUS_NOTEBOOK_DATA", raising=False)
-    raiz = _PATH.parents[2] / "data/lake/pesquisa"
+    monkeypatch.chdir(ROOT)
+    raiz = ROOT / "data/lake/pesquisa"
     assert comum.raiz_dados() == raiz
     assert comum.target_padrao() == f"ducklake:{raiz / 'dados.ducklake'}"
+
+
+def test_without_a_checkout_the_data_root_is_under_cwd(monkeypatch, tmp_path):
+    monkeypatch.delenv("OMNISUS_NOTEBOOK_DATA", raising=False)
+    monkeypatch.chdir(tmp_path)
+    assert comum.raiz_dados() == tmp_path / "data/lake/pesquisa"
 
 
 def test_environment_overrides_the_data_root(monkeypatch, tmp_path):

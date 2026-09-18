@@ -24,7 +24,9 @@ def _():
     from dataclasses import asdict
 
     import marimo as mo
-    from _comum import (
+
+    import omnisus_db as odb
+    from omnisus_db.notebooks import (
         LIMITE_BYTES,
         conferir,
         executar_sem_botoes,
@@ -33,8 +35,6 @@ def _():
         registrar_proveniencia,
         target_padrao,
     )
-
-    import omnisus_db as odb
     from omnisus_db.transforms.dictionaries import load_dicionario
 
     tabelas = {
@@ -161,7 +161,7 @@ def _(mo, odb, target_padrao):
                 "## 3 · Planejar e importar\n\n"
                 "Confira ano e mês na etapa 2. O plano guarda a tabela escolhida; mudar a "
                 "tabela depois exige fixar um novo plano. O notebook limita cada download "
-                "comprimido a 25 MiB (`LIMITE_BYTES` em `_comum.py`); um arquivo maior "
+                "comprimido a 25 MiB (`LIMITE_BYTES` em `omnisus_db.notebooks`); um arquivo maior "
                 "(por exemplo outra UF) termina como `failed`, e pode ser importado "
                 "subindo esse limite ou com a chamada direta `odb.import_dataset` no "
                 'perfil desta base ("Como usar").'

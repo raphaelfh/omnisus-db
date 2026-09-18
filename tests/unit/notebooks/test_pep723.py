@@ -50,3 +50,13 @@ def test_every_notebook_declares_the_github_package():
         assert set(fonte) == {"git"}, (
             f"{caminho.name}: pin a branch/rev only if the notebook needs an unpublished commit"
         )
+
+
+def test_bases_notebooks_import_helpers_from_the_installed_package():
+    """A sibling `_comum.py` is invisible to molab and to `marimo edit --sandbox`."""
+    for caminho in sorted((NOTEBOOKS / "bases").glob("*.py")):
+        if caminho.name.startswith("_"):
+            continue
+        texto = caminho.read_text(encoding="utf-8")
+        assert "from _comum import" not in texto, caminho.name
+        assert "from omnisus_db.notebooks import" in texto, caminho.name
