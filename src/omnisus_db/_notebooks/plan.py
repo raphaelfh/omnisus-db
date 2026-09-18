@@ -15,10 +15,10 @@ from omnisus_db.sources._base import ImportReport, ScopeKey
 
 
 def run_without_buttons(cli_args: Mapping[str, object]) -> bool:
-    """`-- --executar true` walks the button-gated steps without the UI.
+    """`-- --executar true` percorre as células de rede/escrita sem a UI.
 
-    Applies to `marimo export html ...` or `python notebook.py`. In `marimo edit`
-    CLI arguments do not reach the cell and the buttons stay in charge.
+    Combina com `EXECUTAR = True` na célula de parâmetros. Em `marimo edit`
+    os argumentos CLI não chegam à célula: use a constante do notebook.
     """
     return str(cli_args.get("executar", "false")).lower() == "true"
 

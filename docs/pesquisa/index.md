@@ -54,8 +54,9 @@ e os municípios e o que ainda está em aberto.
 
 ## As seis etapas
 
-Todo notebook de `notebooks/bases/` segue as mesmas etapas, e cada etapa com rede ou
-escrita começa por um botão.
+Todo notebook de `notebooks/bases/` segue as mesmas etapas. Rede e escrita só
+correm com `EXECUTAR = True` na célula de parâmetros, ou com `-- --executar true`
+na exportação.
 
 **1 · O que a base registra.** Mostra os campos da base a partir do dicionário da
 biblioteca, sem rede.
@@ -66,7 +67,7 @@ diretório final ou no preliminar, e `odb.available(...)` devolve os escopos que
 ser importados. A população do IBGE não tem inventário: o notebook mostra as edições que
 a biblioteca aceita.
 
-**3 · Planejar e importar.** Fixar o plano grava `plano.json` com um `run_id` antes de
+**3 · Planejar e importar.** Gravar o plano cria `plano.json` com um `run_id` antes de
 qualquer download. A importação usa esse `run_id` e
 `odb.import_dataset(dataset, scopes=..., target=..., policy="skip_same", run_id=...)`,
 para que repetir a etapa não duplique linhas. A população usa

@@ -18,6 +18,8 @@
   IBGE, SINAN, medicines), with the same six steps and a shared research lake.
   Opening a notebook downloads and writes nothing; a test guards that. The other
   notebooks live in `notebooks/explorar/` and `notebooks/desenvolvimento/`.
+  Cells are written like conventional Jupyter notebooks (Python parameters, last
+  expression as output); marimo is only the file format.
 - **Open in molab** badge on every marimo notebook, on `notebooks/README.md` and
   on the researcher start page, linking to
   `https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/...`.
