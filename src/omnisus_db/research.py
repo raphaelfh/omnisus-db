@@ -43,9 +43,9 @@ def latest_snapshot_id(lake: Lake | LakeReader) -> int:
     if not snaps:
         raise LookupError("lake has no snapshots")
     raw = snaps[-1]["snapshot_id"]
-    if type(raw) is not int:
-        raise TypeError(f"snapshot_id must be int, got {type(raw).__name__}")
-    return raw
+    if isinstance(raw, int) and not isinstance(raw, bool):
+        return raw
+    raise TypeError(f"snapshot_id must be int, got {type(raw).__name__}")
 
 
 def import_research(
