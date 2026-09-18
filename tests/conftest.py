@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for omnisus-db."""
+"""Shared pytest fixtures for omnisusdb."""
 
 from __future__ import annotations
 

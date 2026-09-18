@@ -2,7 +2,7 @@
 
 ## O que é
 
-O omnisus-db importa bases abertas do DATASUS e do IBGE para um lake local, uma base de
+O omnisusdb importa bases abertas do DATASUS e do IBGE para um lake local, uma base de
 dados em arquivos no seu computador. Cada importação fica registrada num manifesto, com
 o arquivo de origem, o SHA-256 dele e a execução que o publicou; é isso que permite
 dizer de onde veio cada linha.
@@ -18,13 +18,13 @@ uv sync --locked --extra notebooks
 uv run --locked --extra notebooks marimo edit notebooks/bases/sim_obitos.py
 ```
 
-Sem clonar, o notebook instala `omnisus-db` do GitHub (cabeçalho PEP 723):
+Sem clonar, o notebook instala `omnisusdb` do GitHub (cabeçalho PEP 723):
 
 ```bash
 uvx marimo edit --sandbox notebooks/bases/sim_obitos.py
 ```
 
-`--sandbox` e o molab instalam `omnisus-db` do GitHub no **commit pinado** no
+`--sandbox` e o molab instalam `omnisusdb` do GitHub no **commit pinado** no
 cabeçalho PEP 723 do notebook, não o checkout local. Abra os notebooks a partir
 da raiz do repositório (ou defina `OMNISUS_NOTEBOOK_DATA`) para SIM e IBGE
 gravairem no mesmo lake. Use a prévia em **servidor**, não WebAssembly. Para

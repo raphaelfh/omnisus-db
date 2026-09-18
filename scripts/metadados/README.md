@@ -1,7 +1,7 @@
 # Ferramentas de metadados
 
 Utilitários de desenvolvimento e consulta experimental do checkout. A CLI
-instalada `omnisus-db` ainda não possui um comando nativo de metadados.
+instalada `omnisusdb` ainda não possui um comando nativo de metadados.
 
 | Local | Responsabilidade |
 | --- | --- |

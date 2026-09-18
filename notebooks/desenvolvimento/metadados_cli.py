@@ -2,12 +2,12 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo>=0.23.16,<0.25",
-#     "omnisus-db",
+#     "omnisusdb",
 #     "polars>=1.44.2,<2.0",
 # ]
 #
 # [tool.uv.sources]
-# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
+# omnisusdb = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
 # ///
 
 """Consulta real dos metadados documentais pelo terminal, dentro do checkout."""
@@ -82,7 +82,7 @@ def _(mo):
     Este notebook **executa subprocessos reais** e transforma suas saídas JSON
     em tabelas. Funciona offline com os arquivos versionados do checkout.
 
-    A CLI `omnisus-db` ainda não oferece um comando de dicionário semântico.
+    A CLI `omnisusdb` ainda não oferece um comando de dicionário semântico.
     O acesso demonstrado usa o **script experimental em `scripts/metadados/`** e comandos
     Python de terminal para consultar os CSVs/JSONs existentes. Não exige um lake
     aberto nem faz downloads. Use o ambiente do projeto com `jsonschema` e `pyarrow`.

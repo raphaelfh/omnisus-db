@@ -45,7 +45,7 @@ pipes ou outros programas. Falhas de validação retornam código diferente de z
 e diagnóstico no stderr. `--json` e `--arrow` são modos mutuamente exclusivos.
 O notebook `notebooks/metadados_cli.py`, no checkout, executa esses comandos e
 consultas Python aos CSVs do catálogo, exibindo as saídas reais e filtros por
-categoria/tabela/coluna. Não há ainda um comando nativo `omnisus-db metadata`.
+categoria/tabela/coluna. Não há ainda um comando nativo `omnisusdb metadata`.
 
 Leitura direta, sem depender da API futura:
 

@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/omnisus-db
+      url: https://pypi.org/p/omnisusdb
     permissions:
       # PyPI Trusted Publishing (OIDC): no long-lived token to leak or rotate.
       id-token: write

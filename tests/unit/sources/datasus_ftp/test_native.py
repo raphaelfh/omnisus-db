@@ -39,7 +39,7 @@ def test_auto_without_package_is_none(monkeypatch):
 
 def test_rust_without_package_raises(monkeypatch):
     monkeypatch.setattr(native, "import_module", lambda _: missing_module("omnisus_db_dbf"))
-    with pytest.raises(ImportError, match="omnisus-db-dbf"):
+    with pytest.raises(ImportError, match="omnisusdbdbf"):
         native.load_native("rust")
 
 

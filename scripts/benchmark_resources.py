@@ -407,8 +407,8 @@ def environment(cpu_description=None):
         )
     packages = {}
     for name in (
-        "omnisus-db",
-        "omnisus-db-dbf",
+        "omnisusdb",
+        "omnisusdbdbf",
         "dbfread2",
         "pyarrow",
         "polars",

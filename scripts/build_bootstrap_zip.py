@@ -1,6 +1,6 @@
 """Build src/omnisus_db/data/auxiliares-bootstrap.zip from upstream sources.
 
-Run once or on `omnisus-db lake update-auxiliares` to refresh.
+Run once or on `omnisusdb lake update-auxiliares` to refresh.
 """
 
 from __future__ import annotations

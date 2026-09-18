@@ -1,4 +1,4 @@
-"""Notebooks carry PEP 723 metadata so sandbox/molab can install omnisus-db from GitHub."""
+"""Notebooks carry PEP 723 metadata so sandbox/molab can install omnisusdb from GitHub."""
 
 from __future__ import annotations
 
@@ -45,8 +45,8 @@ def test_every_notebook_declares_the_github_package():
         meta = _metadados(caminho)
         assert meta["requires-python"] == ">=3.12"
         nomes = {re.split(r"[<>=!~;\[ ]", dep, maxsplit=1)[0] for dep in meta["dependencies"]}
-        assert {"marimo", "omnisus-db", "polars"} <= nomes
-        fonte = meta["tool"]["uv"]["sources"]["omnisus-db"]
+        assert {"marimo", "omnisusdb", "polars"} <= nomes
+        fonte = meta["tool"]["uv"]["sources"]["omnisusdb"]
         assert fonte["git"] == REPOSITORIO
         assert set(fonte) == {"git", "rev"}
         assert _SHA1.match(fonte["rev"]), f"{caminho.name}: rev must be a commit SHA"

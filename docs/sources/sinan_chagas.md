@@ -190,8 +190,8 @@ Passo a passo com Chagas e hanseníase, análise e proveniência:
 ### Linha de comando
 
 ```bash
-omnisus-db inventory sinan_chagas
-omnisus-db import sinan_chagas --years 2023 --plan inventory --policy skip_same
+omnisusdb inventory sinan_chagas
+omnisusdb import sinan_chagas --years 2023 --plan inventory --policy skip_same
 ```
 
 O recorte nacional é `ScopeKey(uf=None, ano=2023)`; filtros de UF ou mês na aquisição

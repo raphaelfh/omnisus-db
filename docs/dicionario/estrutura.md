@@ -14,7 +14,7 @@ partições e decodificações, preservando propriedades adicionais em `raw` e
 `fields`. Estender essa base evita um segundo catálogo manual. O
 [Table Schema da Frictionless](https://specs.frictionlessdata.io/table-schema/)
 permite propriedades adicionais e distingue representação física e lógica.
-As extensões `x-*` abaixo são convenções propostas pelo omnisus-db, não campos
+As extensões `x-*` abaixo são convenções propostas pelo omnisusdb, não campos
 padronizados pela Frictionless.
 
 ## Organização atual destes documentos

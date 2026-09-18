@@ -32,8 +32,8 @@ Python API, the inventory and this page all follow from it.
 Use the name wherever a dataset is accepted:
 
 ```bash
-omnisus-db inventory <name>          # what the server actually publishes
-omnisus-db import <name> --plan inventory --years 2020-2024
+omnisusdb inventory <name>          # what the server actually publishes
+omnisusdb import <name> --plan inventory --years 2020-2024
 ```
 
 """

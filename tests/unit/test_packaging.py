@@ -7,6 +7,11 @@ from pathlib import Path
 PYPROJECT = tomllib.loads(
     (Path(__file__).resolve().parents[2] / "pyproject.toml").read_text(encoding="utf-8")
 )
+NATIVE = tomllib.loads(
+    (Path(__file__).resolve().parents[2] / "native/omnisus-db-dbf/pyproject.toml").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 def _names(requirements: list[str]) -> set[str]:
@@ -21,4 +26,12 @@ def test_marimo_is_only_an_optional_extra():
 
 def test_dev_installs_the_notebooks_extra():
     # CI syncs only --extra dev, and tests/unit/notebooks imports marimo.
-    assert "omnisus-db[notebooks]" in PYPROJECT["project"]["optional-dependencies"]["dev"]
+    assert "omnisusdb[notebooks]" in PYPROJECT["project"]["optional-dependencies"]["dev"]
+
+
+def test_distribution_names_have_no_hyphen():
+    assert PYPROJECT["project"]["name"] == "omnisusdb"
+    assert "omnisusdb" in PYPROJECT["project"]["scripts"]
+    assert "-" not in PYPROJECT["project"]["name"]
+    assert NATIVE["project"]["name"] == "omnisusdbdbf"
+    assert "-" not in NATIVE["project"]["name"]

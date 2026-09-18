@@ -3,10 +3,10 @@ requires = ["maturin==1.12.6"]
 build-backend = "maturin"
 
 [project]
-name = "omnisus-db-dbf"
+name = "omnisusdbdbf"
 dynamic = ["version"]
 requires-python = ">=3.12"
-description = "Optional DBF to Arrow reader and DBC decompressor for omnisus-db"
+description = "Optional DBF to Arrow reader and DBC decompressor for omnisusdb"
 readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = ["pyarrow>=25.0.1"]

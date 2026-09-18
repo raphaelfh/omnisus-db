@@ -1,4 +1,4 @@
-"""omnisus-db — Brazilian public health database ingestion lib."""
+"""omnisusdb — Brazilian public health database ingestion lib."""
 
 from __future__ import annotations
 

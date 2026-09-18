@@ -2,18 +2,18 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo>=0.23.16,<0.25",
-#     "omnisus-db",
+#     "omnisusdb",
 #     "polars>=1.44.2,<2.0",
 # ]
 #
 # [tool.uv.sources]
-# omnisus-db = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
+# omnisusdb = { git = "https://github.com/raphaelfh/omnisus-db.git", rev = "5bdb25a45bea2056316dcd03c6a2c62a23a759cb" }
 # ///
 
 import marimo
 
 __generated_with = "0.23.16"
-app = marimo.App(width="medium", app_title="omnisus-db · API na prática")
+app = marimo.App(width="medium", app_title="omnisusdb · API na prática")
 
 
 @app.cell
@@ -35,7 +35,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # omnisus-db · API na prática
+    # omnisusdb · API na prática
 
     [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/desenvolvimento/api_cenarios.py)
 

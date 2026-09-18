@@ -29,7 +29,7 @@ def test_installed_distribution() -> None:
     for path in (Path.cwd(), Path(__file__), Path(__file__).parent / "dbf"):
         assert not path.resolve().is_relative_to(source), f"Smoke input is inside checkout: {path}"
 
-    distribution = importlib.metadata.distribution("omnisus-db-dbf")
+    distribution = importlib.metadata.distribution("omnisusdbdbf")
     assert dbf.API_VERSION == 2
     assert dbf.__version__ == distribution.version
     files = distribution.files

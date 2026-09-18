@@ -1,5 +1,5 @@
 [project]
-name = "omnisus-db"
+name = "omnisusdb"
 dynamic = ["version"]
 description = "Python library for ingesting Brazilian public health databases into DuckLake"
 requires-python = ">=3.12"
@@ -55,7 +55,7 @@ dev = [
     "types-PyYAML>=6.0.12.20260906",
     "pre-commit>=4.6.2",
     # The notebook tests import marimo; keep one pin, in the notebooks extra.
-    "omnisus-db[notebooks]",
+    "omnisusdb[notebooks]",
 ]
 docs = [
     "mkdocs>=1.6.1,<2.0",
@@ -67,7 +67,7 @@ notebooks = [
 ]
 
 [project.scripts]
-omnisus-db = "omnisus_db.cli.main:app"
+omnisusdb = "omnisus_db.cli.main:app"
 
 [project.urls]
 Homepage = "https://github.com/raphaelfh/omnisus-db"

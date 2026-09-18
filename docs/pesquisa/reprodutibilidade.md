@@ -162,7 +162,7 @@ Modelo para uma base do DATASUS:
 
 ```text
 <Base> (<dataset>), arquivo <nome do arquivo> (<source_uri>), SHA-256 <source_sha256>,
-acessado em <AAAA-MM-DD> pelo DATASUS. Importado com omnisus-db <versão>, lake snapshot
+acessado em <AAAA-MM-DD> pelo DATASUS. Importado com omnisusdb <versão>, lake snapshot
 <snapshot_id>, execução <run_id>.
 ```
 

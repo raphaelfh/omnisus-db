@@ -150,7 +150,7 @@
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "omnisus-db: metadados resolvidos de uma coluna (experimental)",
+  "title": "omnisusdb: metadados resolvidos de uma coluna (experimental)",
   "$defs": {
     "source": {
       "type": "object",

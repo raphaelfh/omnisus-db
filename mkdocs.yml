@@ -1,4 +1,4 @@
-site_name: omnisus-db
+site_name: omnisusdb
 site_description: Brazilian public health database ingestion library
 site_url: https://raphaelfh.github.io/omnisus-db
 repo_url: https://github.com/raphaelfh/omnisus-db

@@ -158,7 +158,7 @@ def test_ingest_reports_a_real_snapshot_id(tmp_path: Path) -> None:
 
 
 def test_snapshots_lists_history_instead_of_raising(tmp_path: Path) -> None:
-    """`omnisus-db lake snapshots` was broken: the old query never bound."""
+    """`omnisusdb lake snapshots` was broken: the old query never bound."""
     with Lake.local(f"ducklake:{tmp_path}/h.ducklake") as lake:
         lake.ingest("t", _frame())
         snaps = lake.snapshots()

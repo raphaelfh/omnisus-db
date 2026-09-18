@@ -25,7 +25,7 @@ print(report.run_id, report.rows, report.failed)
 ```
 
 ```bash
-omnisus-db import sim_obitos --year 2023 --ufs RR --policy skip_same --run-id sim-rr-2023-review-01
+omnisusdb import sim_obitos --year 2023 --ufs RR --policy skip_same --run-id sim-rr-2023-review-01
 ```
 
 Source identity combines the compressed DBC SHA-256 with an explicit staging
@@ -191,9 +191,9 @@ history you need. Cutoffs must include a timezone. Returned dictionaries expose
 DuckLake's operation results.
 
 ```bash
-omnisus-db lake optimize sim_obitos
-omnisus-db lake expire-snapshots --before 2026-08-01T00:00:00+00:00 --dry-run
-omnisus-db lake cleanup-files --before 2026-08-01T00:00:00+00:00 --dry-run
+omnisusdb lake optimize sim_obitos
+omnisusdb lake expire-snapshots --before 2026-08-01T00:00:00+00:00 --dry-run
+omnisusdb lake cleanup-files --before 2026-08-01T00:00:00+00:00 --dry-run
 ```
 
 Use `--execute` instead of `--dry-run` to apply expiration or cleanup. Failures
