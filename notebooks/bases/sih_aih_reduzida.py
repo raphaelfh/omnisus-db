@@ -49,6 +49,8 @@ def _(mo):
     mo.md(r"""
     # SIH · AIH reduzida
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sih_aih_reduzida.py)
+
     Autorizações de internação hospitalar (AIH) do Sistema de Informações
     Hospitalares do SUS (SIH/SUS), publicadas pelo DATASUS por UF e mês. Este
     notebook percorre as seis etapas do

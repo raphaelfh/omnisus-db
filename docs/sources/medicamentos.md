@@ -159,7 +159,8 @@ print(pagina.sha256, len(pagina.records))
 ```
 
 Passo a passo com a APAC em seis etapas, a página de estoque e o que não é público:
-[notebooks/bases/medicamentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py).
+[notebooks/bases/medicamentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/medicamentos.py).
 
 ## Fontes
 

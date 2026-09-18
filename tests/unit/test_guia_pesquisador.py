@@ -50,7 +50,9 @@ def test_profile_has_the_seven_sections_in_order(perfil):
 def test_profile_links_its_notebook(perfil):
     caminho = f"notebooks/bases/{PERFIS[perfil]}.py"
     assert (ROOT / caminho).is_file()
-    assert GITHUB + caminho in _secao(_texto(perfil), "Como usar")
+    secao = _secao(_texto(perfil), "Como usar")
+    assert GITHUB + caminho in secao
+    assert f"https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/{caminho}" in secao
 
 
 @pytest.mark.parametrize("perfil", sorted(PERFIS))
@@ -71,6 +73,15 @@ COMECE_AQUI = ROOT / "docs/pesquisa/index.md"
 @pytest.mark.parametrize("notebook", sorted(set(PERFIS.values())))
 def test_start_page_links_every_bases_notebook(notebook):
     assert f"{GITHUB}notebooks/bases/{notebook}.py" in COMECE_AQUI.read_text(encoding="utf-8")
+
+
+MOLAB = "https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/"
+
+
+@pytest.mark.parametrize("notebook", sorted(set(PERFIS.values())))
+def test_start_page_opens_every_bases_notebook_in_molab(notebook):
+    caminho = f"notebooks/bases/{notebook}.py"
+    assert f"]({MOLAB}{caminho})" in COMECE_AQUI.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("perfil", sorted(PERFIS))

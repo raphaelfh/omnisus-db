@@ -150,7 +150,8 @@ with odb.LakeReader(alvo) as leitor:
 atualiza a visão `aux_cnes`.
 
 Passo a passo com análise e proveniência:
-[notebooks/bases/cnes_estabelecimentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py).
+[notebooks/bases/cnes_estabelecimentos.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/cnes_estabelecimentos.py).
 
 ## Fontes
 

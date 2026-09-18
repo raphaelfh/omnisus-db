@@ -49,6 +49,8 @@ def _(mo):
     mo.md(r"""
     # SINAN · Chagas aguda e hanseníase
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sinan.py)
+
     Notificações do Sistema de Informação de Agravos de Notificação (SINAN),
     publicadas pelo DATASUS em **um arquivo nacional por ano**, com diretório final e
     preliminar. Este notebook percorre as seis etapas do

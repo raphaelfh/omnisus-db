@@ -171,7 +171,8 @@ with odb.LakeReader(alvo) as leitor:
 ```
 
 Passo a passo com as sete tabelas, análise e proveniência:
-[notebooks/bases/sia.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py).
+[notebooks/bases/sia.py](https://github.com/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py)
+[![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/bases/sia.py).
 
 ## Fontes
 

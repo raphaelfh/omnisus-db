@@ -29,6 +29,8 @@ def _(mo):
     mo.md("""
     # Inventário e download real do DATASUS
 
+    [![Open in molab](https://molab.marimo.io/molab-shield.svg)](https://molab.marimo.io/github/raphaelfh/omnisus-db/blob/main/notebooks/explorar/inventario_dados_reais.py)
+
     **1. Consulte o servidor → 2. filtre e escolha os arquivos → 3. baixe e explore.**
 
     Todos os registros vêm do FTP público do Ministério da Saúde. O catálogo abaixo
